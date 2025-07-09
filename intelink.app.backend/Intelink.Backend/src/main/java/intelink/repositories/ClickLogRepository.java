@@ -24,6 +24,9 @@ public interface ClickLogRepository extends JpaRepository<ClickLog, UUID> {
             @Param("startTime") Instant startTime,
             @Param("endTime") Instant endTime);
 
+    @Query("SELECT COUNT(c) FROM ClickLog c WHERE c.shortCode = :shortCode")
+    long countByShortCode(@Param("shortCode") String shortCode);
+
     @Query("SELECT COUNT(c) FROM ClickLog c WHERE c.shortCode = :shortCode AND c.timestamp BETWEEN :startTime AND :endTime")
     long countByShortCodeAndTimestampBetween(
             @Param("shortCode") String shortCode,

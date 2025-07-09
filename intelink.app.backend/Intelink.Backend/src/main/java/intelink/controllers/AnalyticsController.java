@@ -1,4 +1,4 @@
-package intelink.controllers.api.v1;
+package intelink.controllers;
 
 import intelink.models.DailyStat;
 import intelink.models.User;
@@ -10,6 +10,7 @@ import intelink.dto.AnalyticsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,7 +39,7 @@ public class AnalyticsController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         if (!hasAccessToShortUrl(shortCode, userDetails)) {
-            return ResponseEntity.forbidden().build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         List<DailyStat> stats = analyticsService.getDailyStatsForRange(shortCode, startDate, endDate);
@@ -52,7 +53,7 @@ public class AnalyticsController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         if (!hasAccessToShortUrl(shortCode, userDetails)) {
-            return ResponseEntity.forbidden().build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         Map<String, Long> stats = analyticsService.getTopValuesByDimension(shortCode, type);
@@ -72,7 +73,7 @@ public class AnalyticsController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         if (!hasAccessToShortUrl(shortCode, userDetails)) {
-            return ResponseEntity.forbidden().build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         // Get recent stats

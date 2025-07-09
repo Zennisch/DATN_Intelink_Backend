@@ -1,4 +1,4 @@
-package intelink.controllers.api.v1;
+package intelink.controllers;
 
 import intelink.models.ShortUrl;
 import intelink.models.User;
@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -86,7 +87,7 @@ public class UrlController {
 
         // Check ownership
         if (userOpt.isEmpty() || !shortUrl.getUser().getId().equals(userOpt.get().getId())) {
-            return ResponseEntity.forbidden().build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         return ResponseEntity.ok(ShortUrlResponse.fromEntity(shortUrl));

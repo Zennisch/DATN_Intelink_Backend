@@ -1,4 +1,4 @@
-package intelink.controllers.api.v1;
+package intelink.controllers;
 
 import intelink.models.User;
 import intelink.models.enums.UserRole;
@@ -16,6 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.util.Map;
 import java.util.Optional;
 
 @RestController

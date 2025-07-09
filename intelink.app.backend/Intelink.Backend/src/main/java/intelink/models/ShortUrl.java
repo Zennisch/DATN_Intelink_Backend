@@ -51,6 +51,9 @@ public class ShortUrl {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "updated_at", nullable = true)
+    private Instant updatedAt;
+
     @Builder.Default
     @Column(name = "total_clicks", nullable = false)
     private Long totalClicks = 0L;
@@ -62,6 +65,12 @@ public class ShortUrl {
     @PrePersist
     private void onCreate() {
         this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    private void onUpdate() {
+        this.updatedAt = Instant.now();
     }
 
 }
