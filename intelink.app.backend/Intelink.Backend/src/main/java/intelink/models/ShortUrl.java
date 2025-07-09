@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity
 @Table(name = "short_urls", indexes = {
@@ -48,7 +49,7 @@ public class ShortUrl {
     private Boolean isActive = true;
 
     @Column(name = "created_at", nullable = false)
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @Builder.Default
     @Column(name = "total_clicks", nullable = false)
@@ -60,7 +61,7 @@ public class ShortUrl {
 
     @PrePersist
     private void onCreate() {
-        this.createdAt = new Timestamp(System.currentTimeMillis());
+        this.createdAt = Instant.now();
     }
 
 }

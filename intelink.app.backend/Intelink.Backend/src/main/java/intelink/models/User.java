@@ -1,9 +1,10 @@
 package intelink.models;
 
+import intelink.models.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Entity
 @Table(name = "users")
@@ -31,8 +32,9 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    @Enumerated
     @Column(name = "role", nullable = false, length = 50)
-    private String role;
+    private UserRole role;
 
     @Builder.Default
     @Column(name = "total_clicks", nullable = false)
@@ -43,20 +45,20 @@ public class User {
     private Integer totalShortUrls = 0;
 
     @Column(name = "created_at", nullable = false)
-    private Timestamp createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Timestamp updatedAt;
+    private Instant updatedAt;
 
     @PrePersist
     private void onCreate() {
-        this.createdAt = new Timestamp(System.currentTimeMillis());
+        this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
     }
 
     @PreUpdate
     private void onUpdate() {
-        this.updatedAt = new Timestamp(System.currentTimeMillis());
+        this.updatedAt = Instant.now();
     }
 
 }
