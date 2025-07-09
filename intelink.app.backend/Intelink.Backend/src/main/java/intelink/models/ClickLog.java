@@ -8,8 +8,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "click_logs", indexes = {
-        @Index(name = "idx_short_code", columnList = "short_code"),
-        @Index(name = "idx_timestamp", columnList = "timestamp")
+        @Index(name = "idx_short_code_timestamp", columnList = "short_code,timestamp"),
+        @Index(name = "idx_country_device", columnList = "country,device_type")
 })
 @Getter
 @Setter

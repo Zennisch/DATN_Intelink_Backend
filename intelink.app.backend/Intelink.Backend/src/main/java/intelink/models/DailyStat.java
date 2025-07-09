@@ -1,8 +1,10 @@
 package intelink.models;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
+import intelink.utils.JsonUtils;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,7 +40,8 @@ public class DailyStat {
 
     @Builder.Default
     @Column(name = "click_count", nullable = false)
-    private long clickCount = 0L;
+    @Min(0)
+    private Long clickCount = 0L;
 
     @Column(name = "hourly_clicks", nullable = true, columnDefinition = "TEXT")
     private String hourlyClicksJson;
@@ -61,12 +64,13 @@ public class DailyStat {
         }
 
         try {
-            int[] result = objectMapper.readValue(hourlyClicksJson, int[].class);
+            int[] result = JsonUtils.fromJson(hourlyClicksJson, int[].class);
             return result.length == 24 ? result : padArray(result);
-        } catch (JsonProcessingException e) {
+        } catch (RuntimeException e) {
             log.warn("Failed to parse hourly clicks JSON for DailyStat id: {}", id, e);
             return new int[24];
         }
+
     }
 
     @Transient
@@ -76,8 +80,8 @@ public class DailyStat {
         }
 
         try {
-            this.hourlyClicksJson = objectMapper.writeValueAsString(hourlyClicks);
-        } catch (JsonProcessingException e) {
+            this.hourlyClicksJson = JsonUtils.toJson(hourlyClicks);
+        } catch (RuntimeJsonMappingException e) {
             log.error("Failed to serialize hourly clicks for DailyStat id: {}", id, e);
             this.hourlyClicksJson = "[" + "0,".repeat(23) + "0]";
         }

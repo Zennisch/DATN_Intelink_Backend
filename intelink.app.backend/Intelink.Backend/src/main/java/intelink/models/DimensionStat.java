@@ -11,7 +11,8 @@ import java.time.LocalDate;
         @Index(name = "idx_short_code", columnList = "short_code"),
         @Index(name = "idx_date", columnList = "date"),
         @Index(name = "idx_type", columnList = "type"),
-        @Index(name = "idx_composite", columnList = "short_code,date,type")
+        @Index(name = "idx_composite", columnList = "short_code,date,type"),
+        @Index(name = "idx_short_code_date_type_value", columnList = "short_code,date,type,value")
 })
 @Getter
 @Setter
@@ -52,7 +53,7 @@ public class DimensionStat {
     private void onCreate() {
         if (this.id == null) {
             this.id = this.shortCode + "_" + this.date.toString() + "_" + this.type + "_" +
-                     this.value.hashCode();
+                    this.value.hashCode();
         }
     }
 }
