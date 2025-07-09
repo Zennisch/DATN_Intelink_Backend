@@ -84,4 +84,17 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public long countUsersByRole(UserRole role) {
-        return userRepository.countByRo
+        return userRepository.countByRole(role);
+    }
+
+    @Transactional
+    public User updateUser(User user) {
+        user.setUpdatedAt(Instant.now());
+        return userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean validatePassword(String rawPassword, String hashedPassword) {
+        return passwordEncoder.matches(rawPassword, hashedPassword);
+    }
+}
