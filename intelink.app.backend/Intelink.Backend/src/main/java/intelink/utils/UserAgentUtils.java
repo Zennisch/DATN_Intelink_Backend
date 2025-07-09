@@ -196,7 +196,7 @@ public class UserAgentUtils {
             return false;
         }
         return MOBILE_PATTERN.matcher(userAgent).find() &&
-               !TABLET_PATTERN.matcher(userAgent).find();
+                !TABLET_PATTERN.matcher(userAgent).find();
     }
 
     public static boolean isTablet(String userAgent) {

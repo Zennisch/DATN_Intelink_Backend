@@ -43,7 +43,7 @@ public interface ClickLogRepository extends JpaRepository<ClickLog, UUID> {
     List<Object[]> countByShortCodeGroupByBrowser(@Param("shortCode") String shortCode);
 
     @Query(value = "SELECT EXTRACT(HOUR FROM timestamp) as hour, COUNT(*) as count " +
-                   "FROM click_logs WHERE short_code = :shortCode AND DATE(timestamp) = DATE(:date) " +
-                   "GROUP BY EXTRACT(HOUR FROM timestamp) ORDER BY hour", nativeQuery = true)
+            "FROM click_logs WHERE short_code = :shortCode AND DATE(timestamp) = DATE(:date) " +
+            "GROUP BY EXTRACT(HOUR FROM timestamp) ORDER BY hour", nativeQuery = true)
     List<Object[]> getHourlyClicksForDate(@Param("shortCode") String shortCode, @Param("date") Instant date);
 }

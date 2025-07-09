@@ -80,8 +80,8 @@ public class IpUtils {
         try {
             InetAddress addr = InetAddress.getByName(ip);
             return addr.isSiteLocalAddress() ||
-                   addr.isLoopbackAddress() ||
-                   addr.isLinkLocalAddress();
+                    addr.isLoopbackAddress() ||
+                    addr.isLinkLocalAddress();
         } catch (UnknownHostException e) {
             log.warn("Could not parse IP address: {}", ip);
             return false;

@@ -1,18 +1,18 @@
 package intelink.controllers;
 
 import intelink.models.ShortUrl;
+import intelink.services.AnalyticsService;
 import intelink.services.ClickLogService;
 import intelink.services.ShortUrlService;
-import intelink.services.AnalyticsService;
-import intelink.utils.UserAgentUtils;
 import intelink.utils.IpUtils;
+import intelink.utils.UserAgentUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
@@ -28,8 +28,8 @@ public class RedirectController {
 
     @GetMapping("/{shortCode}")
     public ResponseEntity<?> redirect(@PathVariable String shortCode,
-                                    @RequestParam(required = false) String password,
-                                    HttpServletRequest request) {
+                                      @RequestParam(required = false) String password,
+                                      HttpServletRequest request) {
 
         Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCode(shortCode);
 
@@ -62,8 +62,8 @@ public class RedirectController {
 
     @PostMapping("/{shortCode}/unlock")
     public ResponseEntity<?> unlockPasswordProtected(@PathVariable String shortCode,
-                                                   @RequestBody Map<String, String> payload,
-                                                   HttpServletRequest request) {
+                                                     @RequestBody Map<String, String> payload,
+                                                     HttpServletRequest request) {
 
         String password = payload.get("password");
         Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCode(shortCode);

@@ -25,8 +25,8 @@ public class ClickLogService {
 
     @Transactional
     public ClickLog recordClick(String shortCode, String ipAddress, String userAgent,
-                               String referrer, String country, String city,
-                               String browser, String os, String deviceType) {
+                                String referrer, String country, String city,
+                                String browser, String os, String deviceType) {
 
         ClickLog clickLog = ClickLog.builder()
                 .shortCode(shortCode)
@@ -66,8 +66,8 @@ public class ClickLogService {
         List<Object[]> results = clickLogRepository.countByShortCodeGroupByCountry(shortCode);
         return results.stream()
                 .collect(Collectors.toMap(
-                    result -> (String) result[0],
-                    result -> (Long) result[1]
+                        result -> (String) result[0],
+                        result -> (Long) result[1]
                 ));
     }
 
@@ -76,8 +76,8 @@ public class ClickLogService {
         List<Object[]> results = clickLogRepository.countByShortCodeGroupByDeviceType(shortCode);
         return results.stream()
                 .collect(Collectors.toMap(
-                    result -> (String) result[0],
-                    result -> (Long) result[1]
+                        result -> (String) result[0],
+                        result -> (Long) result[1]
                 ));
     }
 
@@ -86,8 +86,8 @@ public class ClickLogService {
         List<Object[]> results = clickLogRepository.countByShortCodeGroupByBrowser(shortCode);
         return results.stream()
                 .collect(Collectors.toMap(
-                    result -> (String) result[0],
-                    result -> (Long) result[1]
+                        result -> (String) result[0],
+                        result -> (Long) result[1]
                 ));
     }
 

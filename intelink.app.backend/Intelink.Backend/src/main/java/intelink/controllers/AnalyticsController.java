@@ -1,12 +1,12 @@
 package intelink.controllers;
 
+import intelink.dto.AnalyticsResponse;
 import intelink.models.DailyStat;
 import intelink.models.User;
 import intelink.models.enums.DimensionType;
 import intelink.services.AnalyticsService;
-import intelink.services.UserService;
 import intelink.services.ShortUrlService;
-import intelink.dto.AnalyticsResponse;
+import intelink.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;

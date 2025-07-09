@@ -11,21 +11,18 @@ import java.util.Map;
 @Slf4j
 public class GeoLocationUtils {
 
+    private final RestTemplate restTemplate = new RestTemplate();
     @Value("${app.geoip.enabled:false}")
     private boolean geoIpEnabled;
-
     @Value("${app.geoip.api-key:}")
     private String apiKey;
-
     @Value("${app.geoip.service-url:}")
     private String serviceUrl;
 
-    private final RestTemplate restTemplate = new RestTemplate();
-
     public Map<String, String> getLocationInfo(String ipAddress) {
         Map<String, String> defaultLocation = Map.of(
-            "country", "Unknown",
-            "city", "Unknown"
+                "country", "Unknown",
+                "city", "Unknown"
         );
 
         if (!geoIpEnabled || !IpUtils.isValidIp(ipAddress) || IpUtils.isPrivateIp(ipAddress)) {
@@ -44,8 +41,8 @@ public class GeoLocationUtils {
                 String city = (String) response.get("city");
 
                 return Map.of(
-                    "country", country != null ? country : "Unknown",
-                    "city", city != null ? city : "Unknown"
+                        "country", country != null ? country : "Unknown",
+                        "city", city != null ? city : "Unknown"
                 );
             }
 

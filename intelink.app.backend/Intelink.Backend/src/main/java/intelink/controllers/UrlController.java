@@ -1,11 +1,12 @@
 package intelink.controllers;
 
+import intelink.dto.CreateShortUrlRequest;
+import intelink.dto.ShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
 import intelink.services.ShortUrlService;
 import intelink.services.UserService;
-import intelink.dto.CreateShortUrlRequest;
-import intelink.dto.ShortUrlResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -16,7 +17,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.sql.Timestamp;
 import java.util.Optional;
 

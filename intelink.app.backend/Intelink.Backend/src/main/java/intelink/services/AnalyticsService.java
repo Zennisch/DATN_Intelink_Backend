@@ -86,10 +86,10 @@ public class AnalyticsService {
         List<Object[]> results = dimensionStatRepository.getTopValuesByType(shortCode, type);
         return results.stream()
                 .collect(java.util.stream.Collectors.toMap(
-                    result -> (String) result[0],
-                    result -> (Long) result[1],
-                    (existing, replacement) -> existing,
-                    java.util.LinkedHashMap::new
+                        result -> (String) result[0],
+                        result -> (Long) result[1],
+                        (existing, replacement) -> existing,
+                        java.util.LinkedHashMap::new
                 ));
     }
 

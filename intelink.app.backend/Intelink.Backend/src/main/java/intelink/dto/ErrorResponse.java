@@ -28,8 +28,8 @@ public class ErrorResponse {
     }
 
     public static ErrorResponse withValidationErrors(int status, String error,
-                                                   String message, String path,
-                                                   Map<String, String> validationErrors) {
+                                                     String message, String path,
+                                                     Map<String, String> validationErrors) {
         return ErrorResponse.builder()
                 .status(status)
                 .error(error)

@@ -1,8 +1,8 @@
 package intelink.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.Min;
 import lombok.Data;
 import org.hibernate.validator.constraints.URL;
 

@@ -24,5 +24,5 @@ public enum DimensionType {
     LANGUAGE,
 
     // Custom dimensions
-    CUSTOM;
+    CUSTOM
 }

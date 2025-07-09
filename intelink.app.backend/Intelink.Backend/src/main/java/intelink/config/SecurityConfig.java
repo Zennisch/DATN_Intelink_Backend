@@ -52,29 +52,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/health/**").permitAll()
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/{shortCode}").permitAll()
-                .requestMatchers(HttpMethod.POST, "/{shortCode}/unlock").permitAll()
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
+                        .requestMatchers("/health/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/{shortCode}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/{shortCode}/unlock").permitAll()
 
-                // Admin endpoints
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // Admin endpoints
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                // User endpoints - require authentication
-                .requestMatchers("/api/v1/urls/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/api/v1/analytics/**").hasAnyRole("USER", "ADMIN")
+                        // User endpoints - require authentication
+                        .requestMatchers("/api/v1/urls/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/v1/analytics/**").hasAnyRole("USER", "ADMIN")
 
-                // All other requests require authentication
-                .anyRequest().authenticated()
-            );
+                        // All other requests require authentication
+                        .anyRequest().authenticated()
+                );
 
         return http.build();
     }
@@ -89,7 +89,7 @@ public class SecurityConfig {
         configuration.setMaxAge(3600L);
 
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
-            new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+                new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }

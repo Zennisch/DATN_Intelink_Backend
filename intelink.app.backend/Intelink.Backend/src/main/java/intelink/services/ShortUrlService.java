@@ -21,15 +21,15 @@ import java.util.Optional;
 @Slf4j
 public class ShortUrlService {
 
-    private final ShortUrlRepository shortUrlRepository;
-    private final UserService userService;
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int SHORT_CODE_LENGTH = 7;
     private static final SecureRandom random = new SecureRandom();
+    private final ShortUrlRepository shortUrlRepository;
+    private final UserService userService;
 
     @Transactional
     public ShortUrl createShortUrl(String originalUrl, User user, String description,
-                                  Timestamp expiresAt, Long maxUsage, String password) {
+                                   Timestamp expiresAt, Long maxUsage, String password) {
 
         String shortCode = generateUniqueShortCode();
 
@@ -100,21 +100,17 @@ public class ShortUrlService {
         }
 
         if (shortUrl.getExpiresAt() != null &&
-            shortUrl.getExpiresAt().before(Timestamp.from(Instant.now()))) {
+                shortUrl.getExpiresAt().before(Timestamp.from(Instant.now()))) {
             return false;
         }
 
         if (shortUrl.getMaxUsage() != null &&
-            shortUrl.getTotalClicks() >= shortUrl.getMaxUsage()) {
+                shortUrl.getTotalClicks() >= shortUrl.getMaxUsage()) {
             return false;
         }
 
-        if (shortUrl.getPassword() != null &&
-            !shortUrl.getPassword().equals(providedPassword)) {
-            return false;
-        }
-
-        return true;
+        return shortUrl.getPassword() == null ||
+                shortUrl.getPassword().equals(providedPassword);
     }
 
     @Transactional(readOnly = true)

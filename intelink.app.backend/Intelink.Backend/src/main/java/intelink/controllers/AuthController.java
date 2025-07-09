@@ -1,12 +1,13 @@
 package intelink.controllers;
 
-import intelink.models.User;
-import intelink.models.enums.UserRole;
-import intelink.services.UserService;
+import intelink.dto.AuthResponse;
 import intelink.dto.LoginRequest;
 import intelink.dto.RegisterRequest;
-import intelink.dto.AuthResponse;
+import intelink.models.User;
+import intelink.models.enums.UserRole;
 import intelink.security.JwtTokenProvider;
+import intelink.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +15,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
 
 import java.util.Map;
 import java.util.Optional;
