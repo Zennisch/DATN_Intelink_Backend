@@ -1,6 +1,6 @@
 package intelink.controllers;
 
-import intelink.dto.AnalyticsResponse;
+import intelink.dto.response.AnalyticsResponse;
 import intelink.models.DailyStat;
 import intelink.models.User;
 import intelink.models.enums.DimensionType;

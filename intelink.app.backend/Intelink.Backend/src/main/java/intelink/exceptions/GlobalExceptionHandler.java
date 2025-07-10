@@ -15,7 +15,10 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+// Xử lý các ngoại lệ toàn cục cho tất cả các controller
 @RestControllerAdvice
+
+// Tạo logger tự động cho lớp này
 @Slf4j
 public class GlobalExceptionHandler {
 

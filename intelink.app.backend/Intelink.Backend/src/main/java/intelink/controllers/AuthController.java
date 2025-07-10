@@ -1,8 +1,8 @@
 package intelink.controllers;
 
-import intelink.dto.AuthResponse;
-import intelink.dto.LoginRequest;
-import intelink.dto.RegisterRequest;
+import intelink.dto.response.AuthResponse;
+import intelink.dto.request.LoginRequest;
+import intelink.dto.request.RegisterRequest;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.security.JwtTokenProvider;

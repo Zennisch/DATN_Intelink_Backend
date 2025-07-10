@@ -1,4 +1,4 @@
-package intelink.dto;
+package intelink.dto.response;
 
 import intelink.models.ClickLog;
 import lombok.Builder;

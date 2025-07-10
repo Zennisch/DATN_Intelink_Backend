@@ -1,7 +1,7 @@
 package intelink.controllers;
 
-import intelink.dto.CreateShortUrlRequest;
-import intelink.dto.ShortUrlResponse;
+import intelink.dto.request.CreateShortUrlRequest;
+import intelink.dto.response.ShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
 import intelink.services.ShortUrlService;

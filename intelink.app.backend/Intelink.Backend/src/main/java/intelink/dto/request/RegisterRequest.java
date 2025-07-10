@@ -1,4 +1,4 @@
-package intelink.dto;
+package intelink.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
