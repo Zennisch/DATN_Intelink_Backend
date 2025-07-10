@@ -1,18 +1,17 @@
 package intelink.models;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
-import intelink.utils.JsonUtils;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "daily_stats", indexes = {
-        @Index(name = "idx_short_code", columnList = "short_code"),
+        @Index(name = "idx_short_code_date", columnList = "short_code,date"),
         @Index(name = "idx_date", columnList = "date")
 })
 @Getter
@@ -20,17 +19,16 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString
+@ToString(exclude = {"hourlyStats", "shortUrl"})
 @Builder
 @Slf4j
 public class DailyStat {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
     @Id
     @Column(name = "id", nullable = false, unique = true, length = 50)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    private String id;
+    private Long id;
 
     @Column(name = "short_code", nullable = false, length = 20)
     private String shortCode;
@@ -43,55 +41,37 @@ public class DailyStat {
     @Min(0)
     private Long clickCount = 0L;
 
-    @Column(name = "hourly_clicks", nullable = true, columnDefinition = "TEXT")
-    private String hourlyClicksJson;
+    @Builder.Default
+    @OneToMany(mappedBy = "dailyStat", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HourlyStat> hourlyStats = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_code", referencedColumnName = "short_code", insertable = false, updatable = false)
     private ShortUrl shortUrl;
 
-    @PrePersist
-    private void onCreate() {
-        if (this.id == null) {
-            this.id = this.shortCode + "_" + this.date.toString();
+    @Transient
+    public Long getClicksForHour(int hour) {
+        if (hour < 0 || hour > 23) {
+            throw new IllegalArgumentException("Hour must be between 0 and 23");
         }
+
+        return hourlyStats.stream()
+                .filter(hs -> hs.getHour() == hour)
+                .findFirst()
+                .map(HourlyStat::getClickCount)
+                .orElse(0L);
     }
 
     @Transient
-    public int[] getHourlyClicks() {
-        if (hourlyClicksJson == null || hourlyClicksJson.isEmpty()) {
-            return new int[24];
+    public void incrementClicksForHour(int hour) {
+        if (hour < 0 || hour > 23) {
+            throw new IllegalArgumentException("Hour must be between 0 and 23");
         }
 
-        try {
-            int[] result = JsonUtils.fromJson(hourlyClicksJson, int[].class);
-            return result.length == 24 ? result : padArray(result);
-        } catch (RuntimeException e) {
-            log.warn("Failed to parse hourly clicks JSON for DailyStat id: {}", id, e);
-            return new int[24];
-        }
-
-    }
-
-    @Transient
-    public void setHourlyClicks(int[] hourlyClicks) {
-        if (hourlyClicks == null || hourlyClicks.length != 24) {
-            hourlyClicks = padArray(hourlyClicks);
-        }
-
-        try {
-            this.hourlyClicksJson = JsonUtils.toJson(hourlyClicks);
-        } catch (RuntimeJsonMappingException e) {
-            log.error("Failed to serialize hourly clicks for DailyStat id: {}", id, e);
-            this.hourlyClicksJson = "[" + "0,".repeat(23) + "0]";
-        }
-    }
-
-    private int[] padArray(int[] array) {
-        int[] result = new int[24];
-        if (array != null) {
-            System.arraycopy(array, 0, result, 0, Math.min(array.length, 24));
-        }
-        return result;
+        this.hourlyStats.stream()
+                .filter(h -> h.getHour() == hour)
+                .findFirst()
+                .ifPresent(stat -> stat.setClickCount(stat.getClickCount() + 1));
+        this.clickCount++;
     }
 }

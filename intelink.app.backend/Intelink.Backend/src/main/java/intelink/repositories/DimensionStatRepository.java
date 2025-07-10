@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DimensionStatRepository extends JpaRepository<DimensionStat, String> {
@@ -25,4 +26,6 @@ public interface DimensionStatRepository extends JpaRepository<DimensionStat, St
 
     @Query("SELECT d FROM DimensionStat d WHERE d.shortCode = :shortCode AND d.date = :date")
     List<DimensionStat> findByShortCodeAndDate(@Param("shortCode") String shortCode, @Param("date") LocalDate date);
+
+    Optional<DimensionStat> findByShortCodeAndDateAndTypeAndValue(String shortCode, LocalDate date, DimensionType type, String value);
 }

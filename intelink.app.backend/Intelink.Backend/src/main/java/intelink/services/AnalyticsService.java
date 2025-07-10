@@ -2,6 +2,7 @@ package intelink.services;
 
 import intelink.models.DailyStat;
 import intelink.models.DimensionStat;
+import intelink.models.HourlyStat;
 import intelink.models.enums.DimensionType;
 import intelink.repositories.DailyStatRepository;
 import intelink.repositories.DimensionStatRepository;
@@ -14,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,71 +26,57 @@ public class AnalyticsService {
     private final ClickLogService clickLogService;
 
     @Transactional
-    public void updateDailyStat(String shortCode, LocalDate date, int hour) {
-        Optional<DailyStat> existingStat = dailyStatRepository.findByShortCodeAndDate(shortCode, date);
+    public void updateStatsForClick(String shortCode, LocalDate date, int hour, Map<DimensionType, String> dimensions) {
+        DailyStat dailyStat = findOrCreateDailyStat(shortCode, date);
+        dailyStat.incrementClicksForHour(hour);
+        dimensions.forEach((type, value) -> {
+            if (value != null && !value.isEmpty()) {
+                updateDimensionStat(shortCode, date, type, value);
+            }
+        });
+        dailyStatRepository.save(dailyStat);
+    }
 
-        if (existingStat.isPresent()) {
-            DailyStat dailyStat = existingStat.get();
-            dailyStat.setClickCount(dailyStat.getClickCount() + 1);
+    private DailyStat findOrCreateDailyStat(String shortCode, LocalDate date) {
+        return dailyStatRepository.findByShortCodeAndDate(shortCode, date)
+                .orElseGet(() -> {
+                    log.info("Creating new DailyStat for {} on {}", shortCode, date);
+                    DailyStat newStat = DailyStat.builder()
+                            .shortCode(shortCode)
+                            .date(date)
+                            .clickCount(0L)
+                            .build();
 
-            int[] hourlyClicks = dailyStat.getHourlyClicks();
-            hourlyClicks[hour]++;
-            dailyStat.setHourlyClicks(hourlyClicks);
+                    for (int hour = 0; hour < 24; hour++) {
+                        HourlyStat hourlyStat = HourlyStat.builder()
+                                .hour(hour)
+                                .clickCount(0L)
+                                .dailyStat(newStat)
+                                .build();
+                        newStat.getHourlyStats().add(hourlyStat);
+                    }
 
-            dailyStatRepository.save(dailyStat);
-        } else {
-            int[] hourlyClicks = new int[24];
-            hourlyClicks[hour] = 1;
-
-            DailyStat newStat = DailyStat.builder()
-                    .shortCode(shortCode)
-                    .date(date)
-                    .clickCount(1L)
-                    .build();
-            newStat.setHourlyClicks(hourlyClicks);
-
-            dailyStatRepository.save(newStat);
-        }
+                    return newStat;
+                });
     }
 
     @Transactional
     public void updateDimensionStat(String shortCode, LocalDate date, DimensionType type, String value) {
-        String id = shortCode + "_" + date + "_" + type + "_" + value.hashCode();
+        DimensionStat dimensionStat = dimensionStatRepository
+                .findByShortCodeAndDateAndTypeAndValue(shortCode, date, type, value)
+                .orElseGet(() -> {
+                    log.info("Creating new DimensionStat for {} on {}: {} - {}", shortCode, date, type, value);
+                    return DimensionStat.builder()
+                            .shortCode(shortCode)
+                            .date(date)
+                            .type(type)
+                            .value(value)
+                            .clickCount(0L)
+                            .build();
+                });
 
-        Optional<DimensionStat> existingStat = dimensionStatRepository.findById(id);
-
-        if (existingStat.isPresent()) {
-            DimensionStat dimensionStat = existingStat.get();
-            dimensionStat.setClickCount(dimensionStat.getClickCount() + 1);
-            dimensionStatRepository.save(dimensionStat);
-        } else {
-            DimensionStat newStat = DimensionStat.builder()
-                    .shortCode(shortCode)
-                    .date(date)
-                    .type(type)
-                    .value(value)
-                    .clickCount(1L)
-                    .build();
-
-            dimensionStatRepository.save(newStat);
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public List<DailyStat> getDailyStatsForRange(String shortCode, LocalDate startDate, LocalDate endDate) {
-        return dailyStatRepository.findByShortCodeAndDateBetween(shortCode, startDate, endDate);
-    }
-
-    @Transactional(readOnly = true)
-    public Map<String, Long> getTopValuesByDimension(String shortCode, DimensionType type) {
-        List<Object[]> results = dimensionStatRepository.getTopValuesByType(shortCode, type);
-        return results.stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        result -> (String) result[0],
-                        result -> (Long) result[1],
-                        (existing, replacement) -> existing,
-                        java.util.LinkedHashMap::new
-                ));
+        dimensionStat.setClickCount(dimensionStat.getClickCount() + 1);
+        dimensionStatRepository.save(dimensionStat);
     }
 
     @Async
@@ -98,16 +84,18 @@ public class AnalyticsService {
     public void recalculateStatsForDate(String shortCode, LocalDate date) {
         log.info("Recalculating stats for {} on {}", shortCode, date);
 
-        // Xóa stats cũ
         dailyStatRepository.findByShortCodeAndDate(shortCode, date)
                 .ifPresent(dailyStatRepository::delete);
 
         List<DimensionStat> oldDimensionStats = dimensionStatRepository.findByShortCodeAndDate(shortCode, date);
         dimensionStatRepository.deleteAll(oldDimensionStats);
 
-        // Tính toán lại từ ClickLog
-        int[] hourlyClicks = clickLogService.getHourlyClicksForDate(shortCode, date);
-        long totalClicks = java.util.Arrays.stream(hourlyClicks).sum();
+        int[] hourlyClicksArray = clickLogService.getHourlyClicksForDate(shortCode, date);
+        long totalClicks = 0;
+
+        for (int clicks : hourlyClicksArray) {
+            totalClicks += clicks;
+        }
 
         if (totalClicks > 0) {
             DailyStat newDailyStat = DailyStat.builder()
@@ -115,11 +103,20 @@ public class AnalyticsService {
                     .date(date)
                     .clickCount(totalClicks)
                     .build();
-            newDailyStat.setHourlyClicks(hourlyClicks);
+
+            for (int hour = 0; hour < hourlyClicksArray.length; hour++) {
+                if (hourlyClicksArray[hour] > 0) {
+                    HourlyStat hourlyStat = HourlyStat.builder()
+                            .hour(hour)
+                            .clickCount((long) hourlyClicksArray[hour])
+                            .dailyStat(newDailyStat)
+                            .build();
+                    newDailyStat.getHourlyStats().add(hourlyStat);
+                }
+            }
 
             dailyStatRepository.save(newDailyStat);
 
-            // Tính toán dimension stats
             recalculateDimensionStats(shortCode, date);
         }
 
@@ -152,4 +149,23 @@ public class AnalyticsService {
             }
         });
     }
+
+    // Other methods remain unchanged
+    @Transactional(readOnly = true)
+    public List<DailyStat> getDailyStatsForRange(String shortCode, LocalDate startDate, LocalDate endDate) {
+        return dailyStatRepository.findByShortCodeAndDateBetween(shortCode, startDate, endDate);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getTopValuesByDimension(String shortCode, DimensionType type) {
+        List<Object[]> results = dimensionStatRepository.getTopValuesByType(shortCode, type);
+        return results.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        result -> (String) result[0],
+                        result -> (Long) result[1],
+                        (existing, replacement) -> existing,
+                        java.util.LinkedHashMap::new
+                ));
+    }
+
 }

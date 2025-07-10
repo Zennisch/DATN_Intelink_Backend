@@ -1,6 +1,7 @@
 package intelink.controllers;
 
 import intelink.models.ShortUrl;
+import intelink.models.enums.DimensionType;
 import intelink.services.AnalyticsService;
 import intelink.services.ClickLogService;
 import intelink.services.ShortUrlService;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -89,10 +91,8 @@ public class RedirectController {
             String userAgent = request.getHeader("User-Agent");
             String referrer = request.getHeader("Referer");
 
-            // Parse user agent
             Map<String, String> agentInfo = UserAgentUtils.parseUserAgent(userAgent);
 
-            // Record click
             clickLogService.recordClick(
                     shortCode,
                     ipAddress,
@@ -105,23 +105,23 @@ public class RedirectController {
                     agentInfo.get("deviceType")
             );
 
-            // Update counters
             shortUrlService.incrementClickCount(shortCode);
 
-            // Update analytics
             LocalDate today = LocalDate.now();
-            int currentHour = java.time.LocalTime.now().getHour();
-            analyticsService.updateDailyStat(shortCode, today, currentHour);
+            int currentHour = LocalTime.now().getHour();
 
-            // Update dimension stats
-            if (agentInfo.get("country") != null) {
-                analyticsService.updateDimensionStat(shortCode, today,
-                        intelink.models.enums.DimensionType.COUNTRY, agentInfo.get("country"));
-            }
-            if (agentInfo.get("browser") != null) {
-                analyticsService.updateDimensionStat(shortCode, today,
-                        intelink.models.enums.DimensionType.BROWSER, agentInfo.get("browser"));
-            }
+            Map<DimensionType, String> dimensions = Map.of(
+                    DimensionType.COUNTRY, agentInfo.get("country"),
+                    DimensionType.BROWSER, agentInfo.get("browser"),
+                    DimensionType.DEVICE_TYPE, agentInfo.get("deviceType")
+            );
+
+            analyticsService.updateStatsForClick(
+                    shortCode,
+                    today,
+                    currentHour,
+                    dimensions
+            );
 
         } catch (Exception e) {
             log.error("Failed to record click for shortCode: {}", shortCode, e);
