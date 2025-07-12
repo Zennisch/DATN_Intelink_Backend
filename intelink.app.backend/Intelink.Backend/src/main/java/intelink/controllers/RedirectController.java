@@ -2,6 +2,7 @@ package intelink.controllers;
 
 import intelink.models.ShortUrl;
 import intelink.models.enums.DimensionType;
+import intelink.models.enums.IpVersion;
 import intelink.services.AnalyticsService;
 import intelink.services.ClickLogService;
 import intelink.services.ShortUrlService;
@@ -87,7 +88,10 @@ public class RedirectController {
 
     private void recordClickAsync(String shortCode, HttpServletRequest request) {
         try {
-            String ipAddress = IpUtils.getClientIpAddress(request);
+            IpUtils.IpProcessingResult ipProcessResult = IpUtils.processClientIp(request);
+            String ipAddress = ipProcessResult.getOriginalIp();
+            IpVersion ipVersion = ipProcessResult.getIpVersion();
+            String normalizedIp = ipProcessResult.getNormalizedIp();
             String userAgent = request.getHeader("User-Agent");
             String referrer = request.getHeader("Referer");
 
@@ -96,6 +100,8 @@ public class RedirectController {
             clickLogService.recordClick(
                     shortCode,
                     ipAddress,
+                    ipVersion,
+                    normalizedIp,
                     userAgent,
                     referrer,
                     agentInfo.get("country"),

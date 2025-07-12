@@ -1,5 +1,6 @@
 package intelink.models;
 
+import intelink.models.enums.IpVersion;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,6 +35,13 @@ public class ClickLog {
 
     @Column(name = "ip_address", nullable = true, length = 45)
     private String ipAddress;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ip_version", length = 6)
+    private IpVersion ipVersion;
+
+    @Column(name = "normalized_ip", length = 50)
+    private String normalizedIp;
 
     @Column(name = "user_agent", nullable = true, length = 512)
     private String userAgent;

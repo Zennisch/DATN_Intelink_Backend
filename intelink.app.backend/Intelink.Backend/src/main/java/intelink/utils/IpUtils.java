@@ -1,8 +1,13 @@
 package intelink.utils;
 
+import intelink.models.enums.IpVersion;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Builder;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
@@ -31,8 +36,96 @@ public class IpUtils {
     );
 
     private static final Pattern IPV6_PATTERN = Pattern.compile(
-            "^([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}$|^::1$|^::$"
+            "^([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}$|^::1$|^::$|^(([0-9a-fA-F]{1,4}:){0,6}([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:){0,6}([0-9a-fA-F]{1,4})?)$"
     );
+
+    @Data
+    @Builder
+    public static class IpProcessingResult {
+        private String originalIp;
+        private IpVersion ipVersion;
+        private String normalizedIp;
+        private String subnet;
+        private boolean isPrivate;
+    }
+
+    /**
+     * Gets client IP address from request, processes it, and returns complete information
+     */
+    public static IpProcessingResult processClientIp(HttpServletRequest request) {
+        String ipAddress = getClientIpAddress(request);
+        return processIp(ipAddress);
+    }
+
+    /**
+     * Process any IP address to extract all relevant information
+     */
+    public static IpProcessingResult processIp(String ip) {
+        if (!isValidIp(ip)) {
+            return IpProcessingResult.builder()
+                    .originalIp(ip)
+                    .ipVersion(IpVersion.UNKNOWN)
+                    .normalizedIp("unknown")
+                    .subnet("unknown")
+                    .isPrivate(false)
+                    .build();
+        }
+
+        try {
+            InetAddress inetAddress = InetAddress.getByName(ip);
+            IpVersion version;
+            String normalizedIp;
+            String subnet;
+            boolean isPrivate = isPrivateIp(ip);
+
+            if (inetAddress instanceof Inet4Address) {
+                version = IpVersion.IPv4;
+                normalizedIp = inetAddress.getHostAddress();
+
+                // Create subnet like 192.168.1.0/24
+                String[] parts = normalizedIp.split("\\.");
+                subnet = parts[0] + "." + parts[1] + "." + parts[2] + ".0/24";
+            } else if (inetAddress instanceof Inet6Address) {
+                version = IpVersion.IPv6;
+                // Normalize IPv6 to standard compressed format
+                normalizedIp = inetAddress.getHostAddress();
+
+                // Create /64 subnet (standard network prefix length for IPv6)
+                int endOfNetworkPortion = normalizedIp.lastIndexOf(':');
+                for (int i = 0; i < 3; i++) {
+                    endOfNetworkPortion = normalizedIp.lastIndexOf(':', endOfNetworkPortion - 1);
+                    if (endOfNetworkPortion < 0) break;
+                }
+
+                if (endOfNetworkPortion > 0) {
+                    subnet = normalizedIp.substring(0, endOfNetworkPortion + 1) + ":/64";
+                } else {
+                    subnet = normalizedIp + "/64";
+                }
+            } else {
+                version = IpVersion.UNKNOWN;
+                normalizedIp = ip;
+                subnet = "unknown";
+            }
+
+            return IpProcessingResult.builder()
+                    .originalIp(ip)
+                    .ipVersion(version)
+                    .normalizedIp(normalizedIp)
+                    .subnet(subnet)
+                    .isPrivate(isPrivate)
+                    .build();
+        } catch (UnknownHostException e) {
+            log.warn("Failed to process IP address: {}", ip, e);
+            return IpProcessingResult.builder()
+                    .originalIp(ip)
+                    .ipVersion(IpVersion.UNKNOWN)
+                    .normalizedIp(ip)
+                    .subnet("unknown")
+                    .isPrivate(false)
+                    .build();
+        }
+    }
 
     public static String getClientIpAddress(HttpServletRequest request) {
         log.info("=== IP Address Detection Start ===");
@@ -97,6 +190,20 @@ public class IpUtils {
         return IPV4_PATTERN.matcher(ip).matches() || IPV6_PATTERN.matcher(ip).matches();
     }
 
+    public static IpVersion getIpVersion(String ip) {
+        if (!isValidIp(ip)) {
+            return IpVersion.UNKNOWN;
+        }
+
+        if (IPV4_PATTERN.matcher(ip).matches()) {
+            return IpVersion.IPv4;
+        } else if (IPV6_PATTERN.matcher(ip).matches()) {
+            return IpVersion.IPv6;
+        } else {
+            return IpVersion.UNKNOWN;
+        }
+    }
+
     public static boolean isPrivateIp(String ip) {
         if (!isValidIp(ip)) return false;
 
@@ -107,6 +214,25 @@ public class IpUtils {
             log.warn("Could not parse IP address: {}", ip);
             return false;
         }
+    }
+
+    public static String normalizeIp(String ip) {
+        if (!isValidIp(ip)) {
+            return ip;
+        }
+
+        try {
+            InetAddress inetAddress = InetAddress.getByName(ip);
+            return inetAddress.getHostAddress();
+        } catch (UnknownHostException e) {
+            log.warn("Failed to normalize IP: {}", ip, e);
+            return ip;
+        }
+    }
+
+    public static String createSubnet(String ip) {
+        IpProcessingResult result = processIp(ip);
+        return result.getSubnet();
     }
 
     public static String getCountryFromIp(String ip) {

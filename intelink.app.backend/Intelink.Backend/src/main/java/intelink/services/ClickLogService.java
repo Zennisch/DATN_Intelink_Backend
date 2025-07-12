@@ -1,6 +1,7 @@
 package intelink.services;
 
 import intelink.models.ClickLog;
+import intelink.models.enums.IpVersion;
 import intelink.repositories.ClickLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,13 +25,15 @@ public class ClickLogService {
     private final ClickLogRepository clickLogRepository;
 
     @Transactional
-    public ClickLog recordClick(String shortCode, String ipAddress, String userAgent,
-                                String referrer, String country, String city,
+    public ClickLog recordClick(String shortCode, String ipAddress, IpVersion ipVersion, String normalizedIp,
+                                String userAgent, String referrer, String country, String city,
                                 String browser, String os, String deviceType) {
 
         ClickLog clickLog = ClickLog.builder()
                 .shortCode(shortCode)
                 .ipAddress(ipAddress)
+                .ipVersion(ipVersion)
+                .normalizedIp(normalizedIp)
                 .userAgent(userAgent)
                 .referrer(referrer)
                 .country(country)
