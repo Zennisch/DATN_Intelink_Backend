@@ -31,7 +31,7 @@ public class ShortUrlService {
     public ShortUrl createShortUrl(String originalUrl, User user, String description,
                                    Timestamp expiresAt, Long maxUsage, String password) {
 
-        String shortCode = generateUniqueShortCode();
+        String shortCode = generateUniqueShortCode(user);
 
         ShortUrl shortUrl = ShortUrl.builder()
                 .shortCode(shortCode)
@@ -118,11 +118,29 @@ public class ShortUrlService {
         return shortUrlRepository.countByUserIdAndCreatedAtAfter(userId, since);
     }
 
-    private String generateUniqueShortCode() {
+    private String generateUniqueShortCode(User user) {
         String shortCode;
         int attempts = 0;
+
         do {
-            shortCode = generateRandomCode();
+            // Generate a unique value based on user ID, timestamp, and random component
+            long timestamp = System.currentTimeMillis();
+            long userId = user.getId();
+            int randomComponent = random.nextInt(1000000);
+
+            // Create unique number combining these factors
+            long uniqueNumber = timestamp ^ (userId << 16) ^ randomComponent;
+
+            // Convert to Base62
+            shortCode = encodeBase62(uniqueNumber);
+
+            // Ensure correct length
+            if (shortCode.length() < SHORT_CODE_LENGTH) {
+                shortCode = padShortCode(shortCode);
+            } else if (shortCode.length() > SHORT_CODE_LENGTH) {
+                shortCode = shortCode.substring(0, SHORT_CODE_LENGTH);
+            }
+
             attempts++;
             if (attempts > 10) {
                 throw new RuntimeException("Unable to generate unique short code after 10 attempts");
@@ -130,6 +148,31 @@ public class ShortUrlService {
         } while (shortUrlRepository.findByShortCode(shortCode).isPresent());
 
         return shortCode;
+    }
+
+    private String encodeBase62(long number) {
+        if (number == 0) {
+            return String.valueOf(CHARACTERS.charAt(0));
+        }
+
+        StringBuilder sb = new StringBuilder();
+        int base = CHARACTERS.length();
+
+        while (number > 0) {
+            int remainder = (int)(number % base);
+            sb.insert(0, CHARACTERS.charAt(remainder));
+            number /= base;
+        }
+
+        return sb.toString();
+    }
+
+    private String padShortCode(String shortCode) {
+        StringBuilder sb = new StringBuilder(shortCode);
+        while (sb.length() < SHORT_CODE_LENGTH) {
+            sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
+        }
+        return sb.toString();
     }
 
     private String generateRandomCode() {
