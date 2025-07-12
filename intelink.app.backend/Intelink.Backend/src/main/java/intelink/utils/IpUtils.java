@@ -1,5 +1,7 @@
 package intelink.utils;
 
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.model.CityResponse;
 import intelink.models.enums.IpVersion;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Builder;
@@ -82,12 +84,11 @@ public class IpUtils {
                 version = IpVersion.IPv4;
                 normalizedIp = inetAddress.getHostAddress();
 
-                // Create subnet like 192.168.1.0/24
+                // Create /24 subnet
                 String[] parts = normalizedIp.split("\\.");
                 subnet = parts[0] + "." + parts[1] + "." + parts[2] + ".0/24";
             } else if (inetAddress instanceof Inet6Address) {
                 version = IpVersion.IPv6;
-                // Normalize IPv6 to standard compressed format
                 normalizedIp = inetAddress.getHostAddress();
 
                 // Create /64 subnet (standard network prefix length for IPv6)
@@ -190,20 +191,6 @@ public class IpUtils {
         return IPV4_PATTERN.matcher(ip).matches() || IPV6_PATTERN.matcher(ip).matches();
     }
 
-    public static IpVersion getIpVersion(String ip) {
-        if (!isValidIp(ip)) {
-            return IpVersion.UNKNOWN;
-        }
-
-        if (IPV4_PATTERN.matcher(ip).matches()) {
-            return IpVersion.IPv4;
-        } else if (IPV6_PATTERN.matcher(ip).matches()) {
-            return IpVersion.IPv6;
-        } else {
-            return IpVersion.UNKNOWN;
-        }
-    }
-
     public static boolean isPrivateIp(String ip) {
         if (!isValidIp(ip)) return false;
 
@@ -216,41 +203,38 @@ public class IpUtils {
         }
     }
 
-    public static String normalizeIp(String ip) {
-        if (!isValidIp(ip)) {
-            return ip;
-        }
-
-        try {
-            InetAddress inetAddress = InetAddress.getByName(ip);
-            return inetAddress.getHostAddress();
-        } catch (UnknownHostException e) {
-            log.warn("Failed to normalize IP: {}", ip, e);
-            return ip;
-        }
-    }
-
-    public static String createSubnet(String ip) {
-        IpProcessingResult result = processIp(ip);
-        return result.getSubnet();
-    }
-
     public static String getCountryFromIp(String ip) {
-        if (!isValidIp(ip) || isPrivateIp(ip)) {
+        DatabaseReader databaseReader = GeoIpUtils.getDatabaseReader();
+        try {
+            CityResponse response = databaseReader.city(InetAddress.getByName(ip));
+            String countryIsoCode = response.getCountry().getIsoCode();
+            String countryName = response.getCountry().getName();
+//            return countryIsoCode + " / " + countryName;
+            if (countryIsoCode != null && countryName != null) {
+                return countryIsoCode + " / " + countryName;
+            } else if (countryIsoCode != null) {
+                return countryIsoCode;
+            } else if (countryName != null) {
+                return countryName;
+            } else {
+                return "Unknown";
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get country for IP {}: {}", ip, e.getMessage());
             return "Unknown";
         }
-
-        log.debug("GeoIP lookup for IP: {}", ip);
-        return "Unknown"; // Placeholder
     }
 
     public static String getCityFromIp(String ip) {
-        if (!isValidIp(ip) || isPrivateIp(ip)) {
+        DatabaseReader databaseReader = GeoIpUtils.getDatabaseReader();
+        try {
+            CityResponse response = databaseReader.city(InetAddress.getByName(ip));
+            String cityName = response.getCity().getName();
+            return cityName != null ? cityName : "Unknown";
+        } catch (Exception e) {
+            log.warn("Failed to get city for IP {}: {}", ip, e.getMessage());
             return "Unknown";
         }
-
-        log.debug("GeoIP city lookup for IP: {}", ip);
-        return "Unknown"; // Placeholder
     }
 
     public static String maskIpAddress(String ip) {

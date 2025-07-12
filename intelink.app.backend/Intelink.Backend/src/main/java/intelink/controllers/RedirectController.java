@@ -91,6 +91,10 @@ public class RedirectController {
             IpUtils.IpProcessingResult ipProcessResult = IpUtils.processClientIp(request);
             String ipAddress = ipProcessResult.getOriginalIp();
             IpVersion ipVersion = ipProcessResult.getIpVersion();
+
+            String country = IpUtils.getCountryFromIp(ipAddress);
+            String city = IpUtils.getCityFromIp(ipAddress);
+
             String normalizedIp = ipProcessResult.getNormalizedIp();
             String subnet = ipProcessResult.getSubnet();
             String userAgent = request.getHeader("User-Agent");
@@ -106,8 +110,8 @@ public class RedirectController {
                     subnet,
                     userAgent,
                     referrer,
-                    agentInfo.get("country"),
-                    agentInfo.get("city"),
+                    country,
+                    city,
                     agentInfo.get("browser"),
                     agentInfo.get("os"),
                     agentInfo.get("deviceType")
@@ -120,7 +124,9 @@ public class RedirectController {
 
             Map<DimensionType, String> dimensions = Map.of(
                     DimensionType.COUNTRY, Optional.ofNullable(agentInfo.get("country")).orElse("unknown"),
+                    DimensionType.CITY, Optional.ofNullable(agentInfo.get("city")).orElse("unknown"),
                     DimensionType.BROWSER, Optional.ofNullable(agentInfo.get("browser")).orElse("unknown"),
+                    DimensionType.OS, Optional.ofNullable(agentInfo.get("os")).orElse("unknown"),
                     DimensionType.DEVICE_TYPE, Optional.ofNullable(agentInfo.get("deviceType")).orElse("unknown")
             );
 
