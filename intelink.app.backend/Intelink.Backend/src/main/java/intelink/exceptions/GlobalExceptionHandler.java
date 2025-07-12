@@ -1,5 +1,6 @@
 package intelink.exceptions;
 
+import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -104,5 +105,20 @@ public class GlobalExceptionHandler {
         response.put("timestamp", Instant.now());
 
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+    }
+
+    // JWT exception handler
+
+    @ExceptionHandler(SignatureException.class)
+    public ResponseEntity<Map<String, Object>> handleSignatureException(SignatureException e) {
+        log.error("JWT signature error: {}", e.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", HttpStatus.UNAUTHORIZED.value());
+        response.put("error", "Invalid JWT Signature");
+        response.put("message", "The JWT signature is invalid or has expired");
+        response.put("timestamp", Instant.now());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 }
