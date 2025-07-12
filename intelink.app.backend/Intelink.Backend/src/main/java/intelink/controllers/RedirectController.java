@@ -123,11 +123,11 @@ public class RedirectController {
             int currentHour = LocalTime.now().getHour();
 
             Map<DimensionType, String> dimensions = Map.of(
-                    DimensionType.COUNTRY, Optional.ofNullable(agentInfo.get("country")).orElse("unknown"),
-                    DimensionType.CITY, Optional.ofNullable(agentInfo.get("city")).orElse("unknown"),
-                    DimensionType.BROWSER, Optional.ofNullable(agentInfo.get("browser")).orElse("unknown"),
-                    DimensionType.OS, Optional.ofNullable(agentInfo.get("os")).orElse("unknown"),
-                    DimensionType.DEVICE_TYPE, Optional.ofNullable(agentInfo.get("deviceType")).orElse("unknown")
+                    DimensionType.COUNTRY, country,
+                    DimensionType.CITY, city,
+                    DimensionType.BROWSER, agentInfo.get("browser"),
+                    DimensionType.OS, agentInfo.get("os"),
+                    DimensionType.DEVICE_TYPE, agentInfo.get("deviceType")
             );
 
             analyticsService.updateStatsForClick(

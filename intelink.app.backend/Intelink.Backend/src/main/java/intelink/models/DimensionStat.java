@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
 @Table(name = "dimension_stats", indexes = {
@@ -25,8 +26,9 @@ public class DimensionStat {
 
     @Id
     @Column(name = "id", nullable = false, unique = true, length = 100)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    private String id;
+    private UUID id;
 
     @Column(name = "short_code", nullable = false, length = 20)
     private String shortCode;
@@ -49,11 +51,4 @@ public class DimensionStat {
     @JoinColumn(name = "short_code", referencedColumnName = "short_code", insertable = false, updatable = false)
     private ShortUrl shortUrl;
 
-    @PrePersist
-    private void onCreate() {
-        if (this.id == null) {
-            this.id = this.shortCode + "_" + this.date.toString() + "_" + this.type + "_" +
-                    this.value.hashCode();
-        }
-    }
 }
