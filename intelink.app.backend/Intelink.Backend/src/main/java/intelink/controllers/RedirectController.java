@@ -92,6 +92,7 @@ public class RedirectController {
             String ipAddress = ipProcessResult.getOriginalIp();
             IpVersion ipVersion = ipProcessResult.getIpVersion();
             String normalizedIp = ipProcessResult.getNormalizedIp();
+            String subnet = ipProcessResult.getSubnet();
             String userAgent = request.getHeader("User-Agent");
             String referrer = request.getHeader("Referer");
 
@@ -102,6 +103,7 @@ public class RedirectController {
                     ipAddress,
                     ipVersion,
                     normalizedIp,
+                    subnet,
                     userAgent,
                     referrer,
                     agentInfo.get("country"),

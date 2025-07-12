@@ -43,6 +43,9 @@ public class ClickLog {
     @Column(name = "normalized_ip", length = 50)
     private String normalizedIp;
 
+    @Column(name = "subnet", nullable = true, length = 50)
+    private String subnet;
+
     @Column(name = "user_agent", nullable = true, length = 512)
     private String userAgent;
 

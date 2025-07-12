@@ -25,8 +25,9 @@ public class ClickLogService {
     private final ClickLogRepository clickLogRepository;
 
     @Transactional
-    public ClickLog recordClick(String shortCode, String ipAddress, IpVersion ipVersion, String normalizedIp,
-                                String userAgent, String referrer, String country, String city,
+    public ClickLog recordClick(String shortCode, String ipAddress, IpVersion ipVersion,
+                                String normalizedIp, String subnet, String userAgent,
+                                String referrer, String country, String city,
                                 String browser, String os, String deviceType) {
 
         ClickLog clickLog = ClickLog.builder()
@@ -34,6 +35,7 @@ public class ClickLogService {
                 .ipAddress(ipAddress)
                 .ipVersion(ipVersion)
                 .normalizedIp(normalizedIp)
+                .subnet(subnet)
                 .userAgent(userAgent)
                 .referrer(referrer)
                 .country(country)
@@ -41,7 +43,6 @@ public class ClickLogService {
                 .browser(browser)
                 .os(os)
                 .deviceType(deviceType)
-                .timestamp(Instant.now())
                 .build();
 
         ClickLog saved = clickLogRepository.save(clickLog);
