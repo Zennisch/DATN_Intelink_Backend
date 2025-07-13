@@ -37,8 +37,6 @@ public class UserAgentUtils {
             result.put("browser", "Unknown");
             result.put("os", "Unknown");
             result.put("deviceType", "Unknown");
-            result.put("country", null);
-            result.put("city", null);
             return result;
         }
 
