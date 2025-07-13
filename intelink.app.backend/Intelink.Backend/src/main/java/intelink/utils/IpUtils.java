@@ -41,36 +41,14 @@ public class IpUtils {
             "^([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}$|^::1$|^::$|^(([0-9a-fA-F]{1,4}:){0,6}([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:){0,6}([0-9a-fA-F]{1,4})?)$"
     );
 
-    @Data
-    @Builder
-    public static class IpProcessingResult {
-        private String originalIp;
-        private IpVersion ipVersion;
-        private String normalizedIp;
-        private String subnet;
-        private boolean isPrivate;
-    }
-
-    /**
-     * Gets client IP address from request, processes it, and returns complete information
-     */
     public static IpProcessingResult processClientIp(HttpServletRequest request) {
         String ipAddress = getClientIpAddress(request);
         return processIp(ipAddress);
     }
 
-    /**
-     * Process any IP address to extract all relevant information
-     */
     public static IpProcessingResult processIp(String ip) {
         if (!isValidIp(ip)) {
-            return IpProcessingResult.builder()
-                    .originalIp(ip)
-                    .ipVersion(IpVersion.UNKNOWN)
-                    .normalizedIp("unknown")
-                    .subnet("unknown")
-                    .isPrivate(false)
-                    .build();
+            return IpProcessingResult.builder().originalIp(ip).ipVersion(IpVersion.UNKNOWN).normalizedIp("unknown").subnet("unknown").isPrivate(false).build();
         }
 
         try {
@@ -109,22 +87,10 @@ public class IpUtils {
                 subnet = "unknown";
             }
 
-            return IpProcessingResult.builder()
-                    .originalIp(ip)
-                    .ipVersion(version)
-                    .normalizedIp(normalizedIp)
-                    .subnet(subnet)
-                    .isPrivate(isPrivate)
-                    .build();
+            return IpProcessingResult.builder().originalIp(ip).ipVersion(version).normalizedIp(normalizedIp).subnet(subnet).isPrivate(isPrivate).build();
         } catch (UnknownHostException e) {
             log.warn("Failed to process IP address: {}", ip, e);
-            return IpProcessingResult.builder()
-                    .originalIp(ip)
-                    .ipVersion(IpVersion.UNKNOWN)
-                    .normalizedIp(ip)
-                    .subnet("unknown")
-                    .isPrivate(false)
-                    .build();
+            return IpProcessingResult.builder().originalIp(ip).ipVersion(IpVersion.UNKNOWN).normalizedIp(ip).subnet("unknown").isPrivate(false).build();
         }
     }
 
@@ -161,7 +127,6 @@ public class IpUtils {
             }
         }
 
-        // Fallback
         String remoteAddr = request.getRemoteAddr();
         if (isValidIp(remoteAddr)) {
             log.info("✔ Valid fallback remoteAddr IP: {}", remoteAddr);
@@ -182,7 +147,6 @@ public class IpUtils {
 
         ip = ip.trim();
 
-        // Nếu đang debug local thì cho phép các IP loopback
         if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip) || "127.0.0.1".equals(ip)) {
             // return false; // Chặn nếu production
             return true; // Cho phép khi debug local
@@ -209,7 +173,7 @@ public class IpUtils {
             CityResponse response = databaseReader.city(InetAddress.getByName(ip));
             String countryIsoCode = response.getCountry().getIsoCode();
             String countryName = response.getCountry().getName();
-//            return countryIsoCode + " / " + countryName;
+
             if (countryIsoCode != null && countryName != null) {
                 return countryIsoCode + " / " + countryName;
             } else if (countryIsoCode != null) {
@@ -237,23 +201,14 @@ public class IpUtils {
         }
     }
 
-    public static String maskIpAddress(String ip) {
-        if (!isValidIp(ip)) {
-            return "***.***.***";
-        }
-
-        if (IPV4_PATTERN.matcher(ip).matches()) {
-            String[] parts = ip.split("\\.");
-            if (parts.length == 4) {
-                return parts[0] + "." + parts[1] + ".***.***";
-            }
-        } else if (IPV6_PATTERN.matcher(ip).matches()) {
-            String[] parts = ip.split(":");
-            if (parts.length >= 2) {
-                return parts[0] + ":" + parts[1] + ":****:****:****:****:****:****";
-            }
-        }
-
-        return "***.***.***";
+    @Data
+    @Builder
+    public static class IpProcessingResult {
+        private String originalIp;
+        private IpVersion ipVersion;
+        private String normalizedIp;
+        private String subnet;
+        private boolean isPrivate;
     }
+
 }

@@ -94,7 +94,7 @@ public class AuthController {
 
         if (jwtTokenProvider.validateToken(token, username)) {
             String newToken = jwtTokenProvider.generateToken(username);
-            return ResponseHelper.ok(Map.of("token", newToken));
+            return ResponseEntity.ok(Map.of("token", newToken));
         }
 
         return ResponseHelper.badRequest("Invalid token");

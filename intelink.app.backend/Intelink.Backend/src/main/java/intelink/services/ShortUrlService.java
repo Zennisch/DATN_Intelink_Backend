@@ -159,7 +159,7 @@ public class ShortUrlService {
         int base = CHARACTERS.length();
 
         while (number > 0) {
-            int remainder = (int)(number % base);
+            int remainder = (int) (number % base);
             sb.insert(0, CHARACTERS.charAt(remainder));
             number /= base;
         }
