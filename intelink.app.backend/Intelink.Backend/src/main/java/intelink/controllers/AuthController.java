@@ -32,11 +32,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        if (!userService.isUsernameAvailable(request.getUsername())) {
+        if (userService.existsByUsername(request.getUsername())) {
             return ResponseHelper.badRequest("Username already exists");
         }
 
-        if (!userService.isEmailAvailable(request.getEmail())) {
+        if (userService.existsByEmail(request.getEmail())) {
             return ResponseHelper.badRequest("Email already exists");
         }
 

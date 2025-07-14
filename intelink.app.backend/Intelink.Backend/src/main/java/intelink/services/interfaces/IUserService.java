@@ -17,13 +17,13 @@ public interface IUserService {
 
     Optional<User> findById(Long id);
 
-    boolean isUsernameAvailable(String username);
+    boolean existsByUsername(String username);
 
-    boolean isEmailAvailable(String email);
+    boolean existsByEmail(String email);
 
     long countUsersByRole(UserRole role);
 
-    void incrementUserStats(Long userId, Long clickIncrement);
+    void incrementClickCount(Long userId, Long clickIncrement);
 
     void incrementUrlCount(Long userId);
 

@@ -64,13 +64,13 @@ public class UserService implements IUserService {
     }
 
     @Transactional(readOnly = true)
-    public boolean isUsernameAvailable(String username) {
-        return !userRepository.existsByUsername(username);
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
     }
 
     @Transactional(readOnly = true)
-    public boolean isEmailAvailable(String email) {
-        return !userRepository.existsByEmail(email);
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     @Transactional(readOnly = true)
@@ -79,15 +79,35 @@ public class UserService implements IUserService {
     }
 
     @Transactional
-    public void incrementUserStats(Long userId, Long clickIncrement) {
-        if (clickIncrement > 0) {
-            userRepository.incrementTotalClicks(userId, clickIncrement);
-            log.debug("Incremented total clicks for user {} by {}", userId, clickIncrement);
+    public void incrementClickCount(Long userId, Long clickIncrement) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
         }
+
+        if (clickIncrement == null || clickIncrement <= 0) {
+            throw new IllegalArgumentException("Click increment must be positive");
+        }
+
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("User not found with ID: " + userId);
+        }
+
+        userRepository.incrementTotalClicks(userId, clickIncrement);
+        log.debug("Incremented total clicks for user {} by {}", userId, clickIncrement);
     }
 
     @Transactional
     public void incrementUrlCount(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("User not found with ID: " + userId);
+        }
+
         userRepository.incrementTotalShortUrls(userId);
         log.debug("Incremented URL count for user {}", userId);
     }
