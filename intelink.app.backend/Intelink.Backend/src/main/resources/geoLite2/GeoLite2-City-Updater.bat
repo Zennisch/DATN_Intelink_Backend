@@ -1,0 +1,1 @@
+curl -L "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=YOUR_LICENSE_KEY&suffix=tar.gz" -o GeoLite2-City.tar.gz && tar -xzf GeoLite2-City.tar.gz GeoLite2-City_*/GeoLite2-City.mmdb && FOR /D %%i IN (GeoLite2-City_*) DO move "%%i\GeoLite2-City.mmdb" . && FOR /D %%d IN (GeoLite2-City_*) DO rmdir /S /Q "%%d" && del GeoLite2-City.tar.gz
