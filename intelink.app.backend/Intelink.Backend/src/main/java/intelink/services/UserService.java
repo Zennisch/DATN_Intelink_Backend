@@ -3,37 +3,22 @@ package intelink.services;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.repositories.UserRepository;
+import intelink.services.interfaces.IUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserService {
+public class UserService implements IUserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Transactional(readOnly = true)
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
-    }
 
     @Transactional
     public User createUser(String username, String email, String password, UserRole role) {
@@ -59,17 +44,23 @@ public class UserService {
     }
 
     @Transactional
-    public void incrementUserStats(Long userId, Long clickIncrement) {
-        if (clickIncrement > 0) {
-            userRepository.incrementTotalClicks(userId, clickIncrement);
-            log.debug("Incremented total clicks for user {} by {}", userId, clickIncrement);
-        }
+    public User updateUser(User user) {
+        return userRepository.save(user);
     }
 
-    @Transactional
-    public void incrementUrlCount(Long userId) {
-        userRepository.incrementTotalShortUrls(userId);
-        log.debug("Incremented URL count for user {}", userId);
+    @Transactional(readOnly = true)
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
     }
 
     @Transactional(readOnly = true)
@@ -88,13 +79,17 @@ public class UserService {
     }
 
     @Transactional
-    public User updateUser(User user) {
-        user.setUpdatedAt(Instant.now());
-        return userRepository.save(user);
+    public void incrementUserStats(Long userId, Long clickIncrement) {
+        if (clickIncrement > 0) {
+            userRepository.incrementTotalClicks(userId, clickIncrement);
+            log.debug("Incremented total clicks for user {} by {}", userId, clickIncrement);
+        }
     }
 
-    @Transactional(readOnly = true)
-    public boolean validatePassword(String rawPassword, String hashedPassword) {
-        return passwordEncoder.matches(rawPassword, hashedPassword);
+    @Transactional
+    public void incrementUrlCount(Long userId) {
+        userRepository.incrementTotalShortUrls(userId);
+        log.debug("Incremented URL count for user {}", userId);
     }
+
 }
