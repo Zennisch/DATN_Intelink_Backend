@@ -11,18 +11,18 @@ import java.util.regex.Pattern;
 public class UserAgentUtils {
 
     // Browser patterns
-    private static final Pattern CHROME_PATTERN = Pattern.compile("Chrome/([\\d\\.]+)");
-    private static final Pattern FIREFOX_PATTERN = Pattern.compile("Firefox/([\\d\\.]+)");
-    private static final Pattern SAFARI_PATTERN = Pattern.compile("Safari/([\\d\\.]+)");
-    private static final Pattern EDGE_PATTERN = Pattern.compile("Edg/([\\d\\.]+)");
-    private static final Pattern OPERA_PATTERN = Pattern.compile("OPR/([\\d\\.]+)");
-    private static final Pattern IE_PATTERN = Pattern.compile("MSIE ([\\d\\.]+)");
+    private static final Pattern EDGE_PATTERN = Pattern.compile("Edg/([\\d.]+)");
+    private static final Pattern OPERA_PATTERN = Pattern.compile("OPR/([\\d.]+)");
+    private static final Pattern CHROME_PATTERN = Pattern.compile("Chrome/([\\d.]+)");
+    private static final Pattern FIREFOX_PATTERN = Pattern.compile("Firefox/([\\d.]+)");
+    private static final Pattern SAFARI_PATTERN = Pattern.compile("Safari/([\\d.]+)");
+    private static final Pattern IE_PATTERN = Pattern.compile("MSIE ([\\d.]+)");
 
     // OS patterns
-    private static final Pattern WINDOWS_PATTERN = Pattern.compile("Windows NT ([\\d\\.]+)");
-    private static final Pattern MAC_PATTERN = Pattern.compile("Mac OS X ([\\d_\\.]+)");
+    private static final Pattern WINDOWS_PATTERN = Pattern.compile("Windows NT ([\\d.]+)");
+    private static final Pattern MAC_PATTERN = Pattern.compile("Mac OS X ([\\d_.]+)");
     private static final Pattern LINUX_PATTERN = Pattern.compile("Linux");
-    private static final Pattern ANDROID_PATTERN = Pattern.compile("Android ([\\d\\.]+)");
+    private static final Pattern ANDROID_PATTERN = Pattern.compile("Android ([\\d.]+)");
     private static final Pattern IOS_PATTERN = Pattern.compile("OS ([\\d_]+)");
 
     // Device patterns
@@ -42,21 +42,14 @@ public class UserAgentUtils {
 
         log.debug("Parsing user agent: {}", userAgent);
 
-        // Parse browser
         String browser = parseBrowser(userAgent);
         result.put("browser", browser);
 
-        // Parse OS
         String os = parseOperatingSystem(userAgent);
         result.put("os", os);
 
-        // Parse device type
         String deviceType = parseDeviceType(userAgent);
         result.put("deviceType", deviceType);
-
-        // Country and city will be determined by IP address
-        result.put("country", null);
-        result.put("city", null);
 
         return result;
     }
@@ -110,115 +103,63 @@ public class UserAgentUtils {
     private static String parseOperatingSystem(String userAgent) {
         Matcher matcher;
 
-        // Check for Windows
         matcher = WINDOWS_PATTERN.matcher(userAgent);
         if (matcher.find()) {
             String version = matcher.group(1);
             return "Windows " + getWindowsVersion(version);
         }
 
-        // Check for macOS
         matcher = MAC_PATTERN.matcher(userAgent);
         if (matcher.find()) {
             String version = matcher.group(1).replace("_", ".");
             return "macOS " + version;
         }
 
-        // Check for Android
+        if (LINUX_PATTERN.matcher(userAgent).find()) {
+            return "Linux";
+        }
+
         matcher = ANDROID_PATTERN.matcher(userAgent);
         if (matcher.find()) {
             return "Android " + matcher.group(1);
         }
 
-        // Check for iOS
         matcher = IOS_PATTERN.matcher(userAgent);
         if (matcher.find()) {
             String version = matcher.group(1).replace("_", ".");
             return "iOS " + version;
         }
 
-        // Check for Linux
-        if (LINUX_PATTERN.matcher(userAgent).find()) {
-            return "Linux";
-        }
-
         return "Unknown OS";
     }
 
     private static String parseDeviceType(String userAgent) {
-        if (BOT_PATTERN.matcher(userAgent).find()) {
-            return "Bot";
+        if (MOBILE_PATTERN.matcher(userAgent).find()) {
+            return "Mobile";
         }
 
         if (TABLET_PATTERN.matcher(userAgent).find()) {
             return "Tablet";
         }
 
-        if (MOBILE_PATTERN.matcher(userAgent).find()) {
-            return "Mobile";
+        if (BOT_PATTERN.matcher(userAgent).find()) {
+            return "Bot";
         }
 
         return "Desktop";
     }
 
     private static String getWindowsVersion(String ntVersion) {
-        switch (ntVersion) {
-            case "10.0":
-                return "10/11";
-            case "6.3":
-                return "8.1";
-            case "6.2":
-                return "8";
-            case "6.1":
-                return "7";
-            case "6.0":
-                return "Vista";
-            case "5.1":
-                return "XP";
-            case "5.0":
-                return "2000";
-            default:
-                return ntVersion;
-        }
+        return switch (ntVersion) {
+            case "10.0" -> "10/11";
+            case "6.3" -> "8.1";
+            case "6.2" -> "8";
+            case "6.1" -> "7";
+            case "6.0" -> "Vista";
+            case "5.1" -> "XP";
+            case "5.0" -> "2000";
+            default -> ntVersion;
+        };
     }
 
-    public static boolean isBot(String userAgent) {
-        if (userAgent == null || userAgent.trim().isEmpty()) {
-            return false;
-        }
-        return BOT_PATTERN.matcher(userAgent).find();
-    }
-
-    public static boolean isMobile(String userAgent) {
-        if (userAgent == null || userAgent.trim().isEmpty()) {
-            return false;
-        }
-        return MOBILE_PATTERN.matcher(userAgent).find() &&
-                !TABLET_PATTERN.matcher(userAgent).find();
-    }
-
-    public static boolean isTablet(String userAgent) {
-        if (userAgent == null || userAgent.trim().isEmpty()) {
-            return false;
-        }
-        return TABLET_PATTERN.matcher(userAgent).find();
-    }
-
-    public static String extractBrowserName(String browser) {
-        if (browser == null || browser.equals("Unknown Browser")) {
-            return "Unknown";
-        }
-
-        String[] parts = browser.split(" ");
-        return parts.length > 0 ? parts[0] : "Unknown";
-    }
-
-    public static String extractOSName(String os) {
-        if (os == null || os.equals("Unknown OS")) {
-            return "Unknown";
-        }
-
-        String[] parts = os.split(" ");
-        return parts.length > 0 ? parts[0] : "Unknown";
-    }
 }
