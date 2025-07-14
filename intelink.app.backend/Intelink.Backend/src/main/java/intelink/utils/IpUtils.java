@@ -168,9 +168,9 @@ public class IpUtils {
     }
 
     public static String getCountryFromIp(String ip) {
-        DatabaseReader databaseReader = GeoIpUtils.getDatabaseReader();
+        DatabaseReader reader = GeoLiteUtils.getCityDatabaseReader();
         try {
-            CityResponse response = databaseReader.city(InetAddress.getByName(ip));
+            CityResponse response = reader.city(InetAddress.getByName(ip));
             String countryIsoCode = response.getCountry().getIsoCode();
             String countryName = response.getCountry().getName();
 
@@ -190,9 +190,9 @@ public class IpUtils {
     }
 
     public static String getCityFromIp(String ip) {
-        DatabaseReader databaseReader = GeoIpUtils.getDatabaseReader();
+        DatabaseReader reader = GeoLiteUtils.getCityDatabaseReader();
         try {
-            CityResponse response = databaseReader.city(InetAddress.getByName(ip));
+            CityResponse response = reader.city(InetAddress.getByName(ip));
             String cityName = response.getCity().getName();
             return cityName != null ? cityName : "Unknown";
         } catch (Exception e) {
