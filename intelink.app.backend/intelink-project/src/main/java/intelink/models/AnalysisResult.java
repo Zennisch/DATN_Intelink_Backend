@@ -10,7 +10,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "analysis_results")
+@Table(name = "analysis_results", indexes = {
+    @Index(name = "idx_analysis_results_short_url", columnList = "short_url_id"),
+    @Index(name = "idx_analysis_results_status", columnList = "status"),
+    @Index(name = "idx_analysis_results_analyzed_at", columnList = "analyzed_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor

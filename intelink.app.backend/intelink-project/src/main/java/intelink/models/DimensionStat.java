@@ -8,7 +8,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "dimension_stats")
+@Table(name = "dimension_stats", indexes = {
+    @Index(name = "idx_dimension_stats_short_url", columnList = "short_url_id"),
+    @Index(name = "idx_dimension_stats_type_value", columnList = "type,value"),
+    @Index(name = "idx_dimension_stats_timestamp", columnList = "timestamp")
+})
 @Getter
 @Setter
 @NoArgsConstructor

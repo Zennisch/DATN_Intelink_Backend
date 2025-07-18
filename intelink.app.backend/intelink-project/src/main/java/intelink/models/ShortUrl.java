@@ -8,7 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "short_urls")
+@Table(name = "short_urls", indexes = {
+    @Index(name = "idx_short_urls_short_code", columnList = "short_code", unique = true),
+    @Index(name = "idx_short_urls_user", columnList = "user_id"),
+    @Index(name = "idx_short_urls_is_active", columnList = "is_active"),
+    @Index(name = "idx_short_urls_expires_at", columnList = "expires_at"),
+    @Index(name = "idx_short_urls_created_at", columnList = "created_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -61,18 +67,6 @@ public class ShortUrl {
     @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude
     private User user;
-
-    @OneToMany(mappedBy = "shortUrl", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<HourlyStat> hourlyStats = new ArrayList<>();
-
-    @OneToMany(mappedBy = "shortUrl", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<DailyStat> dailyStats = new ArrayList<>();
-
-    @OneToMany(mappedBy = "shortUrl", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<DimensionStat> dimensionStats = new ArrayList<>();
 
     @PrePersist
     private void onCreate() {

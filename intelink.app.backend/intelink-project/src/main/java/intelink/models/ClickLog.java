@@ -8,7 +8,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "click_logs")
+@Table(name = "click_logs", indexes = {
+    @Index(name = "idx_click_logs_short_url", columnList = "short_url_id"),
+    @Index(name = "idx_click_logs_timestamp", columnList = "timestamp"),
+    @Index(name = "idx_click_logs_country", columnList = "country"),
+    @Index(name = "idx_click_logs_ip_normalized", columnList = "ip_normalized"),
+    @Index(name = "idx_click_logs_browser_os", columnList = "browser,os")
+})
 @Getter
 @Setter
 @NoArgsConstructor
