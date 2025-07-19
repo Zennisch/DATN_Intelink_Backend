@@ -40,38 +40,50 @@ public class UserService implements IUserServices {
     }
 
     public User update(User user) {
-        return null;
+        return userRepository.save(user);
     }
 
     public Optional<User> findById(Long id) {
-        return Optional.empty();
+        return userRepository.findById(id);
     }
 
     public Optional<User> findByUsername(String username) {
-        return Optional.empty();
+        return userRepository.findByUsername(username);
     }
 
     public Optional<User> findByEmail(String email) {
-        return Optional.empty();
+        return userRepository.findByEmail(email);
     }
 
     public boolean existsByUsername(String username) {
-        return false;
+        return userRepository.existsByUsername(username);
     }
 
     public boolean existsByEmail(String email) {
-        return false;
+        return userRepository.existsByEmail(email);
     }
 
     public void incrementTotalClicks(Long userId) {
-
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+        user.setTotalClicks(user.getTotalClicks() + 1);
+        userRepository.save(user);
+        log.debug("UserService.incrementTotalClicks: Total clicks for user ID {} incremented to {}", userId, user.getTotalClicks());
     }
 
     public void incrementTotalClicksWithAmount(Long userId, int amount) {
-
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+        user.setTotalClicks(user.getTotalClicks() + amount);
+        userRepository.save(user);
+        log.debug("UserService.incrementTotalClicksWithAmount: Total clicks for user ID {} incremented by {} to {}", userId, amount, user.getTotalClicks());
     }
 
     public void incrementTotalShortUrls(Long userId) {
-
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+        user.setTotalShortUrls(user.getTotalShortUrls() + 1);
+        userRepository.save(user);
+        log.debug("UserService.incrementTotalShortUrls: Total short URLs for user ID {} incremented to {}", userId, user.getTotalShortUrls());
     }
 }

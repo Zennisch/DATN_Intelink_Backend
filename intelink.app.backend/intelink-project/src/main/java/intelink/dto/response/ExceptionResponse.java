@@ -18,4 +18,5 @@ public class ExceptionResponse {
 
     @Builder.Default
     private Instant timestamp = Instant.now();
+
 }

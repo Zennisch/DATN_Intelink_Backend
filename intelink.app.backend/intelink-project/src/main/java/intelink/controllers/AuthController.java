@@ -1,7 +1,9 @@
 package intelink.controllers;
 
+import intelink.dto.request.LoginRequest;
 import intelink.dto.request.RegisterRequest;
 import intelink.dto.response.AuthResponse;
+import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.security.JwtTokenProvider;
 import intelink.services.UserService;
@@ -10,12 +12,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -30,7 +36,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
-            var user = userService.create(
+            User user = userService.create(
                     registerRequest.getUsername(),
                     registerRequest.getEmail(),
                     registerRequest.getPassword(),
@@ -39,21 +45,51 @@ public class AuthController {
 
             String token = jwtTokenProvider.generateToken(user.getUsername());
             String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
-            Long expirationTime = jwtTokenProvider.getExpirationTimeFromToken(token);
+            Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
 
             return ResponseEntity.ok(AuthResponse.builder()
-                    .token(jwtTokenProvider.generateToken(user.getUsername()))
-                    .refreshToken(jwtTokenProvider.generateRefreshToken(user.getUsername()))
+                    .token(token)
+                    .refreshToken(refreshToken)
                     .username(user.getUsername())
                     .email(user.getEmail())
                     .role(user.getRole().toString())
-                    .expiresIn(jwtTokenProvider.getExpirationTimeFromToken(token))
+                    .expiresIn(expiresIn)
                     .build()
             );
         } catch (Exception e) {
             log.error("Registration failed: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
+        );
+
+        Optional<User> user = userService.findByUsername(loginRequest.getUsername());
+        if (user.isEmpty()) {
+            log.warn("User not found: {}", loginRequest.getUsername());
+            throw new BadCredentialsException("Invalid username or password");
+        }
+
+        String token = jwtTokenProvider.generateToken(authentication.getName());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
+        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(token)
+                .refreshToken(refreshToken)
+                .username(user.get().getUsername())
+                .email(user.get().getEmail())
+                .role(user.get().getRole().toString())
+                .expiresIn(expiresIn)
+                .build()
+        );
     }
 
 }
