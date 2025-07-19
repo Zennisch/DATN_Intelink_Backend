@@ -15,10 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.Optional;
@@ -87,6 +84,32 @@ public class AuthController {
                 .username(user.get().getUsername())
                 .email(user.get().getEmail())
                 .role(user.get().getRole().toString())
+                .expiresIn(expiresIn)
+                .build()
+        );
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new BadCredentialsException("Invalid token format");
+        }
+
+        String oldToken = authHeader.substring(7);
+        String username = jwtTokenProvider.getUsernameFromToken(oldToken);
+
+        if (!jwtTokenProvider.validateToken(oldToken, username)) {
+            throw new BadCredentialsException("Invalid or expired token");
+        }
+
+        String token = jwtTokenProvider.generateToken(username);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(token)
+                .refreshToken(refreshToken)
+                .username(username)
                 .expiresIn(expiresIn)
                 .build()
         );
