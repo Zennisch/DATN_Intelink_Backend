@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Slf4j
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -32,31 +32,26 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        try {
-            User user = userService.create(
-                    registerRequest.getUsername(),
-                    registerRequest.getEmail(),
-                    registerRequest.getPassword(),
-                    UserRole.USER
-            );
+        User user = userService.create(
+                registerRequest.getUsername(),
+                registerRequest.getEmail(),
+                registerRequest.getPassword(),
+                UserRole.USER
+        );
 
-            String token = jwtTokenProvider.generateToken(user.getUsername());
-            String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
-            Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+        String token = jwtTokenProvider.generateToken(user.getUsername());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
+        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-            return ResponseEntity.ok(AuthResponse.builder()
-                    .token(token)
-                    .refreshToken(refreshToken)
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .role(user.getRole().toString())
-                    .expiresIn(expiresIn)
-                    .build()
-            );
-        } catch (Exception e) {
-            log.error("Registration failed: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(token)
+                .refreshToken(refreshToken)
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole().toString())
+                .expiresIn(expiresIn)
+                .build()
+        );
     }
 
     @PostMapping("/login")
@@ -68,8 +63,8 @@ public class AuthController {
                 )
         );
 
-        Optional<User> user = userService.findByUsername(loginRequest.getUsername());
-        if (user.isEmpty()) {
+        Optional<User> userOpt = userService.findByUsername(loginRequest.getUsername());
+        if (userOpt.isEmpty()) {
             log.warn("User not found: {}", loginRequest.getUsername());
             throw new BadCredentialsException("Invalid username or password");
         }
@@ -77,13 +72,14 @@ public class AuthController {
         String token = jwtTokenProvider.generateToken(authentication.getName());
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
         Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+        User user = userOpt.get();
 
         return ResponseEntity.ok(AuthResponse.builder()
                 .token(token)
                 .refreshToken(refreshToken)
-                .username(user.get().getUsername())
-                .email(user.get().getEmail())
-                .role(user.get().getRole().toString())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole().toString())
                 .expiresIn(expiresIn)
                 .build()
         );
