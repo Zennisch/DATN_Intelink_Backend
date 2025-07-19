@@ -7,9 +7,9 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "hourly_stats", indexes = {
-    @Index(name = "idx_hourly_stats_short_url", columnList = "short_url_id"),
-    @Index(name = "idx_hourly_stats_timestamp", columnList = "timestamp"),
-    @Index(name = "idx_hourly_stats_short_url_timestamp", columnList = "short_url_id,timestamp")
+        @Index(name = "idx_hourly_stats_short_url", columnList = "short_url_id"),
+        @Index(name = "idx_hourly_stats_timestamp", columnList = "timestamp"),
+        @Index(name = "idx_hourly_stats_short_url_timestamp", columnList = "short_url_id,timestamp")
 })
 @Getter
 @Setter
