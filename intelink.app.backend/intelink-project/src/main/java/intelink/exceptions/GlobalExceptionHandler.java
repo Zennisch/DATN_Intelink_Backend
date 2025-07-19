@@ -10,6 +10,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -71,10 +73,39 @@ public class GlobalExceptionHandler {
     }
 
     // 404 - Not Found
+
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<?> handleResourceNotFoundException(NoResourceFoundException e) {
         log.error("Resource not found: {}", e.getMessage());
         HttpStatus status = HttpStatus.NOT_FOUND;
+        ExceptionResponse response = ExceptionResponse.builder()
+                .statusCode(status.value())
+                .errorType(status.getReasonPhrase())
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
+
+    // 405 - Method Not Allowed
+
+    @ExceptionHandler(HttpClientErrorException.MethodNotAllowed.class)
+    public ResponseEntity<?> handleMethodNotAllowedException(HttpClientErrorException.MethodNotAllowed e) {
+        log.error("Method not allowed: {}", e.getMessage());
+        HttpStatus status = HttpStatus.METHOD_NOT_ALLOWED;
+        ExceptionResponse response = ExceptionResponse.builder()
+                .statusCode(status.value())
+                .errorType(status.getReasonPhrase())
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
+
+    // 429 - Too Many Requests
+
+    @ExceptionHandler(HttpClientErrorException.TooManyRequests.class)
+    public ResponseEntity<?> handleTooManyRequestsException(HttpClientErrorException.TooManyRequests e) {
+        log.error("Too many requests: {}", e.getMessage());
+        HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
         ExceptionResponse response = ExceptionResponse.builder()
                 .statusCode(status.value())
                 .errorType(status.getReasonPhrase())
@@ -93,6 +124,33 @@ public class GlobalExceptionHandler {
                 .statusCode(status.value())
                 .errorType(status.getReasonPhrase())
                 .message("An unexpected error occurred: " + e.getMessage())
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
+
+    // 502 - Bad Gateway
+
+    @ExceptionHandler(HttpServerErrorException.BadGateway.class)
+    public ResponseEntity<?> handleBadGatewayException(HttpServerErrorException.BadGateway e) {
+        log.error("Bad gateway: {}", e.getMessage());
+        HttpStatus status = HttpStatus.BAD_GATEWAY;
+        ExceptionResponse response = ExceptionResponse.builder()
+                .statusCode(status.value())
+                .errorType(status.getReasonPhrase())
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
+
+    // 504 - Gateway Timeout
+    @ExceptionHandler(HttpServerErrorException.GatewayTimeout.class)
+    public ResponseEntity<?> handleGatewayTimeoutException(HttpServerErrorException.GatewayTimeout e) {
+        log.error("Gateway timeout: {}", e.getMessage());
+        HttpStatus status = HttpStatus.GATEWAY_TIMEOUT;
+        ExceptionResponse response = ExceptionResponse.builder()
+                .statusCode(status.value())
+                .errorType(status.getReasonPhrase())
+                .message(e.getMessage())
                 .build();
         return ResponseEntity.status(status).body(response);
     }
