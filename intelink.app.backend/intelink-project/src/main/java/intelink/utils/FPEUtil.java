@@ -13,7 +13,7 @@ public class FPEUtil {
     private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final byte[] KEY = "_A_VERY_SECURED_KEY_FOR_AES_256_".getBytes();
 
-    public static Cipher generate(Integer number, Integer length) throws IllegalBlockSizeException, BadPaddingException {
+    public static Cipher generate(Long number, Integer length) throws IllegalBlockSizeException, BadPaddingException {
         String format = "%" + length + "s";
         String plainText = String.format(format, number).replace(' ', '0');
         byte[] tweak = randomBytes(8);
@@ -23,10 +23,10 @@ public class FPEUtil {
         return new Cipher(cypherText, tweak);
     }
 
-    public static Integer resolve(String cypherText, byte[] tweak) throws IllegalBlockSizeException, BadPaddingException {
+    public static Long resolve(String cypherText, byte[] tweak) throws IllegalBlockSizeException, BadPaddingException {
         FF3Cipher CIPHER = new FF3Cipher(KEY, tweak, ALPHABET);
         String plainText = CIPHER.decrypt(cypherText);
-        return Integer.parseInt(plainText.replaceFirst("^0+", ""));
+        return Long.parseLong(plainText.replaceFirst("^0+", ""));
     }
 
     public static byte[] randomBytes(int length) {

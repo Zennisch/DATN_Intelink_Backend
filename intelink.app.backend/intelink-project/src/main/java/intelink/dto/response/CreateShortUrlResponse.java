@@ -1,0 +1,41 @@
+package intelink.dto.response;
+
+import intelink.models.ShortUrl;
+import lombok.Builder;
+import lombok.Data;
+
+import java.time.Instant;
+
+@Data
+@Builder
+public class CreateShortUrlResponse {
+
+    private Long id;
+    private String shortCode;
+    private String originalUrl;
+    private Boolean hasPassword;
+    private String description;
+    private String status;
+    private Long maxUsage;
+    private Instant expiresAt;
+    private Instant createdAt;
+    private Instant updatedAt;
+    private String shortUrl;
+
+    public static CreateShortUrlResponse fromEntity(ShortUrl shortUrl) {
+        return CreateShortUrlResponse.builder()
+                .id(shortUrl.getId())
+                .shortCode(shortUrl.getShortCode())
+                .originalUrl(shortUrl.getOriginalUrl())
+                .hasPassword(shortUrl.getPassword() != null)
+                .description(shortUrl.getDescription())
+                .status(shortUrl.getStatus().name())
+                .maxUsage(shortUrl.getMaxUsage())
+                .expiresAt(shortUrl.getExpiresAt())
+                .createdAt(shortUrl.getCreatedAt())
+                .updatedAt(shortUrl.getUpdatedAt())
+                .shortUrl("https://intelink.app/" + shortUrl.getShortCode())
+                .build();
+    }
+
+}

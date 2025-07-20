@@ -10,13 +10,13 @@ public class FPEUtilTest {
 
     @Test
     public void testGenerateAndResolve() throws IllegalBlockSizeException, BadPaddingException {
-        Cipher cipher = FPEUtil.generate(123456, 10);
+        Cipher cipher = FPEUtil.generate(123456L, 10);
         System.out.println("Generated value: " + cipher.getText());
 
-        Integer resolvedValue = FPEUtil.resolve(cipher.getText(), cipher.getTweak());
+        Long resolvedValue = FPEUtil.resolve(cipher.getText(), cipher.getTweak());
         System.out.println("Resolved value: " + resolvedValue);
 
-        assert resolvedValue == 123456;
+        assert resolvedValue == 123456L;
     }
 
 }

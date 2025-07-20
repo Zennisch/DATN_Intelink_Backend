@@ -42,13 +42,13 @@ public class ShortUrl {
     private String description;
 
     @Builder.Default
-    @Column(name = "max_usage", nullable = true)
-    private Long maxUsage = 0L;
-
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ShortUrlStatus status = ShortUrlStatus.ENABLED;
+
+    @Builder.Default
+    @Column(name = "max_usage", nullable = true)
+    private Long maxUsage = 0L;
 
     @Builder.Default
     @Column(name = "total_clicks", nullable = false)

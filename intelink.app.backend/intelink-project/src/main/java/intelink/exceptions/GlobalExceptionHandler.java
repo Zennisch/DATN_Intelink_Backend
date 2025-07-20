@@ -32,6 +32,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(response);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.error("Illegal argument: {}", e.getMessage());
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        ExceptionResponse response = ExceptionResponse.builder()
+                .statusCode(status.value())
+                .errorType(status.getReasonPhrase())
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
+
     // 401 - Unauthorized
 
     @ExceptionHandler(AuthenticationException.class)
