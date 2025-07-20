@@ -10,7 +10,7 @@ import java.time.Instant;
 @Table(name = "short_urls", indexes = {
         @Index(name = "idx_short_urls_short_code", columnList = "short_code", unique = true),
         @Index(name = "idx_short_urls_user", columnList = "user_id"),
-        @Index(name = "idx_short_urls_is_active", columnList = "is_active"),
+        @Index(name = "idx_short_urls_status", columnList = "status"),
         @Index(name = "idx_short_urls_expires_at", columnList = "expires_at"),
         @Index(name = "idx_short_urls_created_at", columnList = "created_at")
 })
