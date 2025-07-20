@@ -1,6 +1,6 @@
 package intelink.repositories;
 
-import intelink.dto.HourlyClickDTO;
+import intelink.dto.HourlyClick;
 import intelink.models.ClickStat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,7 +19,7 @@ public interface ClickStatRepository extends JpaRepository<ClickStat, Long> {
     void incrementTotalClicks(@Param("shortUrlId") String shortUrlId, @Param("timestamp") Instant timestamp);
 
     @Query("""
-                SELECT new intelink.dto.HourlyClickDTO(
+                SELECT new intelink.dto.HourlyClick(
                     EXTRACT(HOUR FROM cs.timestamp) AS hour,
                     SUM(cs.totalClicks) AS totalClicks
                 )
@@ -30,7 +30,7 @@ public interface ClickStatRepository extends JpaRepository<ClickStat, Long> {
                 GROUP BY EXTRACT(HOUR FROM cs.timestamp)
                 ORDER BY EXTRACT(HOUR FROM cs.timestamp)
             """)
-    List<HourlyClickDTO> findHourlyClickStats(
+    List<HourlyClick> findHourlyClickStats(
             @Param("shortUrlId") String shortUrlId,
             @Param("dayStart") Instant dayStart,
             @Param("dayEnd") Instant dayEnd

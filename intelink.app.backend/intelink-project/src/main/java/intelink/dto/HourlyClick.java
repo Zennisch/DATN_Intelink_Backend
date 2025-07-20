@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class HourlyClickDTO {
+public class HourlyClick {
 
     private Integer hour;
     private Long totalClicks;
