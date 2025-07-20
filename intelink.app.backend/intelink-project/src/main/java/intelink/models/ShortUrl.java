@@ -1,5 +1,6 @@
 package intelink.models;
 
+import intelink.models.enums.ShortUrlStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -45,14 +46,15 @@ public class ShortUrl {
     private Long maxUsage = 0L;
 
     @Builder.Default
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ShortUrlStatus status = ShortUrlStatus.ENABLED;
 
     @Builder.Default
     @Column(name = "total_clicks", nullable = false)
     private Long totalClicks = 0L;
 
-    @Column(name = "expires_at", nullable = true)
+    @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
     @Column(name = "created_at", nullable = false)
@@ -74,6 +76,9 @@ public class ShortUrl {
 
     @PreUpdate
     private void onUpdate() {
+        if (this.status == ShortUrlStatus.DELETED) {
+            throw new IllegalStateException("Cannot update a deleted short URL");
+        }
         this.updatedAt = Instant.now();
     }
 
