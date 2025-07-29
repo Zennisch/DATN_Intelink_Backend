@@ -30,6 +30,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Modifying
     @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls + 1 WHERE u.id = :userId")
-    void incrementTotalShortUrls(@Param("userId") Long userId);
+    void incrementTotalShortUrls(Long userId);
+
+    @Modifying
+    @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls - 1 WHERE u.id = :userId")
+    void decrementTotalShortUrls(Long userId);
 
 }

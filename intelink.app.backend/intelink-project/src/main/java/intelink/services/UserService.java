@@ -73,28 +73,25 @@ public class UserService implements IUserServices {
 
     @Transactional
     public void incrementTotalClicks(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
-        user.setTotalClicks(user.getTotalClicks() + 1);
-        userRepository.save(user);
-        log.debug("UserService.incrementTotalClicks: Total clicks for user ID {} incremented to {}", userId, user.getTotalClicks());
+        userRepository.incrementTotalClicks(userId);
+        log.debug("UserService.incrementTotalClicks: Total clicks for user ID {} incremented", userId);
     }
 
     @Transactional
     public void incrementTotalClicksWithAmount(Long userId, int amount) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
-        user.setTotalClicks(user.getTotalClicks() + amount);
-        userRepository.save(user);
-        log.debug("UserService.incrementTotalClicksWithAmount: Total clicks for user ID {} incremented by {} to {}", userId, amount, user.getTotalClicks());
+        userRepository.incrementTotalClicksWithAmount(userId, amount);
+        log.debug("UserService.incrementTotalClicksWithAmount: Total clicks for user ID {} incremented by {}", userId, amount);
     }
 
     @Transactional
     public void incrementTotalShortUrls(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
-        user.setTotalShortUrls(user.getTotalShortUrls() + 1);
-        userRepository.save(user);
-        log.debug("UserService.incrementTotalShortUrls: Total short URLs for user ID {} incremented to {}", userId, user.getTotalShortUrls());
+        userRepository.incrementTotalShortUrls(userId);
+        log.debug("UserService.incrementTotalShortUrls: Total short URLs for user ID {} incremented", userId);
+    }
+
+    @Transactional
+    public void decrementTotalShortUrls(Long userId) {
+        userRepository.decrementTotalShortUrls(userId);
+        log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
     }
 }
