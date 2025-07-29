@@ -1,4 +1,4 @@
-package intelink.security;
+package intelink.config.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

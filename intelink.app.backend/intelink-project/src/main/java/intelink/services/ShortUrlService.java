@@ -108,5 +108,4 @@ public class ShortUrlService implements IShortUrlService {
         shortUrlRepository.incrementTotalClicks(shortCode);
     }
 
-
 }

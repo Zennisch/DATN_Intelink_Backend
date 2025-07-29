@@ -5,7 +5,7 @@ import intelink.dto.request.RegisterRequest;
 import intelink.dto.response.AuthResponse;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
-import intelink.security.JwtTokenProvider;
+import intelink.config.security.JwtTokenProvider;
 import intelink.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

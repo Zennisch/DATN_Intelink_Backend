@@ -1,7 +1,7 @@
 package intelink.config;
 
-import intelink.security.JwtAuthenticationEntryPoint;
-import intelink.security.JwtAuthenticationFilter;
+import intelink.config.security.JwtAuthenticationEntryPoint;
+import intelink.config.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

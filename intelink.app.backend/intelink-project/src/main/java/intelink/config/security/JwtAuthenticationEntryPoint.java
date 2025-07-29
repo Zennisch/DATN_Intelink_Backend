@@ -1,4 +1,4 @@
-package intelink.security;
+package intelink.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;

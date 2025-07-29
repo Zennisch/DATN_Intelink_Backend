@@ -1,4 +1,4 @@
-package intelink.security;
+package intelink.config.security;
 
 import intelink.models.User;
 import lombok.AllArgsConstructor;
