@@ -1,6 +1,6 @@
 package intelink.services;
 
-import intelink.dto.Cipher;
+import intelink.dto.helper.Cipher;
 import intelink.dto.request.CreateShortUrlRequest;
 import intelink.models.ShortUrl;
 import intelink.models.User;

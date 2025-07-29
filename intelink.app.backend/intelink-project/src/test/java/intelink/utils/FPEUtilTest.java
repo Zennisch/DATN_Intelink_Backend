@@ -1,6 +1,6 @@
 package intelink.utils;
 
-import intelink.dto.Cipher;
+import intelink.dto.helper.Cipher;
 import org.junit.jupiter.api.Test;
 
 import javax.crypto.BadPaddingException;

@@ -1,6 +1,6 @@
 package intelink.repositories;
 
-import intelink.dto.HourlyClick;
+import intelink.dto.helper.HourlyClick;
 import intelink.models.ClickStat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

@@ -1,4 +1,4 @@
-package intelink.dto;
+package intelink.dto.helper;
 
 import lombok.Builder;
 import lombok.Data;
