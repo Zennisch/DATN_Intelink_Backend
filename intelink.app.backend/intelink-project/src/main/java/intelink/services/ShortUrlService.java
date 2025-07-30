@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ public class ShortUrlService implements IShortUrlService {
 
     private final ShortUrlRepository shortUrlRepository;
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     private final Integer SHORT_CODE_LENGTH = 10;
 
@@ -35,10 +37,16 @@ public class ShortUrlService implements IShortUrlService {
         Cipher cipher = FPEUtil.generate(user.getId(), SHORT_CODE_LENGTH);
         String shortCode = cipher.getText();
         Instant expiresAt = Instant.now().plusSeconds(request.getAvailableDays() * 24 * 60 * 60);
+
+        String encodedPassword = null;
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            encodedPassword = passwordEncoder.encode(request.getPassword());
+        }
+
         ShortUrl shortUrl = ShortUrl.builder()
                 .shortCode(shortCode)
                 .originalUrl(request.getOriginalUrl())
-                .password(request.getPassword())
+                .password(encodedPassword)
                 .description(request.getDescription())
                 .status(ShortUrlStatus.ENABLED)
                 .maxUsage(request.getMaxUsage())
@@ -125,6 +133,10 @@ public class ShortUrlService implements IShortUrlService {
             return false;
         }
 
-        return shortUrl.getPassword() == null || shortUrl.getPassword().equals(password);
+        if (shortUrl.getPassword() != null) {
+            return password != null && passwordEncoder.matches(password, shortUrl.getPassword());
+        }
+
+        return true;
     }
 }
