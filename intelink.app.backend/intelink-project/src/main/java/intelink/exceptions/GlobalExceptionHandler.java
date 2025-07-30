@@ -167,4 +167,40 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(response);
     }
 
+    // Custom Exception Handlers
+    @ExceptionHandler(ShortUrlExpiredException.class)
+    public ResponseEntity<?> handleShortUrlExpiredException(ShortUrlExpiredException e) {
+        log.error("Short URL expired: {}", e.getMessage());
+        HttpStatus status = HttpStatus.GONE;
+        ExceptionResponse response = ExceptionResponse.builder()
+                .statusCode(status.value())
+                .errorType(status.getReasonPhrase())
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
+
+    @ExceptionHandler(ShortUrlUnavailableException.class)
+    public ResponseEntity<?> handleShortUrlUnavailableException(ShortUrlUnavailableException e) {
+        log.error("Short URL unavailable: {}", e.getMessage());
+        HttpStatus status = HttpStatus.GONE;
+        ExceptionResponse response = ExceptionResponse.builder()
+                .statusCode(status.value())
+                .errorType(status.getReasonPhrase())
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
+
+    @ExceptionHandler(IncorrectPasswordException.class)
+    public ResponseEntity<?> handleIncorrectPasswordException(IncorrectPasswordException e) {
+        log.error("Incorrect password: {}", e.getMessage());
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        ExceptionResponse response = ExceptionResponse.builder()
+                .statusCode(status.value())
+                .errorType(status.getReasonPhrase())
+                .message(e.getMessage())
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
 }

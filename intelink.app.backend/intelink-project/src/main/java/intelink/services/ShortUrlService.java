@@ -96,7 +96,7 @@ public class ShortUrlService implements IShortUrlService {
         return shortUrlRepository.findByShortCode(shortCode);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ShortUrl> getUserShortUrls(Long userId, Pageable pageable) {
         log.debug("ShortUrlService.getUserShortUrls: Fetching short URLs for user ID: {}", userId);
         return shortUrlRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
@@ -108,4 +108,23 @@ public class ShortUrlService implements IShortUrlService {
         shortUrlRepository.incrementTotalClicks(shortCode);
     }
 
+    @Transactional
+    public Boolean isUrlAccessible(ShortUrl shortUrl, String password) {
+        if (shortUrl.getStatus() == ShortUrlStatus.DELETED || shortUrl.getStatus() == ShortUrlStatus.DISABLED) {
+            log.warn("ShortUrlService.isUrlAccessible: URL with code {} is deleted or disabled", shortUrl.getShortCode());
+            return false;
+        }
+
+        if (shortUrl.getExpiresAt() != null && Instant.now().isAfter(shortUrl.getExpiresAt())) {
+            log.warn("ShortUrlService.isUrlAccessible: URL with code {} has expired", shortUrl.getShortCode());
+            return false;
+        }
+
+        if (shortUrl.getMaxUsage() != null && shortUrl.getTotalClicks() >= shortUrl.getMaxUsage()) {
+            log.warn("ShortUrlService.isUrlAccessible: URL with code {} has reached max usage", shortUrl.getShortCode());
+            return false;
+        }
+
+        return shortUrl.getPassword() == null || shortUrl.getPassword().equals(password);
+    }
 }

@@ -22,7 +22,7 @@ public class CreateShortUrlResponse {
     private Instant updatedAt;
     private String shortUrl;
 
-    public static CreateShortUrlResponse fromEntity(ShortUrl shortUrl) {
+    public static CreateShortUrlResponse fromEntity(ShortUrl shortUrl, String baseUrl) {
         return CreateShortUrlResponse.builder()
                 .id(shortUrl.getId())
                 .shortCode(shortUrl.getShortCode())
@@ -34,7 +34,7 @@ public class CreateShortUrlResponse {
                 .expiresAt(shortUrl.getExpiresAt())
                 .createdAt(shortUrl.getCreatedAt())
                 .updatedAt(shortUrl.getUpdatedAt())
-                .shortUrl("https://intelink.app/" + shortUrl.getShortCode())
+                .shortUrl(baseUrl.replace("{shortCode}", shortUrl.getShortCode()))
                 .build();
     }
 

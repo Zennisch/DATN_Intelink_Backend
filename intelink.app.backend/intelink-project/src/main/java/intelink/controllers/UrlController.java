@@ -9,6 +9,7 @@ import intelink.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,6 +31,9 @@ public class UrlController {
     private final ShortUrlService shortUrlService;
     private final UserService userService;
 
+    @Value("${app.short-url.password-unlock-url}")
+    private String passwordUnlockUrlTemplate;
+
     @PostMapping
     public ResponseEntity<?> createShortUrl(
             @Valid
@@ -43,7 +47,7 @@ public class UrlController {
 
         User user = userOpt.get();
         ShortUrl shortUrl = shortUrlService.create(user, request);
-        CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl);
+        CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, passwordUnlockUrlTemplate);
         return ResponseEntity.ok(response);
     }
 }
