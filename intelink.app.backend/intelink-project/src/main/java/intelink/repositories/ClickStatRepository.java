@@ -19,7 +19,7 @@ public interface ClickStatRepository extends JpaRepository<ClickStat, Long> {
     void incrementTotalClicks(@Param("shortUrlId") String shortUrlId, @Param("timestamp") Instant timestamp);
 
     @Query("""
-                SELECT new intelink.dto.HourlyClick(
+                SELECT new intelink.dto.helper.HourlyClick(
                     EXTRACT(HOUR FROM cs.timestamp) AS hour,
                     SUM(cs.totalClicks) AS totalClicks
                 )
