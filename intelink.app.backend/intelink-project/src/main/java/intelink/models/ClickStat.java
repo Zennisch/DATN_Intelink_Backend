@@ -1,15 +1,16 @@
 package intelink.models;
 
+import intelink.models.enums.Granularity;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "hourly_stats", indexes = {
+@Table(name = "click_stats", indexes = {
         @Index(name = "idx_hourly_stats_short_url", columnList = "short_url_id"),
-        @Index(name = "idx_hourly_stats_timestamp", columnList = "timestamp"),
-        @Index(name = "idx_hourly_stats_short_url_timestamp", columnList = "short_url_id,timestamp")
+        @Index(name = "idx_hourly_stats_bucket", columnList = "bucket"),
+        @Index(name = "idx_hourly_stats_short_url_bucket", columnList = "short_url_id,bucket")
 })
 @Getter
 @Setter
@@ -26,8 +27,12 @@ public class ClickStat {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(name = "timestamp", nullable = false)
-    private Instant timestamp;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "granularity", nullable = false)
+    private Granularity granularity;
+
+    @Column(name = "bucket", nullable = false)
+    private Instant bucket;
 
     @Builder.Default
     @Column(name = "total_clicks", nullable = false)

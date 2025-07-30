@@ -1,16 +1,21 @@
 package intelink.services;
 
 import intelink.dto.helper.DimensionInfo;
+import intelink.models.ClickStat;
 import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;
 import intelink.models.enums.DimensionType;
+import intelink.models.enums.Granularity;
+import intelink.repositories.ClickStatRepository;
 import intelink.repositories.DimensionStatRepository;
 import intelink.services.interfaces.IAnalyticService;
+import intelink.utils.DateTimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,6 +27,7 @@ import java.util.stream.Stream;
 public class AnalyticService implements IAnalyticService {
 
     private final DimensionStatRepository dimensionStatRepository;
+    private final ClickStatRepository clickStatRepository;
     private final ShortUrlService shortUrlService;
 
     private static <K, V> Map.Entry<K, V> entry(K k, V v) {
@@ -62,6 +68,30 @@ public class AnalyticService implements IAnalyticService {
             dimensionStat.setTotalClicks(dimensionStat.getTotalClicks() + 1);
             dimensionStatRepository.save(dimensionStat);
         });
+    }
+
+    @Transactional
+    public void recordClickStats(String shortCode) {
+        ShortUrl shortUrl = shortUrlService.findByShortCode(shortCode)
+                .orElseThrow(() -> new IllegalArgumentException("AnalyticsService.recordClickStats: Short code not found: " + shortCode));
+
+        Instant now = Instant.now();
+        for (Granularity granularity : Granularity.values()) {
+            Instant bucket = DateTimeUtil.getBucketStart(now, granularity);
+            ClickStat clickStat = clickStatRepository
+                    .findByShortUrlAndGranularityAndBucket(shortUrl, granularity, bucket)
+                    .orElseGet(() -> {
+                        log.info("Creating new ClickStat for short code: {}, granularity: {}, bucket: {}", shortCode, granularity, bucket);
+                        return ClickStat.builder()
+                                .shortUrl(shortUrl)
+                                .granularity(granularity)
+                                .bucket(bucket)
+                                .totalClicks(0L)
+                                .build();
+                    });
+            clickStat.setTotalClicks(clickStat.getTotalClicks() + 1);
+            clickStatRepository.save(clickStat);
+        }
     }
 
 }

@@ -64,13 +64,17 @@ public class ClickLogService implements IClickLogService {
                 .deviceType(userAgentInfo.getDeviceType())
                 .build();
 
-        clickLogRepository.save(clickLog);
+
         shortUrlService.incrementTotalClicks(shortCode);
 
         DimensionInfo dimensionInfo = new DimensionInfo(
                 country, city, userAgentInfo.getBrowser(), userAgentInfo.getOs(), userAgentInfo.getDeviceType()
         );
         analyticService.recordDimensionStats(shortCode, dimensionInfo);
+
+        analyticService.recordClickStats(shortCode);
+
+        clickLogRepository.save(clickLog);
         return clickLog;
     }
 }
