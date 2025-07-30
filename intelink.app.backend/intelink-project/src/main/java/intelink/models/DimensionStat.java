@@ -11,7 +11,6 @@ import java.util.UUID;
 @Table(name = "dimension_stats", indexes = {
         @Index(name = "idx_dimension_stats_short_url", columnList = "short_url_id"),
         @Index(name = "idx_dimension_stats_type_value", columnList = "type,value"),
-        @Index(name = "idx_dimension_stats_timestamp", columnList = "timestamp")
 })
 @Getter
 @Setter
@@ -27,9 +26,6 @@ public class DimensionStat {
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
-
-    @Column(name = "timestamp", nullable = false)
-    private Instant timestamp;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)

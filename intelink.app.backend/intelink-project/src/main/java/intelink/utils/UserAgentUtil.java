@@ -102,13 +102,13 @@ public class UserAgentUtil {
             return "macOS " + version;
         }
 
-        if (LINUX_PATTERN.matcher(userAgent).find()) {
-            return "Linux";
-        }
-
         matcher = ANDROID_PATTERN.matcher(userAgent);
         if (matcher.find()) {
             return "Android " + matcher.group(1);
+        }
+
+        if (LINUX_PATTERN.matcher(userAgent).find()) {
+            return "Linux";
         }
 
         matcher = IOS_PATTERN.matcher(userAgent);

@@ -1,5 +1,6 @@
 package intelink.services;
 
+import intelink.dto.helper.DimensionInfo;
 import intelink.dto.helper.IpProcessResult;
 import intelink.dto.helper.UserAgentInfo;
 import intelink.models.ClickLog;
@@ -25,6 +26,7 @@ public class ClickLogService implements IClickLogService {
 
     private final ClickLogRepository clickLogRepository;
     private final ShortUrlService shortUrlService;
+    private final AnalyticService analyticService;
 
     @Transactional
     public ClickLog record(String shortCode, HttpServletRequest request) {
@@ -63,8 +65,12 @@ public class ClickLogService implements IClickLogService {
                 .build();
 
         clickLogRepository.save(clickLog);
-        log.debug("Recorded click for short code: {} from IP: {}", shortCode, ipAddress);
         shortUrlService.incrementTotalClicks(shortCode);
+
+        DimensionInfo dimensionInfo = new DimensionInfo(
+                country, city, userAgentInfo.getBrowser(), userAgentInfo.getOs(), userAgentInfo.getDeviceType()
+        );
+        analyticService.recordDimensionStats(shortCode, dimensionInfo);
         return clickLog;
     }
 }
