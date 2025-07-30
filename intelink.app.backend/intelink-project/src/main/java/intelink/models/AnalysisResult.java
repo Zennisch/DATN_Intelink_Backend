@@ -2,8 +2,6 @@ package intelink.models;
 
 import intelink.models.enums.AnalysisStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.time.Instant;
@@ -34,13 +32,17 @@ public class AnalysisResult {
     @Column(name = "status", nullable = false)
     private AnalysisStatus status;
 
-    @Column(name = "confidence_score", nullable = false)
-    @Min(0)
-    @Max(1)
-    private Double confidenceScore;
-
     @Column(name = "analysis_engine", nullable = false)
     private String analysisEngine;
+
+    @Column(name = "threat_type", nullable = false)
+    private String threatType;
+
+    @Column(name = "platform_type", nullable = false)
+    private String platformType;
+
+    @Column(name = "cache_duration", nullable = true)
+    private String cacheDuration;
 
     @Column(name = "details", nullable = true, columnDefinition = "TEXT")
     private String details;

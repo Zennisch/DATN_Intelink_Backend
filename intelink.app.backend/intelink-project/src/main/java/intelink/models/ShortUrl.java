@@ -76,9 +76,6 @@ public class ShortUrl {
 
     @PreUpdate
     private void onUpdate() {
-        if (this.status == ShortUrlStatus.DELETED) {
-            throw new IllegalStateException("Cannot update a deleted short URL");
-        }
         this.updatedAt = Instant.now();
     }
 

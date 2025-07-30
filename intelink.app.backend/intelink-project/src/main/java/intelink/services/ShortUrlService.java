@@ -1,13 +1,18 @@
 package intelink.services;
 
 import intelink.dto.helper.Cipher;
+import intelink.dto.helper.threat.ThreatAnalysisResult;
+import intelink.dto.helper.threat.ThreatMatchInfo;
 import intelink.dto.request.CreateShortUrlRequest;
+import intelink.models.AnalysisResult;
 import intelink.models.ShortUrl;
 import intelink.models.User;
+import intelink.models.enums.AnalysisStatus;
 import intelink.models.enums.ShortUrlStatus;
 import intelink.repositories.ShortUrlRepository;
 import intelink.services.interfaces.IShortUrlService;
 import intelink.utils.FPEUtil;
+import intelink.utils.GoogleSafeBrowsingUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,6 +35,8 @@ public class ShortUrlService implements IShortUrlService {
     private final ShortUrlRepository shortUrlRepository;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final GoogleSafeBrowsingUtil googleSafeBrowsingUtil;
+    private final AnalysisResultService analysisResultService;
 
     private final Integer SHORT_CODE_LENGTH = 10;
 
@@ -57,7 +65,32 @@ public class ShortUrlService implements IShortUrlService {
         ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
         userService.incrementTotalShortUrls(user.getId());
 
-        log.debug("ShortUrlService.create: Created short URL with code: {} for user: {}", shortCode, user.getUsername());
+        ThreatAnalysisResult threatAnalysisResult = googleSafeBrowsingUtil.checkUrls(List.of(shortUrl.getOriginalUrl()));
+        if (!threatAnalysisResult.hasMatches || threatAnalysisResult.matches.isEmpty()) {
+            AnalysisResult analysisResult = AnalysisResult.builder()
+                    .shortUrl(shortUrl)
+                    .status(AnalysisStatus.SAFE)
+                    .analysisEngine("GOOGLE_SAFE_BROWSING")
+                    .threatType("NONE")
+                    .platformType("ANY_PLATFORM")
+                    .build();
+            analysisResultService.save(analysisResult);
+        } else {
+            for (ThreatMatchInfo match : threatAnalysisResult.matches) {
+                AnalysisResult analysisResult = AnalysisResult.builder()
+                        .shortUrl(shortUrl)
+                        .status(AnalysisStatus.fromString(match.threatType))
+                        .analysisEngine("GOOGLE_SAFE_BROWSING")
+                        .threatType(match.threatType)
+                        .platformType(match.platformType)
+                        .cacheDuration(match.cacheDuration)
+                        .details("Threat detected: " + match.threatEntryType)
+                        .analyzedAt(Instant.now())
+                        .build();
+                analysisResultService.save(analysisResult);
+            }
+            deleteShortUrl(user.getId(), shortCode);
+        }
         return savedUrl;
     }
 

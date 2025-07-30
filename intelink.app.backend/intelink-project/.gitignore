@@ -34,3 +34,4 @@ build/
 
 src/main/resources/geoLite2/LICENSE_KEY.txt
 src/main/resources/geoLite2/GeoLite2-City.mmdb
+src/main/resources/googleSafeBrowsing/API_KEY.txt

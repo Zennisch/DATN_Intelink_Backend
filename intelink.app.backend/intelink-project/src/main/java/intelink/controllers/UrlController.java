@@ -4,6 +4,7 @@ import intelink.dto.request.CreateShortUrlRequest;
 import intelink.dto.response.CreateShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
+import intelink.models.enums.ShortUrlStatus;
 import intelink.services.ShortUrlService;
 import intelink.services.UserService;
 import jakarta.validation.Valid;
@@ -31,8 +32,8 @@ public class UrlController {
     private final ShortUrlService shortUrlService;
     private final UserService userService;
 
-    @Value("${app.short-url.password-unlock-url}")
-    private String passwordUnlockUrlTemplate;
+    @Value("${app.short-url.access-url}")
+    private String accessUrl;
 
     @PostMapping
     public ResponseEntity<?> createShortUrl(
@@ -47,7 +48,10 @@ public class UrlController {
 
         User user = userOpt.get();
         ShortUrl shortUrl = shortUrlService.create(user, request);
-        CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, passwordUnlockUrlTemplate);
+        if (shortUrl.getStatus() == ShortUrlStatus.DELETED) {
+            throw new IllegalArgumentException("The URL is unsafe and has been deleted");
+        }
+        CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, accessUrl);
         return ResponseEntity.ok(response);
     }
 }

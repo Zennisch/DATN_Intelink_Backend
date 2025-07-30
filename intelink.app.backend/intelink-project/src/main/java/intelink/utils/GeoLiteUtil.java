@@ -33,11 +33,7 @@ public class GeoLiteUtil {
                 return countryIsoCode + " / " + countryName;
             } else if (countryIsoCode != null) {
                 return countryIsoCode;
-            } else if (countryName != null) {
-                return countryName;
-            } else {
-                return null;
-            }
+            } else return countryName;
         } catch (Exception e) {
             log.error("GeoLiteUtil.getCountryFromIp - Failed to get country for IP {}: {}", ip, e.getMessage());
             return null;

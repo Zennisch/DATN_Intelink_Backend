@@ -1,12 +1,11 @@
 package intelink.controllers;
 
-import intelink.dto.helper.DimensionInfo;
 import intelink.exceptions.IncorrectPasswordException;
 import intelink.exceptions.ShortUrlUnavailableException;
 import intelink.models.ShortUrl;
-import intelink.services.AnalyticService;
 import intelink.services.ClickLogService;
 import intelink.services.ShortUrlService;
+import intelink.utils.GoogleSafeBrowsingUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
