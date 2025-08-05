@@ -22,7 +22,7 @@ services:
             - '8080:8080'
         volumes:
             - ./intelink-project:/app
-            - /app/target
+            - ./intelink-project/target:/app/target
         environment:
             - SPRING_DEVTOOLS_RESTART_ENABLED=true
             - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/IntelinkDB

@@ -2,11 +2,11 @@ FROM maven:3.9.9-eclipse-temurin-17-focal
 
 WORKDIR /app
 
-COPY pom.xml .
+COPY pom.xml /app
 RUN mvn dependency:go-offline -B
 
-COPY src ./src
+COPY src /app/src
 
 EXPOSE 8080
 
-CMD ["mvn", "spring-boot:run"]
+CMD ["./mvnw", "spring-boot:run"]
