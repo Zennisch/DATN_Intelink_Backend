@@ -4,9 +4,10 @@ import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 
 @Slf4j
@@ -17,9 +18,18 @@ public class GeoLiteUtil {
 
     static {
         try {
-            File database = new File("src/main/resources/geoLite2/GeoLite2-City.mmdb");
-            cityDatabaseReader = new DatabaseReader.Builder(database).build();
+            ClassPathResource resource = new ClassPathResource("geoLite2/GeoLite2-City.mmdb");
+
+            if (resource.exists()) {
+                InputStream inputStream = resource.getInputStream();
+                cityDatabaseReader = new DatabaseReader.Builder(inputStream).build();
+                log.info("GeoLite2 database loaded successfully from classpath");
+            } else {
+                log.warn("GeoLite2 database not found in classpath, creating empty reader");
+                cityDatabaseReader = null;
+            }
         } catch (IOException e) {
+            log.error("GeoLiteUtil - Failed to initialize GeoIP database reader: {}", e.getMessage());
             throw new RuntimeException("GeoLiteUtil - Failed to initialize GeoIP database reader", e);
         }
     }
