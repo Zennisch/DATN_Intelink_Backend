@@ -1,5 +1,6 @@
 package intelink.models;
 
+import intelink.models.enums.OAuthProvider;
 import intelink.models.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -47,6 +48,21 @@ public class User {
     @Builder.Default
     @Column(name = "total_short_urls", nullable = false)
     private Integer totalShortUrls = 0;
+
+    @Builder.Default
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false)
+    @Builder.Default
+    private OAuthProvider authProvider = OAuthProvider.LOCAL;
+
+    @Column(name = "provider_user_id", nullable = true)
+    private String providerUserId;
+
+    @Column(name = "last_login_at", nullable = true)
+    private Instant lastLoginAt;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
