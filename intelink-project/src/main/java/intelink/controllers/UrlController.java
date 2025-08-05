@@ -32,7 +32,7 @@ public class UrlController {
     private final ShortUrlService shortUrlService;
     private final UserService userService;
 
-    @Value("${app.short-url.access-url}")
+    @Value("${app.url.access}")
     private String accessUrl;
 
     @PostMapping

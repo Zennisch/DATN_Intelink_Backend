@@ -5,7 +5,6 @@ import intelink.exceptions.ShortUrlUnavailableException;
 import intelink.models.ShortUrl;
 import intelink.services.ClickLogService;
 import intelink.services.ShortUrlService;
-import intelink.utils.GoogleSafeBrowsingUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,7 @@ public class RedirectController {
     private final ShortUrlService shortUrlService;
     private final ClickLogService clickLogService;
 
-    @Value("${app.short-url.password-unlock-url}")
+    @Value("${app.url.password-unlock}")
     private String passwordUnlockUrlTemplate;
 
     @GetMapping("/{shortCode}")
