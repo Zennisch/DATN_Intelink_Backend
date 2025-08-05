@@ -1,0 +1,43 @@
+services:
+    postgres:
+        image: postgres:15-alpine
+        container_name: intelink-postgres
+        ports:
+            - '6543:5432'
+        environment:
+            - POSTGRES_USER=intelink
+            - POSTGRES_PASSWORD=intelink
+            - POSTGRES_DB=IntelinkDB
+        networks:
+            - intelink-network
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+    app:
+        container_name: intelink-app
+        build:
+            context: ./intelink-project
+            dockerfile: Dockerfile
+        ports:
+            - '8080:8080'
+        volumes:
+            - ./intelink-project:/app
+            - ./intelink-project/target:/app/target
+        environment:
+            - SPRING_DEVTOOLS_RESTART_ENABLED=true
+            - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/IntelinkDB
+            - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+            - SPRING_DATASOURCE_USERNAME=intelink
+            - SPRING_DATASOURCE_PASSWORD=intelink
+        depends_on:
+            - postgres
+        networks:
+            - intelink-network
+
+networks:
+    intelink-network:
+        driver: bridge
+
+volumes:
+    postgres_data:
+        driver: local

@@ -3,18 +3,13 @@ package intelink.utils;
 import intelink.dto.helper.threat.ThreatAnalysisResult;
 import intelink.dto.helper.threat.ThreatMatchInfo;
 import intelink.dto.helper.threat.ThreatMatchesResponse;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -22,27 +17,16 @@ import java.util.Map;
 public class GoogleSafeBrowsingUtil {
 
     private final RestTemplate restTemplate;
-    @Value("classpath:googleSafeBrowsing/API_KEY.txt")
-    private Resource apiKeyResource;
-    private String apiKey;
+
+    @Value("${app.api.key.safe-browsing}")
+    private String key;
 
     public GoogleSafeBrowsingUtil(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
-    @PostConstruct
-    private void init() {
-        try {
-            this.apiKey = StreamUtils.copyToString(
-                    apiKeyResource.getInputStream(), StandardCharsets.UTF_8
-            ).trim();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read Google Safe Browsing API key", e);
-        }
-    }
-
     public ThreatAnalysisResult checkUrls(List<String> urls) {
-        String urlEndpoint = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=" + apiKey;
+        String urlEndpoint = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=" + key;
 
         Map<String, Object> body = Map.of(
                 "client", Map.of("clientId", "testclient", "clientVersion", "1.0"),
