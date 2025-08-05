@@ -66,7 +66,7 @@ public class ShortUrlService implements IShortUrlService {
         userService.incrementTotalShortUrls(user.getId());
 
         ThreatAnalysisResult threatAnalysisResult = googleSafeBrowsingUtil.checkUrls(List.of(shortUrl.getOriginalUrl()));
-        if (!threatAnalysisResult.hasMatches || threatAnalysisResult.matches.isEmpty()) {
+        if (!threatAnalysisResult.hasMatches() || threatAnalysisResult.matches().isEmpty()) {
             AnalysisResult analysisResult = AnalysisResult.builder()
                     .shortUrl(shortUrl)
                     .status(AnalysisStatus.SAFE)
@@ -76,15 +76,15 @@ public class ShortUrlService implements IShortUrlService {
                     .build();
             analysisResultService.save(analysisResult);
         } else {
-            for (ThreatMatchInfo match : threatAnalysisResult.matches) {
+            for (ThreatMatchInfo match : threatAnalysisResult.matches()) {
                 AnalysisResult analysisResult = AnalysisResult.builder()
                         .shortUrl(shortUrl)
-                        .status(AnalysisStatus.fromString(match.threatType))
+                        .status(AnalysisStatus.fromString(match.threatType()))
                         .analysisEngine("GOOGLE_SAFE_BROWSING")
-                        .threatType(match.threatType)
-                        .platformType(match.platformType)
-                        .cacheDuration(match.cacheDuration)
-                        .details("Threat detected: " + match.threatEntryType)
+                        .threatType(match.threatType())
+                        .platformType(match.platformType())
+                        .cacheDuration(match.cacheDuration())
+                        .details("Threat detected: " + match.threatEntryType())
                         .analyzedAt(Instant.now())
                         .build();
                 analysisResultService.save(analysisResult);
