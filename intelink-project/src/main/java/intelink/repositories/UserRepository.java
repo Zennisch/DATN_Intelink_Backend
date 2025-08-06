@@ -1,6 +1,7 @@
 package intelink.repositories;
 
 import intelink.models.User;
+import intelink.models.enums.OAuthProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -36,4 +37,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls - 1 WHERE u.id = :userId")
     void decrementTotalShortUrls(Long userId);
 
+    Optional<User> findByAuthProviderAndProviderUserId(OAuthProvider authProvider, String providerUserId);
 }

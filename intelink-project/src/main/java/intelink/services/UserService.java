@@ -1,6 +1,7 @@
 package intelink.services;
 
 import intelink.models.User;
+import intelink.models.enums.OAuthProvider;
 import intelink.models.enums.UserRole;
 import intelink.repositories.UserRepository;
 import intelink.services.interfaces.IUserServices;
@@ -10,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -93,5 +95,62 @@ public class UserService implements IUserServices {
     public void decrementTotalShortUrls(Long userId) {
         userRepository.decrementTotalShortUrls(userId);
         log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
+    }
+
+    @Transactional
+    public void updateEmailVerified(Long userId, boolean verified) {
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setEmailVerified(verified);
+            userRepository.save(user);
+            log.info("UserService.updateEmailVerified: Email verification status updated for user ID: {}", userId);
+        });
+    }
+
+    @Transactional
+    public void updateLastLogin(String username) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            user.setLastLoginAt(Instant.now());
+            userRepository.save(user);
+            log.debug("UserService.updateLastLogin: Last login updated for user: {}", username);
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByProviderAndProviderId(OAuthProvider provider, String providerId) {
+        return userRepository.findByAuthProviderAndProviderUserId(provider, providerId);
+    }
+
+    @Transactional
+    public User createOAuthUser(String username, String email, OAuthProvider provider, String providerId) {
+        if (userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
+        User user = User.builder()
+                .username(username)
+                .email(email)
+                .passwordHash(null) // OAuth users don't have password
+                .role(UserRole.USER)
+                .emailVerified(true) // OAuth emails are pre-verified
+                .authProvider(provider)
+                .providerUserId(providerId)
+                .lastLoginAt(Instant.now())
+                .build();
+
+        User savedUser = userRepository.save(user);
+        log.info("UserService.createOAuthUser: OAuth user created with ID: {}", savedUser.getId());
+        return savedUser;
+    }
+
+    @Transactional
+    public void changePassword(String username, String newPassword) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            log.info("UserService.changePassword: Password changed for user: {}", username);
+        });
     }
 }

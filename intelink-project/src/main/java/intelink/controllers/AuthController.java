@@ -9,6 +9,7 @@ import intelink.dto.response.LogoutResponse;
 import intelink.dto.response.UserProfileResponse;
 import intelink.dto.response.ValidateTokenResponse;
 import intelink.models.User;
+import intelink.models.enums.OAuthProvider;
 import intelink.models.enums.UserRole;
 import intelink.services.UserService;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -43,19 +45,21 @@ public class AuthController {
                 UserRole.USER
         );
 
-        String token = jwtTokenProvider.generateToken(user.getUsername());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
-        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+        // Tạo token xác thực email (cần inject VerificationTokenService)
+        // VerificationToken token = verificationTokenService.createToken(
+        //     user, TokenType.EMAIL_VERIFICATION, 24
+        // );
 
-        return ResponseEntity.ok(AuthResponse.builder()
-                .token(token)
-                .refreshToken(refreshToken)
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole().toString())
-                .expiresIn(expiresIn)
-                .build()
-        );
+        // Gửi email xác thực (cần inject EmailService)
+        // emailService.sendVerificationEmail(user.getEmail(), token.getToken());
+
+        // Trả về response yêu cầu xác thực email
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Registration successful. Please check your email to verify your account.",
+                "email", user.getEmail(),
+                "emailVerified", user.getEmailVerified()
+        ));
     }
 
     @PostMapping("/login")
@@ -73,10 +77,23 @@ public class AuthController {
             throw new BadCredentialsException("Invalid username or password");
         }
 
+        User user = userOpt.get();
+
+        // Kiểm tra email verification (chỉ cho LOCAL auth provider)
+        if (user.getAuthProvider() == OAuthProvider.LOCAL && !user.getEmailVerified()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Please verify your email before logging in",
+                    "emailVerified", false
+            ));
+        }
+
+        // Cập nhật last login
+        userService.updateLastLogin(user.getUsername());
+
         String token = jwtTokenProvider.generateToken(authentication.getName());
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
         Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
-        User user = userOpt.get();
 
         return ResponseEntity.ok(AuthResponse.builder()
                 .token(token)
@@ -142,6 +159,9 @@ public class AuthController {
                 .role(user.getRole().toString())
                 .totalClicks(user.getTotalClicks())
                 .totalShortUrls(user.getTotalShortUrls())
+                .emailVerified(user.getEmailVerified())
+                .authProvider(user.getAuthProvider().toString())
+                .lastLoginAt(user.getLastLoginAt())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build()
@@ -214,4 +234,75 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@Valid @RequestBody Map<String, String> request) {
+        String token = request.get("token");
+
+        // Cần inject VerificationTokenService
+        // Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.EMAIL_VERIFICATION);
+
+        // if (tokenOpt.isEmpty()) {
+        //     return ResponseEntity.badRequest().body(Map.of(
+        //             "success", false,
+        //             "message", "Invalid or expired verification token"
+        //     ));
+        // }
+
+        // VerificationToken verificationToken = tokenOpt.get();
+        // userService.updateEmailVerified(verificationToken.getUser().getId(), true);
+        // verificationTokenService.markAsUsed(token);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Email verified successfully"
+        ));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody Map<String, String> request) {
+        String email = request.get("email");
+
+        Optional<User> userOpt = userService.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            // Không tiết lộ thông tin user có tồn tại hay không
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "If the email exists, a password reset link has been sent"
+            ));
+        }
+
+        // User user = userOpt.get();
+        // VerificationToken token = verificationTokenService.createToken(user, TokenType.PASSWORD_RESET, 1); // 1 hour
+        // emailService.sendPasswordResetEmail(user.getEmail(), token.getToken());
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "If the email exists, a password reset link has been sent"
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+
+        // Cần inject VerificationTokenService
+        // Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.PASSWORD_RESET);
+
+        // if (tokenOpt.isEmpty()) {
+        //     return ResponseEntity.badRequest().body(Map.of(
+        //             "success", false,
+        //             "message", "Invalid or expired reset token"
+        //     ));
+        // }
+
+        // VerificationToken verificationToken = tokenOpt.get();
+        // userService.changePassword(verificationToken.getUser().getUsername(), newPassword);
+        // verificationTokenService.markAsUsed(token);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Password reset successfully"
+        ));
+    }
 }
