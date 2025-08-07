@@ -18,5 +18,5 @@ public interface IAnalyticService {
 
     ArrayList<Map<String, Object>> getTimeStats(String shortCode);
 
-    ArrayList<Map<String, Object>> getDimensionStats(String shortCode, DimensionType type);
+    Map<String, Object> getDimensionStats(String shortCode, DimensionType type);
 }

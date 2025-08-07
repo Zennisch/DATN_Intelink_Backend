@@ -240,7 +240,7 @@ public class AnalyticService implements IAnalyticService {
     }
 
     @Override
-    public ArrayList<Map<String, Object>> getDimensionStats(String shortCode, DimensionType type) {
+    public Map<String, Object> getDimensionStats(String shortCode, DimensionType type) {
         ShortUrl shortUrl = shortUrlService.findByShortCode(shortCode)
                 .orElseThrow(() -> new IllegalArgumentException("AnalyticsService.getDimensionStats: Short code not found: " + shortCode));
 
@@ -257,8 +257,8 @@ public class AnalyticService implements IAnalyticService {
                         "percentage", totalClicks > 0 ? Math.round((double) stat.getTotalClicks() / totalClicks * 100.0 * 100.0) / 100.0 : 0.0
                 )).toList()
         );
-        result.add(data);
 
-        return result;
+
+        return data;
     }
 }

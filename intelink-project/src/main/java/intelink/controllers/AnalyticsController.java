@@ -61,7 +61,7 @@ public class AnalyticsController {
                 dimensionType = mapStringToDimensionType(type.toLowerCase());
             }
             
-            ArrayList<Map<String, Object>> stats = analyticService.getDimensionStats(shortCode, dimensionType);
+            Map<String, Object> stats = analyticService.getDimensionStats(shortCode, dimensionType);
             return ResponseEntity.ok(stats);
             
         } catch (IllegalArgumentException e) {
