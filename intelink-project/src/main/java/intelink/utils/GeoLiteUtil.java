@@ -2,23 +2,31 @@ package intelink.utils;
 
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 
+@Component
 @Slf4j
 public class GeoLiteUtil {
 
     @Getter
-    private static final DatabaseReader cityDatabaseReader;
+    private static DatabaseReader cityDatabaseReader;
 
-    static {
+    @Value("${app.geolite2.database.path}")
+    private String databasePath;
+
+    @PostConstruct
+    public void init() {
         try {
-            ClassPathResource resource = new ClassPathResource("geoLite2/GeoLite2-City.mmdb");
+            ClassPathResource resource = new ClassPathResource(databasePath);
 
             if (resource.exists()) {
                 InputStream inputStream = resource.getInputStream();
@@ -26,7 +34,6 @@ public class GeoLiteUtil {
                 log.info("GeoLite2 database loaded successfully from classpath");
             } else {
                 log.warn("GeoLite2 database not found in classpath, creating empty reader");
-                cityDatabaseReader = null;
             }
         } catch (IOException e) {
             log.error("GeoLiteUtil - Failed to initialize GeoIP database reader: {}", e.getMessage());
