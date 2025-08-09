@@ -29,7 +29,10 @@ public class GoogleSafeBrowsingUtil {
         String urlEndpoint = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=" + key;
 
         Map<String, Object> body = Map.of(
-                "client", Map.of("clientId", "testclient", "clientVersion", "1.0"),
+                "client", Map.of(
+                        "clientId", "testclient",
+                        "clientVersion", "1.0"
+                ),
                 "threatInfo", Map.of(
                         "threatTypes", List.of("MALWARE", "SOCIAL_ENGINEERING"),
                         "platformTypes", List.of("ANY_PLATFORM"),
@@ -46,11 +49,11 @@ public class GoogleSafeBrowsingUtil {
         ResponseEntity<ThreatMatchesResponse> resp = restTemplate.postForEntity(urlEndpoint, req, ThreatMatchesResponse.class);
 
         ThreatMatchesResponse matchesResp = resp.getBody();
-        if (matchesResp == null || matchesResp.matches == null) {
+        if (matchesResp == null || matchesResp.matches() == null) {
             return new ThreatAnalysisResult(false, List.of());
         } else {
-            List<ThreatMatchInfo> infos = matchesResp.matches.stream()
-                    .map(m -> new ThreatMatchInfo(m.threatType, m.platformType, m.threat.url, m.cacheDuration, m.threatEntryType))
+            List<ThreatMatchInfo> infos = matchesResp.matches().stream()
+                    .map(m -> new ThreatMatchInfo(m.threatType(), m.platformType(), m.threat().url(), m.cacheDuration(), m.threatEntryType()))
                     .toList();
             return new ThreatAnalysisResult(true, infos);
         }
