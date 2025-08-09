@@ -22,15 +22,15 @@ import java.util.List;
 @Component
 public class GoogleSafeBrowsingUtil {
 
+    @Value("${app.api.key.safe-browsing}")
+    private String key;
+
     public static final String URL_ENDPOINT = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=";
     public static final String CLIENT_ID = "testClient";
     public static final String CLIENT_VERSION = "1.0";
 
     private final RestTemplate restTemplate;
-
-    @Value("${app.api.key.safe-browsing}")
-    private String key;
-
+    
     public GoogleSafeBrowsingUtil(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
@@ -51,14 +51,22 @@ public class GoogleSafeBrowsingUtil {
 
         HttpEntity<SafeBrowsingRequest> req = new HttpEntity<>(body, headers);
 
-        ResponseEntity<ThreatMatchesResponse> resp = restTemplate.postForEntity(URL_ENDPOINT, req, ThreatMatchesResponse.class);
+        String urlWithKey = URL_ENDPOINT + key;
+        ResponseEntity<ThreatMatchesResponse> resp
+                = restTemplate.postForEntity(urlWithKey, req, ThreatMatchesResponse.class);
 
         ThreatMatchesResponse matchesResp = resp.getBody();
         if (matchesResp == null || matchesResp.matches() == null) {
             return new ThreatAnalysisResult(false, List.of());
         } else {
             List<ThreatMatchInfo> infos = matchesResp.matches().stream()
-                    .map(m -> new ThreatMatchInfo(m.threatType(), m.platformType(), m.threat().url(), m.cacheDuration(), m.threatEntryType()))
+                    .map(m -> new ThreatMatchInfo(
+                            m.threatType(),
+                            m.platformType(),
+                            m.threat().url(),
+                            m.cacheDuration(),
+                            m.threatEntryType())
+                    )
                     .toList();
             return new ThreatAnalysisResult(true, infos);
         }
