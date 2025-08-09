@@ -30,7 +30,7 @@ public class GoogleSafeBrowsingUtil {
     public static final String CLIENT_VERSION = "1.0";
 
     private final RestTemplate restTemplate;
-    
+
     public GoogleSafeBrowsingUtil(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
