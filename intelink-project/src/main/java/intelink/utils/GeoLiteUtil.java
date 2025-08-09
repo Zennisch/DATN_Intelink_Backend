@@ -23,24 +23,6 @@ public class GeoLiteUtil {
     @Value("${app.geolite2.database.path}")
     private String databasePath;
 
-    @PostConstruct
-    public void init() {
-        try {
-            ClassPathResource resource = new ClassPathResource(databasePath);
-
-            if (resource.exists()) {
-                InputStream inputStream = resource.getInputStream();
-                cityDatabaseReader = new DatabaseReader.Builder(inputStream).build();
-                log.info("GeoLite2 database loaded successfully from classpath");
-            } else {
-                log.warn("GeoLite2 database not found in classpath, creating empty reader");
-            }
-        } catch (IOException e) {
-            log.error("GeoLiteUtil - Failed to initialize GeoIP database reader: {}", e.getMessage());
-            throw new RuntimeException("GeoLiteUtil - Failed to initialize GeoIP database reader", e);
-        }
-    }
-
     public static String getCountryFromIp(String ip) {
         try {
             CityResponse response = cityDatabaseReader.city(InetAddress.getByName(ip));
@@ -64,6 +46,24 @@ public class GeoLiteUtil {
         } catch (Exception e) {
             log.error("GeoLiteUtil.getCityFromIp - Failed to get city for IP {}: {}", ip, e.getMessage());
             return null;
+        }
+    }
+
+    @PostConstruct
+    public void init() {
+        try {
+            ClassPathResource resource = new ClassPathResource(databasePath);
+
+            if (resource.exists()) {
+                InputStream inputStream = resource.getInputStream();
+                cityDatabaseReader = new DatabaseReader.Builder(inputStream).build();
+                log.info("GeoLite2 database loaded successfully from classpath");
+            } else {
+                log.warn("GeoLite2 database not found in classpath, creating empty reader");
+            }
+        } catch (IOException e) {
+            log.error("GeoLiteUtil - Failed to initialize GeoIP database reader: {}", e.getMessage());
+            throw new RuntimeException("GeoLiteUtil - Failed to initialize GeoIP database reader", e);
         }
     }
 
