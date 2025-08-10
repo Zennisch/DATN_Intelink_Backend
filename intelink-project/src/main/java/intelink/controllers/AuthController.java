@@ -1,10 +1,7 @@
 package intelink.controllers;
 
 import intelink.config.security.JwtTokenProvider;
-import intelink.dto.request.ForgotPasswordRequest;
-import intelink.dto.request.LoginRequest;
-import intelink.dto.request.RegisterRequest;
-import intelink.dto.request.ValidateTokenRequest;
+import intelink.dto.request.*;
 import intelink.dto.response.*;
 import intelink.models.User;
 import intelink.models.enums.OAuthProvider;
@@ -76,6 +73,21 @@ public class AuthController {
         return ResponseEntity.ok(ForgotPasswordResponse.builder()
                 .success(true)
                 .message("If the email exists, a password reset link has been sent")
+                .build()
+        );
+    }
+
+    // ========== Reset Password
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestParam("token") String token,
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
+    ) {
+        userService.resetPassword(token, resetPasswordRequest);
+
+        return ResponseEntity.ok(ResetPasswordResponse.builder()
+                .success(true)
+                .message("Password reset successfully")
                 .build()
         );
     }

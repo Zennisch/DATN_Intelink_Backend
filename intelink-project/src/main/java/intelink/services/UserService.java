@@ -1,5 +1,6 @@
 package intelink.services;
 
+import intelink.dto.request.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.OAuthProvider;
@@ -93,6 +94,33 @@ public class UserService implements IUserServices {
         String resetLink = resetPasswordEmailUrlTemplate.replace("{token}", verificationToken.getToken());
         emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
         log.info("UserService.forgotPassword: Password reset email sent to {}", user.getEmail());
+    }
+
+    @Transactional
+    public void resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
+        if (token == null || token.isEmpty()) {
+            throw new BadCredentialsException("Invalid password reset token");
+        }
+
+        String password = resetPasswordRequest.getPassword();
+        String confirmPassword = resetPasswordRequest.getConfirmPassword();
+        if (!password.equals(confirmPassword)) {
+            throw new BadCredentialsException("New password and confirmation do not match");
+        }
+
+        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.PASSWORD_RESET);
+        if (tokenOpt.isEmpty()) {
+            throw new BadCredentialsException("Invalid or expired password reset token");
+        }
+
+        VerificationToken verificationToken = tokenOpt.get();
+        User user = verificationToken.getUser();
+        user.setPasswordHash(passwordEncoder.encode(password));
+        userRepository.save(user);
+        log.info("UserService.resetPassword: Password reset for user ID: {}", user.getId());
+
+        verificationTokenService.markTokenAsUsed(verificationToken);
+        log.info("UserService.resetPassword: Password reset token marked as used for user ID: {}", user.getId());
     }
 
     @Transactional
