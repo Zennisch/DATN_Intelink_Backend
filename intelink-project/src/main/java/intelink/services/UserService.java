@@ -11,7 +11,7 @@ import intelink.models.enums.OAuthProvider;
 import intelink.models.enums.TokenType;
 import intelink.models.enums.UserRole;
 import intelink.repositories.UserRepository;
-import intelink.services.interfaces.IUserServices;
+import intelink.services.interfaces.IUserService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserService implements IUserServices {
+public class UserService implements IUserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;

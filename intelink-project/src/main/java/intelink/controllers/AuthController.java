@@ -1,21 +1,20 @@
 package intelink.controllers;
 
-import intelink.config.security.JwtTokenProvider;
 import intelink.dto.object.AuthObject;
-import intelink.dto.request.*;
+import intelink.dto.request.ForgotPasswordRequest;
+import intelink.dto.request.LoginRequest;
+import intelink.dto.request.RegisterRequest;
+import intelink.dto.request.ResetPasswordRequest;
 import intelink.dto.response.*;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
-import intelink.services.UserService;
+import intelink.services.interfaces.IUserService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,9 +22,7 @@ import java.util.Optional;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final UserService userService;
-
-    private final JwtTokenProvider jwtTokenProvider;
+    private final IUserService userService;
 
     // ========== Register
     @PostMapping("/register")

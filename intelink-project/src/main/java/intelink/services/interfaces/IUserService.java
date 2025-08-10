@@ -9,7 +9,7 @@ import jakarta.mail.MessagingException;
 
 import java.util.Optional;
 
-public interface IUserServices {
+public interface IUserService {
 
     User create(String username, String email, String password, UserRole role) throws MessagingException;
 
