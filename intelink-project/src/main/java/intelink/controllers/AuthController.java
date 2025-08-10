@@ -4,17 +4,20 @@ import intelink.config.security.JwtTokenProvider;
 import intelink.dto.request.LoginRequest;
 import intelink.dto.request.RegisterRequest;
 import intelink.dto.request.ValidateTokenRequest;
-import intelink.dto.response.AuthResponse;
-import intelink.dto.response.LogoutResponse;
-import intelink.dto.response.UserProfileResponse;
-import intelink.dto.response.ValidateTokenResponse;
+import intelink.dto.response.*;
 import intelink.models.User;
+import intelink.models.VerificationToken;
 import intelink.models.enums.OAuthProvider;
+import intelink.models.enums.TokenType;
 import intelink.models.enums.UserRole;
+import intelink.services.EmailService;
 import intelink.services.UserService;
+import intelink.services.VerificationTokenService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -32,12 +35,19 @@ import java.util.Optional;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
     private final UserService userService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final VerificationTokenService verificationTokenService;
 
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final EmailService emailService;
+
+    @Value("${app.url.verify-email}")
+    private String verificationEmailUrlTemplate;
+
+    // ========== Register
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) throws MessagingException {
         User user = userService.create(
                 registerRequest.getUsername(),
                 registerRequest.getEmail(),
@@ -45,21 +55,17 @@ public class AuthController {
                 UserRole.USER
         );
 
-        // Tạo token xác thực email (cần inject VerificationTokenService)
-        // VerificationToken token = verificationTokenService.createToken(
-        //     user, TokenType.EMAIL_VERIFICATION, 24
-        // );
+        VerificationToken verificationToken = verificationTokenService.create(user, TokenType.EMAIL_VERIFICATION, 24);
+        String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
+        emailService.sendVerificationEmail(user.getEmail(), verificationLink);
 
-        // Gửi email xác thực (cần inject EmailService)
-        // emailService.sendVerificationEmail(user.getEmail(), token.getToken());
-
-        // Trả về response yêu cầu xác thực email
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Registration successful. Please check your email to verify your account.",
-                "email", user.getEmail(),
-                "emailVerified", user.getEmailVerified()
-        ));
+        return ResponseEntity.ok(RegisterResponse.builder()
+                .success(true)
+                .message("Registration successful. Please check your email to verify your account.")
+                .email(user.getEmail())
+                .emailVerified(user.getEmailVerified())
+                .build()
+        );
     }
 
     @PostMapping("/login")

@@ -22,14 +22,12 @@ import java.util.List;
 @Component
 public class GoogleSafeBrowsingUtil {
 
-    @Value("${app.api.key.safe-browsing}")
-    private String key;
-
     public static final String URL_ENDPOINT = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=";
     public static final String CLIENT_ID = "testClient";
     public static final String CLIENT_VERSION = "1.0";
-
     private final RestTemplate restTemplate;
+    @Value("${app.api.key.safe-browsing}")
+    private String key;
 
     public GoogleSafeBrowsingUtil(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
