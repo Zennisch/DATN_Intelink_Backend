@@ -1,5 +1,8 @@
 package intelink.services.interfaces;
 
+import intelink.dto.object.AuthObject;
+import intelink.dto.request.LoginRequest;
+import intelink.dto.request.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import jakarta.mail.MessagingException;
@@ -10,22 +13,25 @@ public interface IUserServices {
 
     User create(String username, String email, String password, UserRole role) throws MessagingException;
 
-    User update(User user);
+    void verifyEmail(String token);
 
-    Optional<User> findById(Long id);
+    void forgotPassword(String email) throws MessagingException;
+
+    void resetPassword(String token, ResetPasswordRequest resetPasswordRequest);
+
+    AuthObject login(LoginRequest loginRequest);
+
+    AuthObject refreshToken(String authHeader);
+
+    User profile(String authHeader);
+
+    void logout(String authHeader);
 
     Optional<User> findByUsername(String username);
 
-    Optional<User> findByEmail(String email);
-
-    boolean existsByUsername(String username);
-
-    boolean existsByEmail(String email);
-
     void incrementTotalClicks(Long userId);
-
-    void incrementTotalClicksWithAmount(Long userId, int amount);
 
     void incrementTotalShortUrls(Long userId);
 
+    void decrementTotalShortUrls(Long userId);
 }

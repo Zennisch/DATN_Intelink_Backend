@@ -2,6 +2,7 @@ package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
 import intelink.dto.object.AuthObject;
+import intelink.dto.object.TokenObject;
 import intelink.dto.request.LoginRequest;
 import intelink.dto.request.ResetPasswordRequest;
 import intelink.models.User;
@@ -19,6 +20,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,24 @@ public class UserService implements IUserServices {
 
     @Value("${app.url.reset-password}")
     private String resetPasswordEmailUrlTemplate;
+
+    private TokenObject validateToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new BadCredentialsException("Invalid token format");
+        }
+
+        String token = authHeader.substring(7);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+
+        if (!jwtTokenProvider.validateToken(token, username)) {
+            throw new BadCredentialsException("Invalid or expired token");
+        }
+
+        return TokenObject.builder()
+                .token(token)
+                .username(username)
+                .build();
+    }
 
     @Transactional
     public User create(String username, String email, String password, UserRole role) throws MessagingException {
@@ -142,7 +162,6 @@ public class UserService implements IUserServices {
 
         Optional<User> userOpt = findByUsername(loginRequest.getUsername());
         if (userOpt.isEmpty()) {
-            log.warn("User not found: {}", loginRequest.getUsername());
             throw new BadCredentialsException("Invalid username or password");
         }
 
@@ -168,13 +187,55 @@ public class UserService implements IUserServices {
     }
 
     @Transactional
-    public User update(User user) {
-        return userRepository.save(user);
+    public AuthObject refreshToken(String authHeader) {
+        TokenObject tokenObject = validateToken(authHeader);
+        String username = tokenObject.getUsername();
+
+        String token = jwtTokenProvider.generateToken(username);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+        Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
+
+        Optional<User> userOpt = findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new BadCredentialsException("User not found");
+        }
+        User user = userOpt.get();
+
+        return AuthObject.builder()
+                .user(user)
+                .token(token)
+                .refreshToken(refreshToken)
+                .expiresAt(expiresAt)
+                .build();
     }
 
     @Transactional
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public User profile(String authHeader) {
+        TokenObject tokenObject = validateToken(authHeader);
+        String username = tokenObject.getUsername();
+
+        Optional<User> userOpt = findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new BadCredentialsException("User not found");
+        }
+
+        User user = userOpt.get();
+        log.info("UserService.profile: Retrieved profile for user: {}", username);
+        return user;
+    }
+
+    @Transactional
+    public void logout(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new BadCredentialsException("Invalid token format");
+        }
+
+        String token = authHeader.substring(7);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+
+        if (jwtTokenProvider.validateToken(token, username)) {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @Transactional
@@ -183,30 +244,9 @@ public class UserService implements IUserServices {
     }
 
     @Transactional
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
-    @Transactional
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
-    }
-
-    @Transactional
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    @Transactional
     public void incrementTotalClicks(Long userId) {
         userRepository.incrementTotalClicks(userId);
         log.debug("UserService.incrementTotalClicks: Total clicks for user ID {} incremented", userId);
-    }
-
-    @Transactional
-    public void incrementTotalClicksWithAmount(Long userId, int amount) {
-        userRepository.incrementTotalClicksWithAmount(userId, amount);
-        log.debug("UserService.incrementTotalClicksWithAmount: Total clicks for user ID {} incremented by {}", userId, amount);
     }
 
     @Transactional
@@ -219,44 +259,5 @@ public class UserService implements IUserServices {
     public void decrementTotalShortUrls(Long userId) {
         userRepository.decrementTotalShortUrls(userId);
         log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<User> findByProviderAndProviderId(OAuthProvider provider, String providerId) {
-        return userRepository.findByAuthProviderAndProviderUserId(provider, providerId);
-    }
-
-    @Transactional
-    public User createOAuthUser(String username, String email, OAuthProvider provider, String providerId) {
-        if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("Username already exists");
-        }
-        if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-
-        User user = User.builder()
-                .username(username)
-                .email(email)
-                .passwordHash(null) // OAuth users don't have password
-                .role(UserRole.USER)
-                .emailVerified(true) // OAuth emails are pre-verified
-                .authProvider(provider)
-                .providerUserId(providerId)
-                .lastLoginAt(Instant.now())
-                .build();
-
-        User savedUser = userRepository.save(user);
-        log.info("UserService.createOAuthUser: OAuth user created with ID: {}", savedUser.getId());
-        return savedUser;
-    }
-
-    @Transactional
-    public void changePassword(String username, String newPassword) {
-        userRepository.findByUsername(username).ifPresent(user -> {
-            user.setPasswordHash(passwordEncoder.encode(newPassword));
-            userRepository.save(user);
-            log.info("UserService.changePassword: Password changed for user: {}", username);
-        });
     }
 }
