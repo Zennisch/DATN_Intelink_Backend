@@ -68,6 +68,25 @@ public class AuthController {
         );
     }
 
+    // ========== Verify Email
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
+        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.EMAIL_VERIFICATION);
+        if (tokenOpt.isEmpty()) {
+            throw new BadCredentialsException("Invalid or expired verification token");
+        }
+
+        VerificationToken verificationToken = tokenOpt.get();
+        userService.updateEmailVerified(verificationToken.getUser().getId(), true);
+        verificationTokenService.markTokenAsUsed(verificationToken);
+
+        return ResponseEntity.ok(VerifyEmailResponse.builder()
+                .success(true)
+                .message("Email verified successfully")
+                .build()
+        );
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(

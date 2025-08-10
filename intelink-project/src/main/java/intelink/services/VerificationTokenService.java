@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +36,17 @@ public class VerificationTokenService implements IVerificationTokenService {
                 .build();
         verificationTokenRepository.save(verificationToken);
         return verificationToken;
+    }
+
+    public Optional<VerificationToken> findValidToken(String token, TokenType tokenType) {
+        Instant now = Instant.now();
+        return verificationTokenRepository.findByTokenAndTypeAndExpiresAtAfter(token, tokenType, now)
+                .filter(verificationToken -> verificationToken.getExpiresAt().isAfter(now));
+    }
+
+    public void markTokenAsUsed(VerificationToken verificationToken) {
+        verificationToken.setUsed(true);
+        verificationTokenRepository.save(verificationToken);
     }
 
 }
