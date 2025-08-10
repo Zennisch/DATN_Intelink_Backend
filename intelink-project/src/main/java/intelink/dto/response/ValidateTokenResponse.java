@@ -12,7 +12,7 @@ public class ValidateTokenResponse {
     private boolean valid;
     private String username;
     private String role;
-    private Long expiresIn;
+    private Long expiresAt;
     private String message;
 
 }

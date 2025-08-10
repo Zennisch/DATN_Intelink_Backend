@@ -1,7 +1,7 @@
 package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
-import intelink.dto.object.LoginObject;
+import intelink.dto.object.AuthObject;
 import intelink.dto.request.LoginRequest;
 import intelink.dto.request.ResetPasswordRequest;
 import intelink.models.User;
@@ -15,7 +15,6 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -134,7 +132,7 @@ public class UserService implements IUserServices {
     }
 
     @Transactional
-    public LoginObject login(LoginRequest loginRequest) {
+    public AuthObject login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsername(),
@@ -154,17 +152,18 @@ public class UserService implements IUserServices {
             throw new BadCredentialsException("Please verify your email before logging in");
         }
 
-        updateLastLogin(user.getUsername());
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
 
         String token = jwtTokenProvider.generateToken(authentication.getName());
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
-        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+        Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-        return LoginObject.builder()
+        return AuthObject.builder()
                 .user(user)
                 .token(token)
                 .refreshToken(refreshToken)
-                .expiresIn(expiresIn)
+                .expiresAt(expiresAt)
                 .build();
     }
 
@@ -220,16 +219,6 @@ public class UserService implements IUserServices {
     public void decrementTotalShortUrls(Long userId) {
         userRepository.decrementTotalShortUrls(userId);
         log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
-    }
-
-
-    @Transactional
-    public void updateLastLogin(String username) {
-        userRepository.findByUsername(username).ifPresent(user -> {
-            user.setLastLoginAt(Instant.now());
-            userRepository.save(user);
-            log.debug("UserService.updateLastLogin: Last login updated for user: {}", username);
-        });
     }
 
     @Transactional(readOnly = true)

@@ -1,7 +1,7 @@
 package intelink.controllers;
 
 import intelink.config.security.JwtTokenProvider;
-import intelink.dto.object.LoginObject;
+import intelink.dto.object.AuthObject;
 import intelink.dto.request.*;
 import intelink.dto.response.*;
 import intelink.models.User;
@@ -87,9 +87,10 @@ public class AuthController {
         );
     }
 
+    // ========== Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        LoginObject obj = userService.login(loginRequest);
+        AuthObject obj = userService.login(loginRequest);
 
         return ResponseEntity.ok(AuthResponse.builder()
                 .token(obj.getToken())
@@ -97,11 +98,12 @@ public class AuthController {
                 .username(obj.getUser().getUsername())
                 .email(obj.getUser().getEmail())
                 .role(obj.getUser().getRole().toString())
-                .expiresIn(obj.getExpiresIn())
+                .expiresAt(obj.getExpiresAt())
                 .build()
         );
     }
 
+    // ========== Refresh Token
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -117,17 +119,18 @@ public class AuthController {
 
         String token = jwtTokenProvider.generateToken(username);
         String refreshToken = jwtTokenProvider.generateRefreshToken(username);
-        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+        Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
         return ResponseEntity.ok(AuthResponse.builder()
                 .token(token)
                 .refreshToken(refreshToken)
                 .username(username)
-                .expiresIn(expiresIn)
+                .expiresAt(expiresAt)
                 .build()
         );
     }
 
+    // ========== Get User Profile
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -164,6 +167,7 @@ public class AuthController {
         );
     }
 
+    // ========== Logout
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
         try {
@@ -202,13 +206,13 @@ public class AuthController {
                 Optional<User> userOpt = userService.findByUsername(username);
                 if (userOpt.isPresent()) {
                     User user = userOpt.get();
-                    Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+                    Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
                     return ResponseEntity.ok(ValidateTokenResponse.builder()
                             .valid(true)
                             .username(user.getUsername())
                             .role(user.getRole().toString())
-                            .expiresIn(expiresIn)
+                            .expiresAt(expiresAt)
                             .message("Token is valid")
                             .build()
                     );
