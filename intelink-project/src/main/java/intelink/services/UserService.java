@@ -1,5 +1,8 @@
 package intelink.services;
 
+import intelink.config.security.JwtTokenProvider;
+import intelink.dto.object.LoginObject;
+import intelink.dto.request.LoginRequest;
 import intelink.dto.request.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.VerificationToken;
@@ -12,12 +15,17 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -29,6 +37,8 @@ public class UserService implements IUserServices {
     private final PasswordEncoder passwordEncoder;
     private final VerificationTokenService verificationTokenService;
     private final EmailService emailService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${app.url.verify-email}")
     private String verificationEmailUrlTemplate;
@@ -121,6 +131,41 @@ public class UserService implements IUserServices {
 
         verificationTokenService.markTokenAsUsed(verificationToken);
         log.info("UserService.resetPassword: Password reset token marked as used for user ID: {}", user.getId());
+    }
+
+    @Transactional
+    public LoginObject login(LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
+        );
+
+        Optional<User> userOpt = findByUsername(loginRequest.getUsername());
+        if (userOpt.isEmpty()) {
+            log.warn("User not found: {}", loginRequest.getUsername());
+            throw new BadCredentialsException("Invalid username or password");
+        }
+
+        User user = userOpt.get();
+
+        if (user.getAuthProvider() == OAuthProvider.LOCAL && !user.getEmailVerified()) {
+            throw new BadCredentialsException("Please verify your email before logging in");
+        }
+
+        updateLastLogin(user.getUsername());
+
+        String token = jwtTokenProvider.generateToken(authentication.getName());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
+        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+
+        return LoginObject.builder()
+                .user(user)
+                .token(token)
+                .refreshToken(refreshToken)
+                .expiresIn(expiresIn)
+                .build();
     }
 
     @Transactional

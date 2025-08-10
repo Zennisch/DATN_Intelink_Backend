@@ -1,10 +1,10 @@
 package intelink.controllers;
 
 import intelink.config.security.JwtTokenProvider;
+import intelink.dto.object.LoginObject;
 import intelink.dto.request.*;
 import intelink.dto.response.*;
 import intelink.models.User;
-import intelink.models.enums.OAuthProvider;
 import intelink.models.enums.UserRole;
 import intelink.services.UserService;
 import jakarta.mail.MessagingException;
@@ -12,14 +12,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -30,7 +26,6 @@ public class AuthController {
 
     private final UserService userService;
 
-    private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
     // ========== Register
@@ -92,47 +87,17 @@ public class AuthController {
         );
     }
 
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
-
-        Optional<User> userOpt = userService.findByUsername(loginRequest.getUsername());
-        if (userOpt.isEmpty()) {
-            log.warn("User not found: {}", loginRequest.getUsername());
-            throw new BadCredentialsException("Invalid username or password");
-        }
-
-        User user = userOpt.get();
-
-        // Kiểm tra email verification (chỉ cho LOCAL auth provider)
-        if (user.getAuthProvider() == OAuthProvider.LOCAL && !user.getEmailVerified()) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "Please verify your email before logging in",
-                    "emailVerified", false
-            ));
-        }
-
-        // Cập nhật last login
-        userService.updateLastLogin(user.getUsername());
-
-        String token = jwtTokenProvider.generateToken(authentication.getName());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
-        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+        LoginObject obj = userService.login(loginRequest);
 
         return ResponseEntity.ok(AuthResponse.builder()
-                .token(token)
-                .refreshToken(refreshToken)
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole().toString())
-                .expiresIn(expiresIn)
+                .token(obj.getToken())
+                .refreshToken(obj.getRefreshToken())
+                .username(obj.getUser().getUsername())
+                .email(obj.getUser().getEmail())
+                .role(obj.getUser().getRole().toString())
+                .expiresIn(obj.getExpiresIn())
                 .build()
         );
     }
