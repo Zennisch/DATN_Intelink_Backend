@@ -2,6 +2,8 @@ package intelink.config;
 
 import intelink.config.security.JwtAuthenticationEntryPoint;
 import intelink.config.security.JwtAuthenticationFilter;
+import intelink.config.security.OAuth2AuthenticationSuccessHandler;
+import intelink.services.OAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -53,6 +55,9 @@ public class SecurityConfig {
     @Value("${app.cors.max-age}")
     private long maxAge;
 
+    private final OAuthService oAuthService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(passwordStrength);
@@ -95,10 +100,17 @@ public class SecurityConfig {
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(oAuthService)
+                        )
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/{shortCode}").permitAll()
                         .requestMatchers(HttpMethod.POST, "/{shortCode}/unlock").permitAll()
 

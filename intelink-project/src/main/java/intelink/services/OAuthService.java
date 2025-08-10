@@ -41,7 +41,13 @@ public class OAuthService extends DefaultOAuth2UserService {
     }
 
     private OAuth2User processOAuth2User(OAuth2User oAuth2User, OAuthProvider provider) {
-        String providerUserId = oAuth2User.getAttribute("id");
+        String providerUserId;
+        if (provider == OAuthProvider.GOOGLE) {
+            providerUserId = oAuth2User.getAttribute("sub");
+        } else {
+            providerUserId = oAuth2User.getAttribute("id");
+        }
+
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
@@ -104,14 +110,15 @@ public class OAuthService extends DefaultOAuth2UserService {
     }
 
     public AuthObject callback(String authToken) {
-        String username = jwtTokenProvider.getUsernameFromToken(authToken);
-        Optional<User> userOpt = userRepository.findByUsername(username);
+        String email = jwtTokenProvider.getUsernameFromToken(authToken);
+        Optional<User> userOpt = userRepository.findByEmail(email);
 
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found");
         }
 
         User user = userOpt.get();
+
         String token = jwtTokenProvider.generateToken(user.getUsername());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
