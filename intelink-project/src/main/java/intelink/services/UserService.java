@@ -1,12 +1,17 @@
 package intelink.services;
 
 import intelink.models.User;
+import intelink.models.VerificationToken;
 import intelink.models.enums.OAuthProvider;
+import intelink.models.enums.TokenType;
 import intelink.models.enums.UserRole;
 import intelink.repositories.UserRepository;
 import intelink.services.interfaces.IUserServices;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +26,17 @@ public class UserService implements IUserServices {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final VerificationTokenService verificationTokenService;
+    private final EmailService emailService;
+
+    @Value("${app.url.verify-email}")
+    private String verificationEmailUrlTemplate;
+
+    @Value("${app.url.reset-password}")
+    private String resetPasswordEmailUrlTemplate;
 
     @Transactional
-    public User create(String username, String email, String password, UserRole role) {
+    public User create(String username, String email, String password, UserRole role) throws MessagingException {
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Username already exists");
         }
@@ -40,7 +53,46 @@ public class UserService implements IUserServices {
 
         User savedUser = userRepository.save(user);
         log.info("UserService.create: User created with ID: {}", savedUser.getId());
+
+        VerificationToken verificationToken = verificationTokenService.create(user, TokenType.EMAIL_VERIFICATION, 24);
+        String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
+        emailService.sendVerificationEmail(user.getEmail(), verificationLink);
+        log.info("UserService.create: Verification email sent to {}", user.getEmail());
+
         return savedUser;
+    }
+
+    @Transactional
+    public void verifyEmail(String token) {
+        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.EMAIL_VERIFICATION);
+        if (tokenOpt.isEmpty()) {
+            throw new BadCredentialsException("Invalid or expired verification token");
+        }
+
+        VerificationToken verificationToken = tokenOpt.get();
+
+        User user = verificationToken.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        log.info("UserService.verifyEmail: Email verified for user ID: {}", user.getId());
+
+        verificationTokenService.markTokenAsUsed(verificationToken);
+        log.info("UserService.verifyEmail: Verification token marked as used for user ID: {}", user.getId());
+    }
+
+    @Transactional
+    public void forgotPassword(String email) throws MessagingException {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            // Do not reveal if the email exists for security reasons
+            return;
+        }
+
+        User user = userOpt.get();
+        VerificationToken verificationToken = verificationTokenService.create(user, TokenType.PASSWORD_RESET, 1);
+        String resetLink = resetPasswordEmailUrlTemplate.replace("{token}", verificationToken.getToken());
+        emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
+        log.info("UserService.forgotPassword: Password reset email sent to {}", user.getEmail());
     }
 
     @Transactional
@@ -97,14 +149,6 @@ public class UserService implements IUserServices {
         log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
     }
 
-    @Transactional
-    public void updateEmailVerified(Long userId, boolean verified) {
-        userRepository.findById(userId).ifPresent(user -> {
-            user.setEmailVerified(verified);
-            userRepository.save(user);
-            log.info("UserService.updateEmailVerified: Email verification status updated for user ID: {}", userId);
-        });
-    }
 
     @Transactional
     public void updateLastLogin(String username) {

@@ -2,12 +2,13 @@ package intelink.services.interfaces;
 
 import intelink.models.User;
 import intelink.models.enums.UserRole;
+import jakarta.mail.MessagingException;
 
 import java.util.Optional;
 
 public interface IUserServices {
 
-    User create(String username, String email, String password, UserRole role);
+    User create(String username, String email, String password, UserRole role) throws MessagingException;
 
     User update(User user);
 

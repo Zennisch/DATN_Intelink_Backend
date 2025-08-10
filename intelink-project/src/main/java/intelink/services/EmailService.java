@@ -37,4 +37,21 @@ public class EmailService implements IEmailService {
         mailSender.send(message);
     }
 
+    public void sendResetPasswordEmail(String to, String link) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String content = "<html><body>" +
+                "<h1>Reset Your Intelink Password</h1>" +
+                "<p>To reset your password, please click the link below:</p>" +
+                "<a href=\"" + link + "\">Reset Password</a>" +
+                "</body></html>";
+
+        helper.setFrom(fromEmail);
+        helper.setTo(to);
+        helper.setSubject("Intelink Password Reset");
+        helper.setText(content, true);
+
+        mailSender.send(message);
+    }
+
 }

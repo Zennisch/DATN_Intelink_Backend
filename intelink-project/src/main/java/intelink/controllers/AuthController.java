@@ -1,23 +1,19 @@
 package intelink.controllers;
 
 import intelink.config.security.JwtTokenProvider;
+import intelink.dto.request.ForgotPasswordRequest;
 import intelink.dto.request.LoginRequest;
 import intelink.dto.request.RegisterRequest;
 import intelink.dto.request.ValidateTokenRequest;
 import intelink.dto.response.*;
 import intelink.models.User;
-import intelink.models.VerificationToken;
 import intelink.models.enums.OAuthProvider;
-import intelink.models.enums.TokenType;
 import intelink.models.enums.UserRole;
-import intelink.services.EmailService;
 import intelink.services.UserService;
-import intelink.services.VerificationTokenService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -36,14 +32,9 @@ import java.util.Optional;
 public class AuthController {
 
     private final UserService userService;
-    private final VerificationTokenService verificationTokenService;
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final EmailService emailService;
-
-    @Value("${app.url.verify-email}")
-    private String verificationEmailUrlTemplate;
 
     // ========== Register
     @PostMapping("/register")
@@ -55,10 +46,6 @@ public class AuthController {
                 UserRole.USER
         );
 
-        VerificationToken verificationToken = verificationTokenService.create(user, TokenType.EMAIL_VERIFICATION, 24);
-        String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
-        emailService.sendVerificationEmail(user.getEmail(), verificationLink);
-
         return ResponseEntity.ok(RegisterResponse.builder()
                 .success(true)
                 .message("Registration successful. Please check your email to verify your account.")
@@ -69,16 +56,9 @@ public class AuthController {
     }
 
     // ========== Verify Email
-    @GetMapping("/verify-email")
+    @PostMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
-        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.EMAIL_VERIFICATION);
-        if (tokenOpt.isEmpty()) {
-            throw new BadCredentialsException("Invalid or expired verification token");
-        }
-
-        VerificationToken verificationToken = tokenOpt.get();
-        userService.updateEmailVerified(verificationToken.getUser().getId(), true);
-        verificationTokenService.markTokenAsUsed(verificationToken);
+        userService.verifyEmail(token);
 
         return ResponseEntity.ok(VerifyEmailResponse.builder()
                 .success(true)
@@ -86,6 +66,20 @@ public class AuthController {
                 .build()
         );
     }
+
+    // ========== Forgot Password
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) throws MessagingException {
+        String email = forgotPasswordRequest.getEmail();
+        userService.forgotPassword(email);
+
+        return ResponseEntity.ok(ForgotPasswordResponse.builder()
+                .success(true)
+                .message("If the email exists, a password reset link has been sent")
+                .build()
+        );
+    }
+
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
@@ -259,75 +253,4 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@Valid @RequestBody Map<String, String> request) {
-        String token = request.get("token");
-
-        // Cần inject VerificationTokenService
-        // Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.EMAIL_VERIFICATION);
-
-        // if (tokenOpt.isEmpty()) {
-        //     return ResponseEntity.badRequest().body(Map.of(
-        //             "success", false,
-        //             "message", "Invalid or expired verification token"
-        //     ));
-        // }
-
-        // VerificationToken verificationToken = tokenOpt.get();
-        // userService.updateEmailVerified(verificationToken.getUser().getId(), true);
-        // verificationTokenService.markAsUsed(token);
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Email verified successfully"
-        ));
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody Map<String, String> request) {
-        String email = request.get("email");
-
-        Optional<User> userOpt = userService.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            // Không tiết lộ thông tin user có tồn tại hay không
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "If the email exists, a password reset link has been sent"
-            ));
-        }
-
-        // User user = userOpt.get();
-        // VerificationToken token = verificationTokenService.createToken(user, TokenType.PASSWORD_RESET, 1); // 1 hour
-        // emailService.sendPasswordResetEmail(user.getEmail(), token.getToken());
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "If the email exists, a password reset link has been sent"
-        ));
-    }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody Map<String, String> request) {
-        String token = request.get("token");
-        String newPassword = request.get("newPassword");
-
-        // Cần inject VerificationTokenService
-        // Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.PASSWORD_RESET);
-
-        // if (tokenOpt.isEmpty()) {
-        //     return ResponseEntity.badRequest().body(Map.of(
-        //             "success", false,
-        //             "message", "Invalid or expired reset token"
-        //     ));
-        // }
-
-        // VerificationToken verificationToken = tokenOpt.get();
-        // userService.changePassword(verificationToken.getUser().getUsername(), newPassword);
-        // verificationTokenService.markAsUsed(token);
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Password reset successfully"
-        ));
-    }
 }
