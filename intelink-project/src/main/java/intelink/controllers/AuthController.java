@@ -8,6 +8,7 @@ import intelink.dto.request.ResetPasswordRequest;
 import intelink.dto.response.*;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
+import intelink.services.OAuthService;
 import intelink.services.interfaces.IUserService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IUserService userService;
+    private final OAuthService oAuthService;
 
     // ========== Register
     @PostMapping("/register")
@@ -142,6 +144,24 @@ public class AuthController {
         return ResponseEntity.ok(LogoutResponse.builder()
                 .success(true)
                 .message("Logged out successfully")
+                .build()
+        );
+    }
+
+    // ========== OAuth Login
+    @GetMapping("/oauth/callback")
+    public ResponseEntity<?> oAuthCallback(
+            @RequestParam String token
+    ) {
+        AuthObject authObject = oAuthService.callback(token);
+
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(authObject.getToken())
+                .refreshToken(authObject.getRefreshToken())
+                .username(authObject.getUser().getUsername())
+                .email(authObject.getUser().getEmail())
+                .role(authObject.getUser().getRole().toString())
+                .expiresAt(authObject.getExpiresAt())
                 .build()
         );
     }

@@ -34,4 +34,7 @@ public interface IUserService {
     void incrementTotalShortUrls(Long userId);
 
     void decrementTotalShortUrls(Long userId);
+
+    Optional<User> findByEmail(String email);
+
 }

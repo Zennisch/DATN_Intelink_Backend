@@ -35,7 +35,7 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Value("${app.security.password-strength}")
+    @Value("${app.security.password-encryption-strength}")
     private int passwordStrength;
 
     @Value("${app.cors.allowed-origins}")
