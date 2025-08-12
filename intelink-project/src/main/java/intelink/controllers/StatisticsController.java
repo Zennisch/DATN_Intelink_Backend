@@ -46,15 +46,7 @@ public class StatisticsController {
         log.info("StatisticsController.getDimensionStats: Getting {} dimension stats for short code: {}", type, shortCode);
 
         try {
-            // Convert string type to DimensionType enum with flexible matching
-            DimensionType dimensionType;
-            try {
-                // First try direct enum matching
-                dimensionType = DimensionType.valueOf(type.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                // If direct matching fails, try mapping common aliases
-                dimensionType = mapStringToDimensionType(type.toLowerCase());
-            }
+            DimensionType dimensionType = DimensionType.fromString(type);
 
             Map<String, Object> stats = statisticsService.getDimensionStats(shortCode, dimensionType);
             return ResponseEntity.ok(stats);
@@ -67,47 +59,6 @@ public class StatisticsController {
             errorResponse.put("providedType", type);
             return ResponseEntity.badRequest().body(errorResponse);
         }
-    }
-
-    /**
-     * Maps string values to DimensionType enum with flexible matching
-     * Supports aliases like "device" -> DEVICE_TYPE, "location" -> COUNTRY, etc.
-     */
-    private DimensionType mapStringToDimensionType(String type) {
-        return switch (type.toLowerCase()) {
-            // Device related
-            case "device", "device_type", "devicetype" -> DimensionType.DEVICE_TYPE;
-            case "browser" -> DimensionType.BROWSER;
-            case "os", "operating_system", "operatingsystem" -> DimensionType.OS;
-
-            // Location related
-            case "country", "location" -> DimensionType.COUNTRY;
-            case "city" -> DimensionType.CITY;
-            case "region" -> DimensionType.REGION;
-            case "timezone" -> DimensionType.TIMEZONE;
-
-            // Source related
-            case "referrer" -> DimensionType.REFERRER;
-            case "referrer_type", "referrertype" -> DimensionType.REFERRER_TYPE;
-            case "utm_source", "utmsource" -> DimensionType.UTM_SOURCE;
-            case "utm_medium", "utmmedium" -> DimensionType.UTM_MEDIUM;
-            case "utm_campaign", "utmcampaign" -> DimensionType.UTM_CAMPAIGN;
-            case "utm_term", "utmterm" -> DimensionType.UTM_TERM;
-            case "utm_content", "utmcontent" -> DimensionType.UTM_CONTENT;
-
-            // Technology related
-            case "isp" -> DimensionType.ISP;
-            case "language" -> DimensionType.LANGUAGE;
-
-            // Custom
-            case "custom" -> DimensionType.CUSTOM;
-
-            default -> throw new IllegalArgumentException(
-                    "Unsupported dimension type: " + type +
-                            ". Supported types: device, browser, os, country, city, region, timezone, " +
-                            "referrer, utm_source, utm_medium, utm_campaign, isp, language, custom"
-            );
-        };
     }
 
     @GetMapping("/{shortCode}/overview")
