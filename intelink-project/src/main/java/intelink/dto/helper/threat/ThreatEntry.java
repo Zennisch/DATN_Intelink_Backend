@@ -1,5 +1,9 @@
 package intelink.dto.helper.threat;
 
-public class ThreatEntry {
-    public String url;
+public record ThreatEntry(String url) {
+    public ThreatEntry {
+        if (url == null || url.isBlank()) {
+            throw new IllegalArgumentException("URL cannot be null or blank");
+        }
+    }
 }

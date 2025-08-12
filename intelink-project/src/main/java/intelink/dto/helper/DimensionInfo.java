@@ -8,11 +8,9 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class DimensionInfo {
-
     String country;
     String city;
     String browser;
     String os;
     String deviceType;
-
 }

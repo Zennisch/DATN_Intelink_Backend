@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class UserAgentUtil {
 
-    // Browser patterns
+    // Browser
     private static final Pattern EDGE_PATTERN = Pattern.compile("Edg/([\\d.]+)");
     private static final Pattern OPERA_PATTERN = Pattern.compile("OPR/([\\d.]+)");
     private static final Pattern CHROME_PATTERN = Pattern.compile("Chrome/([\\d.]+)");
@@ -17,14 +17,14 @@ public class UserAgentUtil {
     private static final Pattern SAFARI_PATTERN = Pattern.compile("Safari/([\\d.]+)");
     private static final Pattern IE_PATTERN = Pattern.compile("MSIE ([\\d.]+)");
 
-    // OS patterns
+    // OS
     private static final Pattern WINDOWS_PATTERN = Pattern.compile("Windows NT ([\\d.]+)");
     private static final Pattern MAC_PATTERN = Pattern.compile("Mac OS X ([\\d_.]+)");
     private static final Pattern LINUX_PATTERN = Pattern.compile("Linux");
     private static final Pattern ANDROID_PATTERN = Pattern.compile("Android ([\\d.]+)");
     private static final Pattern IOS_PATTERN = Pattern.compile("OS ([\\d_]+)");
 
-    // Device patterns
+    // Device
     private static final Pattern MOBILE_PATTERN = Pattern.compile("Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone");
     private static final Pattern TABLET_PATTERN = Pattern.compile("iPad|Android(?!.*Mobile)|Tablet");
     private static final Pattern BOT_PATTERN = Pattern.compile("bot|crawler|spider|scraper", Pattern.CASE_INSENSITIVE);

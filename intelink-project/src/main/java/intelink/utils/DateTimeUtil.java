@@ -11,18 +11,12 @@ public class DateTimeUtil {
 
     public static Instant getBucketStart(Instant instant, Granularity granularity) {
         ZonedDateTime zdt = instant.atZone(ZoneId.systemDefault());
-        switch (granularity) {
-            case HOURLY:
-                return zdt.truncatedTo(ChronoUnit.HOURS).toInstant();
-            case DAILY:
-                return zdt.toLocalDate().atStartOfDay(zdt.getZone()).toInstant();
-            case MONTHLY:
-                return zdt.withDayOfMonth(1).toLocalDate().atStartOfDay(zdt.getZone()).toInstant();
-            case YEARLY:
-                return zdt.withDayOfYear(1).toLocalDate().atStartOfDay(zdt.getZone()).toInstant();
-            default:
-                throw new IllegalArgumentException("DateTimeUtil.getBucketStart: Unsupported granularity: " + granularity);
-        }
+        return switch (granularity) {
+            case HOURLY -> zdt.truncatedTo(ChronoUnit.HOURS).toInstant();
+            case DAILY -> zdt.toLocalDate().atStartOfDay(zdt.getZone()).toInstant();
+            case MONTHLY -> zdt.withDayOfMonth(1).toLocalDate().atStartOfDay(zdt.getZone()).toInstant();
+            case YEARLY -> zdt.withDayOfYear(1).toLocalDate().atStartOfDay(zdt.getZone()).toInstant();
+        };
     }
 
 }

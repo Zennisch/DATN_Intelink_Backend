@@ -7,7 +7,7 @@ public enum IpVersion {
         try {
             return IpVersion.valueOf(version.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return UNKNOWN;
+            throw new IllegalArgumentException("Invalid IP version: " + version, e);
         }
     }
 }
