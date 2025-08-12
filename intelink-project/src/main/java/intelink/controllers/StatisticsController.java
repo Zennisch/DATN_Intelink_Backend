@@ -3,7 +3,6 @@ package intelink.controllers;
 import intelink.models.enums.DimensionType;
 import intelink.services.StatisticsService;
 import lombok.RequiredArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

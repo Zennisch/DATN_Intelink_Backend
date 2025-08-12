@@ -36,27 +36,20 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @Value("${app.security.password-encryption-strength}")
-    private int passwordStrength;
-
-    @Value("${app.cors.allowed-origins}")
-    private String allowedOrigins;
-
-    @Value("${app.cors.allowed-methods}")
-    private String allowedMethods;
-
-    @Value("${app.cors.allowed-headers}")
-    private String allowedHeaders;
-
-    @Value("${app.cors.allow-credentials}")
-    private boolean allowCredentials;
-
-    @Value("${app.cors.max-age}")
-    private long maxAge;
-
     private final OAuthService oAuthService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    @Value("${app.security.password-encryption-strength}")
+    private int passwordStrength;
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
+    @Value("${app.cors.allowed-methods}")
+    private String allowedMethods;
+    @Value("${app.cors.allowed-headers}")
+    private String allowedHeaders;
+    @Value("${app.cors.allow-credentials}")
+    private boolean allowCredentials;
+    @Value("${app.cors.max-age}")
+    private long maxAge;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
