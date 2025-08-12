@@ -25,6 +25,13 @@ public enum DimensionType {
     LANGUAGE,
 
     // Custom dimensions
-    CUSTOM
+    CUSTOM;
 
+    public static DimensionType fromString(String type) {
+        try {
+            return DimensionType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid dimension type: " + type);
+        }
+    }
 }
