@@ -1,30 +1,21 @@
 package intelink.controllers;
 
-import intelink.config.security.JwtTokenProvider;
+import intelink.dto.object.AuthObject;
+import intelink.dto.request.ForgotPasswordRequest;
 import intelink.dto.request.LoginRequest;
 import intelink.dto.request.RegisterRequest;
-import intelink.dto.request.ValidateTokenRequest;
-import intelink.dto.response.AuthResponse;
-import intelink.dto.response.LogoutResponse;
-import intelink.dto.response.UserProfileResponse;
-import intelink.dto.response.ValidateTokenResponse;
+import intelink.dto.request.ResetPasswordRequest;
+import intelink.dto.response.*;
 import intelink.models.User;
-import intelink.models.enums.OAuthProvider;
 import intelink.models.enums.UserRole;
-import intelink.services.UserService;
+import intelink.services.OAuthService;
+import intelink.services.interfaces.IUserService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,12 +23,12 @@ import java.util.Optional;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final UserService userService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final IUserService userService;
+    private final OAuthService oAuthService;
 
+    // ========== Register
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) throws MessagingException {
         User user = userService.create(
                 registerRequest.getUsername(),
                 registerRequest.getEmail(),
@@ -45,113 +36,90 @@ public class AuthController {
                 UserRole.USER
         );
 
-        // Tạo token xác thực email (cần inject VerificationTokenService)
-        // VerificationToken token = verificationTokenService.createToken(
-        //     user, TokenType.EMAIL_VERIFICATION, 24
-        // );
-
-        // Gửi email xác thực (cần inject EmailService)
-        // emailService.sendVerificationEmail(user.getEmail(), token.getToken());
-
-        // Trả về response yêu cầu xác thực email
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Registration successful. Please check your email to verify your account.",
-                "email", user.getEmail(),
-                "emailVerified", user.getEmailVerified()
-        ));
+        return ResponseEntity.ok(RegisterResponse.builder()
+                .success(true)
+                .message("Registration successful. Please check your email to verify your account.")
+                .email(user.getEmail())
+                .emailVerified(user.getEmailVerified())
+                .build()
+        );
     }
 
+    // ========== Verify Email
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
+        userService.verifyEmail(token);
+
+        return ResponseEntity.ok(VerifyEmailResponse.builder()
+                .success(true)
+                .message("Email verified successfully")
+                .build()
+        );
+    }
+
+    // ========== Forgot Password
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) throws MessagingException {
+        String email = forgotPasswordRequest.getEmail();
+        userService.forgotPassword(email);
+
+        return ResponseEntity.ok(ForgotPasswordResponse.builder()
+                .success(true)
+                .message("If the email exists, a password reset link has been sent")
+                .build()
+        );
+    }
+
+    // ========== Reset Password
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestParam("token") String token,
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
+    ) {
+        userService.resetPassword(token, resetPasswordRequest);
+
+        return ResponseEntity.ok(ResetPasswordResponse.builder()
+                .success(true)
+                .message("Password reset successfully")
+                .build()
+        );
+    }
+
+    // ========== Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
-
-        Optional<User> userOpt = userService.findByUsername(loginRequest.getUsername());
-        if (userOpt.isEmpty()) {
-            log.warn("User not found: {}", loginRequest.getUsername());
-            throw new BadCredentialsException("Invalid username or password");
-        }
-
-        User user = userOpt.get();
-
-        // Kiểm tra email verification (chỉ cho LOCAL auth provider)
-        if (user.getAuthProvider() == OAuthProvider.LOCAL && !user.getEmailVerified()) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "Please verify your email before logging in",
-                    "emailVerified", false
-            ));
-        }
-
-        // Cập nhật last login
-        userService.updateLastLogin(user.getUsername());
-
-        String token = jwtTokenProvider.generateToken(authentication.getName());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
-        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+        AuthObject obj = userService.login(loginRequest);
 
         return ResponseEntity.ok(AuthResponse.builder()
-                .token(token)
-                .refreshToken(refreshToken)
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole().toString())
-                .expiresIn(expiresIn)
+                .token(obj.getToken())
+                .refreshToken(obj.getRefreshToken())
+                .username(obj.getUser().getUsername())
+                .email(obj.getUser().getEmail())
+                .role(obj.getUser().getRole().toString())
+                .expiresAt(obj.getExpiresAt())
                 .build()
         );
     }
 
+    // ========== Refresh Token
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new BadCredentialsException("Invalid token format");
-        }
-
-        String oldToken = authHeader.substring(7);
-        String username = jwtTokenProvider.getUsernameFromToken(oldToken);
-
-        if (!jwtTokenProvider.validateToken(oldToken, username)) {
-            throw new BadCredentialsException("Invalid or expired token");
-        }
-
-        String token = jwtTokenProvider.generateToken(username);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
-        Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
+        AuthObject obj = userService.refreshToken(authHeader);
 
         return ResponseEntity.ok(AuthResponse.builder()
-                .token(token)
-                .refreshToken(refreshToken)
-                .username(username)
-                .expiresIn(expiresIn)
+                .token(obj.getToken())
+                .refreshToken(obj.getRefreshToken())
+                .username(obj.getUser().getUsername())
+                .expiresAt(obj.getExpiresAt())
                 .build()
         );
     }
 
+    // ========== Get User Profile
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new BadCredentialsException("Invalid token format");
-        }
+        User user = userService.profile(authHeader);
 
-        String token = authHeader.substring(7);
-        String username = jwtTokenProvider.getUsernameFromToken(token);
-
-        if (!jwtTokenProvider.validateToken(token, username)) {
-            throw new BadCredentialsException("Invalid or expired token");
-        }
-
-        Optional<User> userOpt = userService.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            log.warn("User not found: {}", username);
-            throw new BadCredentialsException("User not found");
-        }
-
-        User user = userOpt.get();
         return ResponseEntity.ok(UserProfileResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -168,141 +136,34 @@ public class AuthController {
         );
     }
 
+    // ========== Logout
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
-        try {
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                String username = jwtTokenProvider.getUsernameFromToken(token);
+        userService.logout(authHeader);
 
-                if (jwtTokenProvider.validateToken(token, username)) {
-                    SecurityContextHolder.clearContext();
-                    log.info("User logged out successfully: {}", username);
-                }
-            }
-
-            return ResponseEntity.ok(LogoutResponse.builder()
-                    .success(true)
-                    .message("Logged out successfully")
-                    .build()
-            );
-        } catch (Exception e) {
-            log.error("Error during logout: {}", e.getMessage());
-            return ResponseEntity.ok(LogoutResponse.builder()
-                    .success(true)
-                    .message("Logged out successfully")
-                    .build()
-            );
-        }
+        return ResponseEntity.ok(LogoutResponse.builder()
+                .success(true)
+                .message("Logged out successfully")
+                .build()
+        );
     }
 
-    @PostMapping("/validate")
-    public ResponseEntity<?> validateToken(@Valid @RequestBody ValidateTokenRequest validateRequest) {
-        try {
-            String token = validateRequest.getToken();
-            String username = jwtTokenProvider.getUsernameFromToken(token);
+    // ========== OAuth Login
+    @GetMapping("/oauth/callback")
+    public ResponseEntity<?> oAuthCallback(
+            @RequestParam String token
+    ) {
+        AuthObject authObject = oAuthService.callback(token);
 
-            if (jwtTokenProvider.validateToken(token, username)) {
-                Optional<User> userOpt = userService.findByUsername(username);
-                if (userOpt.isPresent()) {
-                    User user = userOpt.get();
-                    Long expiresIn = jwtTokenProvider.getExpirationTimeFromToken(token);
-
-                    return ResponseEntity.ok(ValidateTokenResponse.builder()
-                            .valid(true)
-                            .username(user.getUsername())
-                            .role(user.getRole().toString())
-                            .expiresIn(expiresIn)
-                            .message("Token is valid")
-                            .build()
-                    );
-                }
-            }
-
-            return ResponseEntity.ok(ValidateTokenResponse.builder()
-                    .valid(false)
-                    .message("Invalid or expired token")
-                    .build()
-            );
-        } catch (Exception e) {
-            log.error("Error validating token: {}", e.getMessage());
-            return ResponseEntity.ok(ValidateTokenResponse.builder()
-                    .valid(false)
-                    .message("Invalid token format")
-                    .build()
-            );
-        }
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(authObject.getToken())
+                .refreshToken(authObject.getRefreshToken())
+                .username(authObject.getUser().getUsername())
+                .email(authObject.getUser().getEmail())
+                .role(authObject.getUser().getRole().toString())
+                .expiresAt(authObject.getExpiresAt())
+                .build()
+        );
     }
 
-    @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@Valid @RequestBody Map<String, String> request) {
-        String token = request.get("token");
-
-        // Cần inject VerificationTokenService
-        // Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.EMAIL_VERIFICATION);
-
-        // if (tokenOpt.isEmpty()) {
-        //     return ResponseEntity.badRequest().body(Map.of(
-        //             "success", false,
-        //             "message", "Invalid or expired verification token"
-        //     ));
-        // }
-
-        // VerificationToken verificationToken = tokenOpt.get();
-        // userService.updateEmailVerified(verificationToken.getUser().getId(), true);
-        // verificationTokenService.markAsUsed(token);
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Email verified successfully"
-        ));
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody Map<String, String> request) {
-        String email = request.get("email");
-
-        Optional<User> userOpt = userService.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            // Không tiết lộ thông tin user có tồn tại hay không
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "If the email exists, a password reset link has been sent"
-            ));
-        }
-
-        // User user = userOpt.get();
-        // VerificationToken token = verificationTokenService.createToken(user, TokenType.PASSWORD_RESET, 1); // 1 hour
-        // emailService.sendPasswordResetEmail(user.getEmail(), token.getToken());
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "If the email exists, a password reset link has been sent"
-        ));
-    }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody Map<String, String> request) {
-        String token = request.get("token");
-        String newPassword = request.get("newPassword");
-
-        // Cần inject VerificationTokenService
-        // Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, TokenType.PASSWORD_RESET);
-
-        // if (tokenOpt.isEmpty()) {
-        //     return ResponseEntity.badRequest().body(Map.of(
-        //             "success", false,
-        //             "message", "Invalid or expired reset token"
-        //     ));
-        // }
-
-        // VerificationToken verificationToken = tokenOpt.get();
-        // userService.changePassword(verificationToken.getUser().getUsername(), newPassword);
-        // verificationTokenService.markAsUsed(token);
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Password reset successfully"
-        ));
-    }
 }

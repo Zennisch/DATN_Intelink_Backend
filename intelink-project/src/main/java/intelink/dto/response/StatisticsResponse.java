@@ -15,7 +15,7 @@ public class StatisticsResponse {
     private String shortCode;
     private String category;
     private List<StatData> data;
-    
+
     @Data
     @Builder
     @NoArgsConstructor

@@ -2,7 +2,6 @@ package intelink.services.interfaces;
 
 import intelink.models.enums.DimensionType;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 public interface IStatisticsService {

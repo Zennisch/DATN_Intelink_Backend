@@ -14,9 +14,9 @@ import java.util.Optional;
 @Repository
 public interface DimensionStatRepository extends JpaRepository<DimensionStat, Long> {
     Optional<DimensionStat> findByShortUrlAndTypeAndValue(ShortUrl shortUrl, DimensionType type, String value);
-    
+
     List<DimensionStat> findByShortUrlAndType(ShortUrl shortUrl, DimensionType type);
-    
+
     @Query("SELECT ds FROM DimensionStat ds WHERE ds.shortUrl = :shortUrl AND ds.type = :type ORDER BY ds.totalClicks DESC")
     List<DimensionStat> findByShortUrlAndTypeOrderByTotalClicksDesc(@Param("shortUrl") ShortUrl shortUrl, @Param("type") DimensionType type);
 }
