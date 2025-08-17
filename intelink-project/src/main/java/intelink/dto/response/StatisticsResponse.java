@@ -15,14 +15,14 @@ public class StatisticsResponse {
     private String shortCode;
     private String category;
     private List<StatData> data;
-    
+    private Long totalClicks;
+
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class StatData {
         private String name;
-        private String time;
         private Long clicks;
         private Double percentage;
     }

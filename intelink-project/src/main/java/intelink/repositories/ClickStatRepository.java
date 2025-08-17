@@ -15,12 +15,15 @@ import java.util.Optional;
 @Repository
 public interface ClickStatRepository extends JpaRepository<ClickStat, Long> {
     Optional<ClickStat> findByShortUrlAndGranularityAndBucket(ShortUrl shortUrl, Granularity granularity, Instant bucket);
-    
+
     List<ClickStat> findByShortUrlAndGranularityOrderByBucketAsc(ShortUrl shortUrl, Granularity granularity);
-    
+
     @Query("SELECT cs FROM ClickStat cs WHERE cs.shortUrl = :shortUrl AND cs.granularity = :granularity AND cs.bucket >= :startTime ORDER BY cs.bucket ASC")
     List<ClickStat> findByShortUrlAndGranularityAndBucketGreaterThanEqualOrderByBucketAsc(
-            @Param("shortUrl") ShortUrl shortUrl, 
-            @Param("granularity") Granularity granularity, 
+            @Param("shortUrl") ShortUrl shortUrl,
+            @Param("granularity") Granularity granularity,
             @Param("startTime") Instant startTime);
+
+    List<ClickStat> findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanOrderByBucketAsc(
+            ShortUrl shortUrl, Granularity granularity, Instant bucketGreaterThanEqual, Instant bucketLessThan);
 }
