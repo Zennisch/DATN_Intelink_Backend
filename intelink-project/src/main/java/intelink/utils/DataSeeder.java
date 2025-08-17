@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -16,8 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-//import org.springframework.stereotype.Component;
-//@Component
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class DataSeeder implements CommandLineRunner {
@@ -71,7 +71,7 @@ public class DataSeeder implements CommandLineRunner {
         createAnalysisResults(shortUrls, 200);
         log.info("Created analysis results");
 
-        createClickLogsAndStats(shortUrls, 10000);
+        createClickLogsAndStats(shortUrls, 50000);
         log.info("Created click logs and stats");
 
         log.info("Data seeding completed successfully!");
@@ -91,8 +91,8 @@ public class DataSeeder implements CommandLineRunner {
                     .emailVerified(random.nextBoolean())
                     .authProvider(random.nextDouble() < 0.7 ? OAuthProvider.LOCAL : getRandomOAuthProvider())
                     .providerUserId(random.nextDouble() < 0.3 ? "provider_" + UUID.randomUUID().toString().substring(0, 8) : null)
-                    .lastLoginAt(getRandomInstantBetween(2021, 2024))
-                    .createdAt(getRandomInstantBetween(2021, 2023))
+                    .lastLoginAt(getRandomInstantBetween(2023, 2024))
+                    .createdAt(getRandomInstantBetween(2023, 2023))
                     .updatedAt(Instant.now())
                     .build();
 
@@ -107,7 +107,7 @@ public class DataSeeder implements CommandLineRunner {
 
         for (int i = 1; i <= count; i++) {
             User randomUser = users.get(random.nextInt(users.size()));
-            Instant createdAt = getRandomInstantBetween(2021, 2024);
+            Instant createdAt = getRandomInstantBetween(2023, 2024);
 
             ShortUrl shortUrl = ShortUrl.builder()
                     .shortCode(generateRandomShortCode())
@@ -134,7 +134,7 @@ public class DataSeeder implements CommandLineRunner {
 
         for (int i = 0; i < count; i++) {
             User randomUser = users.get(random.nextInt(users.size()));
-            Instant createdAt = getRandomInstantBetween(2021, 2024);
+            Instant createdAt = getRandomInstantBetween(2023, 2024);
 
             VerificationToken token = VerificationToken.builder()
                     .token(UUID.randomUUID().toString())
@@ -157,7 +157,7 @@ public class DataSeeder implements CommandLineRunner {
         for (int i = 0; i < count; i++) {
             User randomUser = users.get(random.nextInt(users.size()));
             OAuthProvider provider = getRandomOAuthProvider();
-            Instant createdAt = getRandomInstantBetween(2021, 2024);
+            Instant createdAt = getRandomInstantBetween(2023, 2024);
 
             OAuthAccount account = OAuthAccount.builder()
                     .provider(provider)
@@ -192,7 +192,7 @@ public class DataSeeder implements CommandLineRunner {
                     .platformType(getRandomPlatformType())
                     .cacheDuration(random.nextDouble() < 0.5 ? "3600s" : null)
                     .details(status != AnalysisStatus.SAFE ? "Threat detected: " + getRandomThreatType() : null)
-                    .analyzedAt(getRandomInstantBetween(2021, 2024))
+                    .analyzedAt(getRandomInstantBetween(2023, 2024))
                     .shortUrl(randomShortUrl)
                     .build();
 
@@ -209,7 +209,7 @@ public class DataSeeder implements CommandLineRunner {
 
         for (int i = 0; i < clickLogCount; i++) {
             ShortUrl randomShortUrl = shortUrls.get(random.nextInt(shortUrls.size()));
-            Instant timestamp = getRandomInstantBetween(2021, 2024);
+            Instant timestamp = getRandomInstantBetween(2023, 2024);
             String country = getRandomElement(countries);
             String city = getRandomElement(cities);
             String browser = getRandomElement(browsers);
@@ -253,7 +253,7 @@ public class DataSeeder implements CommandLineRunner {
             createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.OS, os);
             createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.DEVICE_TYPE, deviceType);
 
-            if (i % 1000 == 0) {
+            if (i % clickLogCount == 0) {
                 clickLogRepository.saveAll(clickLogs);
                 clickStatRepository.saveAll(clickStatsMap.values());
                 dimensionStatRepository.saveAll(dimensionStatsMap.values());
