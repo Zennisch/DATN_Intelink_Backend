@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -17,6 +16,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
+//import org.springframework.stereotype.Component;
 //@Component
 @RequiredArgsConstructor
 @Slf4j
@@ -39,10 +39,10 @@ public class DataSeeder implements CommandLineRunner {
     private final List<String> operatingSystems = Arrays.asList("Windows", "macOS", "Linux", "Android", "iOS", "ChromeOS");
     private final List<String> deviceTypes = Arrays.asList("Desktop", "Mobile", "Tablet", "Smart TV", "Game Console");
     private final List<String> userAgents = Arrays.asList(
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
-        "Mozilla/5.0 (Android 14; Mobile; rv:120.0) Gecko/120.0 Firefox/120.0"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
+            "Mozilla/5.0 (Android 14; Mobile; rv:120.0) Gecko/120.0 Firefox/120.0"
     );
     private final List<String> domains = Arrays.asList("google.com", "github.com", "stackoverflow.com", "youtube.com", "facebook.com", "twitter.com", "linkedin.com", "reddit.com", "medium.com", "dev.to");
 
@@ -56,27 +56,21 @@ public class DataSeeder implements CommandLineRunner {
 
         log.info("Starting data seeding...");
 
-        // Create users
         List<User> users = createUsers(100);
         log.info("Created {} users", users.size());
 
-        // Create short URLs
         List<ShortUrl> shortUrls = createShortUrls(users, 500);
         log.info("Created {} short URLs", shortUrls.size());
 
-        // Create verification tokens
         createVerificationTokens(users, 50);
         log.info("Created verification tokens");
 
-        // Create OAuth accounts
         createOAuthAccounts(users, 30);
         log.info("Created OAuth accounts");
 
-        // Create analysis results
         createAnalysisResults(shortUrls, 200);
         log.info("Created analysis results");
 
-        // Create click logs and stats (heavy data)
         createClickLogsAndStats(shortUrls, 10000);
         log.info("Created click logs and stats");
 
@@ -88,19 +82,19 @@ public class DataSeeder implements CommandLineRunner {
 
         for (int i = 1; i <= count; i++) {
             User user = User.builder()
-                .username("user" + String.format("%03d", i))
-                .email("user" + i + "@example.com")
-                .passwordHash(passwordEncoder.encode("password123"))
-                .role(i <= 5 ? UserRole.ADMIN : UserRole.USER)
-                .totalClicks(ThreadLocalRandom.current().nextLong(0, 1000))
-                .totalShortUrls(ThreadLocalRandom.current().nextInt(0, 50))
-                .emailVerified(random.nextBoolean())
-                .authProvider(random.nextDouble() < 0.7 ? OAuthProvider.LOCAL : getRandomOAuthProvider())
-                .providerUserId(random.nextDouble() < 0.3 ? "provider_" + UUID.randomUUID().toString().substring(0, 8) : null)
-                .lastLoginAt(getRandomInstantBetween(2021, 2024))
-                .createdAt(getRandomInstantBetween(2021, 2023))
-                .updatedAt(Instant.now())
-                .build();
+                    .username("user" + String.format("%03d", i))
+                    .email("user" + i + "@example.com")
+                    .passwordHash(passwordEncoder.encode("password123"))
+                    .role(i <= 5 ? UserRole.ADMIN : UserRole.USER)
+                    .totalClicks(ThreadLocalRandom.current().nextLong(0, 1000))
+                    .totalShortUrls(ThreadLocalRandom.current().nextInt(0, 50))
+                    .emailVerified(random.nextBoolean())
+                    .authProvider(random.nextDouble() < 0.7 ? OAuthProvider.LOCAL : getRandomOAuthProvider())
+                    .providerUserId(random.nextDouble() < 0.3 ? "provider_" + UUID.randomUUID().toString().substring(0, 8) : null)
+                    .lastLoginAt(getRandomInstantBetween(2021, 2024))
+                    .createdAt(getRandomInstantBetween(2021, 2023))
+                    .updatedAt(Instant.now())
+                    .build();
 
             users.add(user);
         }
@@ -116,18 +110,18 @@ public class DataSeeder implements CommandLineRunner {
             Instant createdAt = getRandomInstantBetween(2021, 2024);
 
             ShortUrl shortUrl = ShortUrl.builder()
-                .shortCode(generateRandomShortCode())
-                .originalUrl("https://" + getRandomElement(domains) + "/page/" + i)
-                .password(random.nextDouble() < 0.2 ? passwordEncoder.encode("secret123") : null)
-                .description(random.nextDouble() < 0.5 ? "Description for URL " + i : null)
-                .status(getRandomShortUrlStatus())
-                .maxUsage(random.nextDouble() < 0.3 ? ThreadLocalRandom.current().nextLong(10, 1000) : null)
-                .totalClicks(ThreadLocalRandom.current().nextLong(0, 500))
-                .expiresAt(createdAt.plus(ThreadLocalRandom.current().nextLong(30, 365), ChronoUnit.DAYS))
-                .createdAt(createdAt)
-                .updatedAt(getRandomInstantAfter(createdAt))
-                .user(randomUser)
-                .build();
+                    .shortCode(generateRandomShortCode())
+                    .originalUrl("https://" + getRandomElement(domains) + "/page/" + i)
+                    .password(random.nextDouble() < 0.2 ? passwordEncoder.encode("secret123") : null)
+                    .description(random.nextDouble() < 0.5 ? "Description for URL " + i : null)
+                    .status(getRandomShortUrlStatus())
+                    .maxUsage(random.nextDouble() < 0.3 ? ThreadLocalRandom.current().nextLong(10, 1000) : null)
+                    .totalClicks(ThreadLocalRandom.current().nextLong(0, 500))
+                    .expiresAt(createdAt.plus(ThreadLocalRandom.current().nextLong(30, 365), ChronoUnit.DAYS))
+                    .createdAt(createdAt)
+                    .updatedAt(getRandomInstantAfter(createdAt))
+                    .user(randomUser)
+                    .build();
 
             shortUrls.add(shortUrl);
         }
@@ -143,13 +137,13 @@ public class DataSeeder implements CommandLineRunner {
             Instant createdAt = getRandomInstantBetween(2021, 2024);
 
             VerificationToken token = VerificationToken.builder()
-                .token(UUID.randomUUID().toString())
-                .type(getRandomTokenType())
-                .used(random.nextBoolean())
-                .expiresAt(createdAt.plus(24, ChronoUnit.HOURS))
-                .createdAt(createdAt)
-                .user(randomUser)
-                .build();
+                    .token(UUID.randomUUID().toString())
+                    .type(getRandomTokenType())
+                    .used(random.nextBoolean())
+                    .expiresAt(createdAt.plus(24, ChronoUnit.HOURS))
+                    .createdAt(createdAt)
+                    .user(randomUser)
+                    .build();
 
             tokens.add(token);
         }
@@ -166,17 +160,17 @@ public class DataSeeder implements CommandLineRunner {
             Instant createdAt = getRandomInstantBetween(2021, 2024);
 
             OAuthAccount account = OAuthAccount.builder()
-                .provider(provider)
-                .providerUserId("oauth_" + provider.name().toLowerCase() + "_" + i)
-                .providerUsername("oauth_user_" + i)
-                .providerEmail("oauth" + i + "@" + provider.name().toLowerCase() + ".com")
-                .accessToken("access_token_" + UUID.randomUUID().toString())
-                .refreshToken(random.nextDouble() < 0.7 ? "refresh_token_" + UUID.randomUUID().toString() : null)
-                .tokenExpiresAt(createdAt.plus(30, ChronoUnit.DAYS))
-                .createdAt(createdAt)
-                .updatedAt(getRandomInstantAfter(createdAt))
-                .user(randomUser)
-                .build();
+                    .provider(provider)
+                    .providerUserId("oauth_" + provider.name().toLowerCase() + "_" + i)
+                    .providerUsername("oauth_user_" + i)
+                    .providerEmail("oauth" + i + "@" + provider.name().toLowerCase() + ".com")
+                    .accessToken("access_token_" + UUID.randomUUID())
+                    .refreshToken(random.nextDouble() < 0.7 ? "refresh_token_" + UUID.randomUUID() : null)
+                    .tokenExpiresAt(createdAt.plus(30, ChronoUnit.DAYS))
+                    .createdAt(createdAt)
+                    .updatedAt(getRandomInstantAfter(createdAt))
+                    .user(randomUser)
+                    .build();
 
             accounts.add(account);
         }
@@ -192,15 +186,15 @@ public class DataSeeder implements CommandLineRunner {
             AnalysisStatus status = getRandomAnalysisStatus();
 
             AnalysisResult result = AnalysisResult.builder()
-                .status(status)
-                .analysisEngine(random.nextDouble() < 0.8 ? "GOOGLE_SAFE_BROWSING" : "VIRUS_TOTAL")
-                .threatType(status == AnalysisStatus.SAFE ? "NONE" : getRandomThreatType())
-                .platformType(getRandomPlatformType())
-                .cacheDuration(random.nextDouble() < 0.5 ? "3600s" : null)
-                .details(status != AnalysisStatus.SAFE ? "Threat detected: " + getRandomThreatType() : null)
-                .analyzedAt(getRandomInstantBetween(2021, 2024))
-                .shortUrl(randomShortUrl)
-                .build();
+                    .status(status)
+                    .analysisEngine(random.nextDouble() < 0.8 ? "GOOGLE_SAFE_BROWSING" : "VIRUS_TOTAL")
+                    .threatType(status == AnalysisStatus.SAFE ? "NONE" : getRandomThreatType())
+                    .platformType(getRandomPlatformType())
+                    .cacheDuration(random.nextDouble() < 0.5 ? "3600s" : null)
+                    .details(status != AnalysisStatus.SAFE ? "Threat detected: " + getRandomThreatType() : null)
+                    .analyzedAt(getRandomInstantBetween(2021, 2024))
+                    .shortUrl(randomShortUrl)
+                    .build();
 
             results.add(result);
         }
@@ -222,47 +216,43 @@ public class DataSeeder implements CommandLineRunner {
             String os = getRandomElement(operatingSystems);
             String deviceType = getRandomElement(deviceTypes);
 
-            // Create click log
             ClickLog clickLog = ClickLog.builder()
-                .ipVersion(random.nextDouble() < 0.9 ? IpVersion.IPV4 : IpVersion.IPV6)
-                .ipAddress(generateRandomIp())
-                .ipNormalized(generateRandomIp())
-                .subnet(generateRandomSubnet())
-                .userAgent(getRandomElement(userAgents))
-                .referrer(random.nextDouble() < 0.6 ? "https://" + getRandomElement(domains) : null)
-                .country(country)
-                .city(city)
-                .browser(browser)
-                .os(os)
-                .deviceType(deviceType)
-                .timestamp(timestamp)
-                .shortUrl(randomShortUrl)
-                .build();
+                    .ipVersion(random.nextDouble() < 0.9 ? IpVersion.IPV4 : IpVersion.IPV6)
+                    .ipAddress(generateRandomIp())
+                    .ipNormalized(generateRandomIp())
+                    .subnet(generateRandomSubnet())
+                    .userAgent(getRandomElement(userAgents))
+                    .referrer(random.nextDouble() < 0.6 ? "https://" + getRandomElement(domains) : null)
+                    .country(country)
+                    .city(city)
+                    .browser(browser)
+                    .os(os)
+                    .deviceType(deviceType)
+                    .timestamp(timestamp)
+                    .shortUrl(randomShortUrl)
+                    .build();
 
             clickLogs.add(clickLog);
 
-            // Create/update click stats for different granularities
             for (Granularity granularity : Granularity.values()) {
                 Instant bucket = getBucketStart(timestamp, granularity);
                 String statsKey = randomShortUrl.getId() + "_" + granularity + "_" + bucket.toString();
 
                 clickStatsMap.computeIfAbsent(statsKey, k -> ClickStat.builder()
-                    .granularity(granularity)
-                    .bucket(bucket)
-                    .totalClicks(0L)
-                    .shortUrl(randomShortUrl)
-                    .build())
-                    .setTotalClicks(clickStatsMap.get(statsKey).getTotalClicks() + 1);
+                                .granularity(granularity)
+                                .bucket(bucket)
+                                .totalClicks(0L)
+                                .shortUrl(randomShortUrl)
+                                .build())
+                        .setTotalClicks(clickStatsMap.get(statsKey).getTotalClicks() + 1);
             }
 
-            // Create/update dimension stats
             createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.COUNTRY, country);
             createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.CITY, city);
             createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.BROWSER, browser);
             createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.OS, os);
             createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.DEVICE_TYPE, deviceType);
 
-            // Batch save every 1000 records to avoid memory issues
             if (i % 1000 == 0) {
                 clickLogRepository.saveAll(clickLogs);
                 clickStatRepository.saveAll(clickStatsMap.values());
@@ -276,7 +266,6 @@ public class DataSeeder implements CommandLineRunner {
             }
         }
 
-        // Save remaining records
         if (!clickLogs.isEmpty()) {
             clickLogRepository.saveAll(clickLogs);
             clickStatRepository.saveAll(clickStatsMap.values());
@@ -287,15 +276,14 @@ public class DataSeeder implements CommandLineRunner {
     private void createDimensionStat(Map<String, DimensionStat> dimensionStatsMap, ShortUrl shortUrl, DimensionType type, String value) {
         String key = shortUrl.getId() + "_" + type + "_" + value;
         dimensionStatsMap.computeIfAbsent(key, k -> DimensionStat.builder()
-            .type(type)
-            .value(value)
-            .totalClicks(0L)
-            .shortUrl(shortUrl)
-            .build())
-            .setTotalClicks(dimensionStatsMap.get(key).getTotalClicks() + 1);
+                        .type(type)
+                        .value(value)
+                        .totalClicks(0L)
+                        .shortUrl(shortUrl)
+                        .build())
+                .setTotalClicks(dimensionStatsMap.get(key).getTotalClicks() + 1);
     }
 
-    // Helper methods
     private Instant getRandomInstantBetween(int startYear, int endYear) {
         LocalDateTime start = LocalDateTime.of(startYear, 1, 1, 0, 0);
         LocalDateTime end = LocalDateTime.of(endYear, 12, 31, 23, 59);
@@ -331,8 +319,10 @@ public class DataSeeder implements CommandLineRunner {
         return switch (granularity) {
             case HOURLY -> dateTime.withMinute(0).withSecond(0).withNano(0).toInstant(ZoneOffset.UTC);
             case DAILY -> dateTime.withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant(ZoneOffset.UTC);
-            case MONTHLY -> dateTime.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant(ZoneOffset.UTC);
-            case YEARLY -> dateTime.withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant(ZoneOffset.UTC);
+            case MONTHLY ->
+                    dateTime.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant(ZoneOffset.UTC);
+            case YEARLY ->
+                    dateTime.withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant(ZoneOffset.UTC);
         };
     }
 
@@ -347,7 +337,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private ShortUrlStatus getRandomShortUrlStatus() {
         return random.nextDouble() < 0.8 ? ShortUrlStatus.ENABLED :
-               random.nextDouble() < 0.9 ? ShortUrlStatus.DISABLED : ShortUrlStatus.DELETED;
+                random.nextDouble() < 0.9 ? ShortUrlStatus.DISABLED : ShortUrlStatus.DELETED;
     }
 
     private TokenType getRandomTokenType() {
@@ -357,7 +347,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private AnalysisStatus getRandomAnalysisStatus() {
         return random.nextDouble() < 0.7 ? AnalysisStatus.SAFE :
-               random.nextDouble() < 0.9 ? AnalysisStatus.SUSPICIOUS : AnalysisStatus.MALICIOUS;
+                random.nextDouble() < 0.9 ? AnalysisStatus.SUSPICIOUS : AnalysisStatus.MALICIOUS;
     }
 
     private String getRandomThreatType() {

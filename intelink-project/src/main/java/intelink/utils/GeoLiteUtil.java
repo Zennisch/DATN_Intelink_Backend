@@ -2,37 +2,26 @@ package intelink.utils;
 
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 
+@Component
 @Slf4j
 public class GeoLiteUtil {
 
     @Getter
-    private static final DatabaseReader cityDatabaseReader;
+    private static DatabaseReader cityDatabaseReader;
 
-    static {
-        try {
-            ClassPathResource resource = new ClassPathResource("geoLite2/GeoLite2-City.mmdb");
-
-            if (resource.exists()) {
-                InputStream inputStream = resource.getInputStream();
-                cityDatabaseReader = new DatabaseReader.Builder(inputStream).build();
-                log.info("GeoLite2 database loaded successfully from classpath");
-            } else {
-                log.warn("GeoLite2 database not found in classpath, creating empty reader");
-                cityDatabaseReader = null;
-            }
-        } catch (IOException e) {
-            log.error("GeoLiteUtil - Failed to initialize GeoIP database reader: {}", e.getMessage());
-            throw new RuntimeException("GeoLiteUtil - Failed to initialize GeoIP database reader", e);
-        }
-    }
+    @Value("${app.geolite2.database.path}")
+    private String databasePath;
 
     public static String getCountryFromIp(String ip) {
         try {
@@ -57,6 +46,24 @@ public class GeoLiteUtil {
         } catch (Exception e) {
             log.error("GeoLiteUtil.getCityFromIp - Failed to get city for IP {}: {}", ip, e.getMessage());
             return null;
+        }
+    }
+
+    @PostConstruct
+    public void init() {
+        try {
+            ClassPathResource resource = new ClassPathResource(databasePath);
+
+            if (resource.exists()) {
+                InputStream inputStream = resource.getInputStream();
+                cityDatabaseReader = new DatabaseReader.Builder(inputStream).build();
+                log.info("GeoLite2 database loaded successfully from classpath");
+            } else {
+                log.warn("GeoLite2 database not found in classpath, creating empty reader");
+            }
+        } catch (IOException e) {
+            log.error("GeoLiteUtil - Failed to initialize GeoIP database reader: {}", e.getMessage());
+            throw new RuntimeException("GeoLiteUtil - Failed to initialize GeoIP database reader", e);
         }
     }
 

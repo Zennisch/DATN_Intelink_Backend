@@ -15,7 +15,10 @@ public class StatisticsResponse {
     private String shortCode;
     private String category;
     private List<StatData> data;
+<<<<<<< HEAD
     private Long totalClicks;
+=======
+>>>>>>> c082875b64e8f460ed7201794b5021d98d090f60
 
     @Data
     @Builder
