@@ -5,6 +5,7 @@ import intelink.dto.response.TimeStatsResponse;
 import intelink.models.enums.DimensionType;
 import intelink.services.StatisticsService;
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,8 +39,8 @@ public class StatisticsController {
 
     @GetMapping("/{shortCode}/time")
     public ResponseEntity<?> getTimeStats(@PathVariable String shortCode,
-                                                            @RequestParam(required = false) String customFrom,
-                                                            @RequestParam(required = false) String customTo) {
+                                          @RequestParam(required = false) String customFrom,
+                                          @RequestParam(required = false) String customTo) {
         log.info("StatisticsController.getTimeStats: Fetching time stats for shortCode: {}, from: {}, to: {}",
                 shortCode, customFrom, customTo);
         TimeStatsResponse stats = statisticsService.getTimeStats(shortCode, customFrom, customTo);
@@ -54,23 +55,6 @@ public class StatisticsController {
         StatisticsResponse stats = statisticsService.getDimensionStats(shortCode,type);
         return ResponseEntity.ok(stats);
 
-<<<<<<< HEAD
-=======
-        try {
-            DimensionType dimensionType = DimensionType.fromString(type);
-
-            Map<String, Object> stats = statisticsService.getDimensionStats(shortCode, dimensionType);
-            return ResponseEntity.ok(stats);
-
-        } catch (IllegalArgumentException e) {
-            log.error("StatisticsController.getDimensionStats: Invalid dimension type: {}", type);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Invalid dimension type");
-            errorResponse.put("message", e.getMessage());
-            errorResponse.put("providedType", type);
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
->>>>>>> c082875b64e8f460ed7201794b5021d98d090f60
     }
 
     @GetMapping("/{shortCode}/overview")
@@ -83,4 +67,3 @@ public class StatisticsController {
         return ResponseEntity.ok(overview);
     }
 }
-

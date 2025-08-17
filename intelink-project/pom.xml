@@ -122,12 +122,6 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-<<<<<<< HEAD
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>RELEASE</version>
-            <scope>compile</scope>
-=======
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
@@ -138,7 +132,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-authorization-server</artifactId>
->>>>>>> c082875b64e8f460ed7201794b5021d98d090f60
         </dependency>
     </dependencies>
 
