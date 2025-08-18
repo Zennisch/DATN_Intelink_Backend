@@ -1,48 +1,28 @@
 package intelink.dto.response;
 
 import intelink.dto.object.StatsCategory;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TimeStatsResponse {
-    private StatsCategory hourly;
-    private StatsCategory daily;
-    private StatsCategory monthly;
+    private String granularity;
+    private String from;
+    private String to;
+    private long totalClicks;
+    private List<Bucket> buckets;
 
-    // Constructor
-    public TimeStatsResponse(StatsCategory hourly, StatsCategory daily, StatsCategory monthly) {
-        this.hourly = hourly;
-        this.daily = daily;
-        this.monthly = monthly;
-    }
-
-    // Getters and setters
-    public StatsCategory getHourly() {
-        return hourly;
-    }
-
-    public void setHourly(StatsCategory hourly) {
-        this.hourly = hourly;
-    }
-
-    public StatsCategory getDaily() {
-        return daily;
-    }
-
-    public void setDaily(StatsCategory daily) {
-        this.daily = daily;
-    }
-
-    public StatsCategory getMonthly() {
-        return monthly;
-    }
-
-    public void setMonthly(StatsCategory monthly) {
-        this.monthly = monthly;
-    }
-
-    public TimeStatsResponse(StatsCategory hourly) {
-        this.hourly = hourly;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Bucket {
+        private String time; // ISO string
+        private long clicks;
     }
 }
 

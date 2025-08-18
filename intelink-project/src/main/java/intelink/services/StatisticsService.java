@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +35,15 @@ public class StatisticsService implements IStatisticsService {
     private final DimensionStatRepository dimensionStatRepository;
     private final ClickStatRepository clickStatRepository;
     private final ShortUrlService shortUrlService;
+
+    private ChronoUnit getChronoUnit(Granularity granularity) {
+        return switch (granularity) {
+            case HOURLY -> ChronoUnit.HOURS;
+            case DAILY -> ChronoUnit.DAYS;
+            case MONTHLY -> ChronoUnit.MONTHS;
+            case YEARLY -> ChronoUnit.YEARS;
+        };
+    }
 
     @Override
     public Map<String, Object> getDeviceStats(String shortCode) {
@@ -120,80 +131,90 @@ public class StatisticsService implements IStatisticsService {
     }
 
     @Override
-    public TimeStatsResponse getTimeStats(String shortCode, String customFrom, String customTo) {
+    public TimeStatsResponse getTimeStats(String shortCode, String customFrom, String customTo, String granularityStr) {
         ShortUrl shortUrl = shortUrlService.findByShortCode(shortCode)
                 .orElseThrow(() -> new IllegalArgumentException("StatisticsService.getTimeStats: Short code not found: " + shortCode));
 
+        Granularity granularity = granularityStr != null ? Granularity.fromString(granularityStr) : Granularity.HOURLY;
         Instant now = Instant.now();
 
-        // Nếu có customFrom và customTo, trả về một danh mục duy nhất
+        Instant from, to;
+        int bucketCount;
+        switch (granularity) {
+            case HOURLY -> {
+                to = now.truncatedTo(ChronoUnit.HOURS);
+                from = to.minus(23, ChronoUnit.HOURS); // 24 buckets
+                bucketCount = 24;
+            }
+            case DAILY -> {
+                to = now.truncatedTo(ChronoUnit.DAYS);
+                from = to.minus(29, ChronoUnit.DAYS); // 30 buckets
+                bucketCount = 30;
+            }
+            case MONTHLY -> {
+                ZonedDateTime zdt = now.atZone(ZoneId.systemDefault()).withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+                to = zdt.toInstant();
+                from = zdt.minusMonths(11).toInstant(); // 12 buckets
+                bucketCount = 12;
+            }
+            case YEARLY -> {
+                ZonedDateTime zdt = now.atZone(ZoneId.systemDefault()).withDayOfYear(1).truncatedTo(ChronoUnit.DAYS);
+                to = zdt.toInstant();
+                from = zdt.minusYears(9).toInstant(); // 10 buckets, có thể thay đổi
+                bucketCount = 10;
+            }
+            default -> throw new IllegalArgumentException("Unsupported granularity");
+        }
+        ZoneId zoneId = ZoneId.systemDefault();
         if (customFrom != null && customTo != null) {
-            Instant fromInstant = Instant.parse(customFrom);
-            Instant toInstant = Instant.parse(customTo);
-
-            // Lấy dữ liệu thống kê với granularity HOURLY để chi tiết nhất
-            List<ClickStat> stats = clickStatRepository.findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanOrderByBucketAsc(
-                    shortUrl, Granularity.HOURLY, fromInstant, toInstant);
-
-            // Tính tổng số lượt click
-            long totalClicks = stats.stream().mapToLong(ClickStat::getTotalClicks).sum();
-
-            // Tạo danh sách StatEntry với định dạng time và clicks
-            List<StatEntry> statEntries = stats.stream()
-                    .map(stat -> new StatEntry(stat.getBucket().toString(), stat.getTotalClicks()))
-                    .collect(Collectors.toList());
-
-            // Tạo category với tên là khoảng thời gian
-            String categoryName = fromInstant.toString() + " to " + toInstant.toString();
-            StatsCategory category = new StatsCategory(categoryName, totalClicks, statEntries);
-
-            // Trả về TimeStatsResponse với một category duy nhất
-            return new TimeStatsResponse(category);
+            from = Instant.parse(customFrom);
+            to = Instant.parse(customTo);
+            if (granularity == Granularity.MONTHLY) {
+                // Convert to ZonedDateTime for monthly granularity
+                ZonedDateTime zdtFrom = from.atZone(ZoneId.systemDefault());
+                ZonedDateTime zdtTo = to.atZone(ZoneId.systemDefault());
+                bucketCount = (int) ChronoUnit.MONTHS.between(zdtFrom, zdtTo) + 1;
+            } else if (granularity == Granularity.YEARLY) {
+                // Convert to ZonedDateTime for yearly granularity
+                ZonedDateTime zdtFrom = from.atZone(ZoneId.systemDefault());
+                ZonedDateTime zdtTo = to.atZone(ZoneId.systemDefault());
+                bucketCount = (int) ChronoUnit.YEARS.between(zdtFrom, zdtTo) + 1;
+            } else {
+                ChronoUnit unit = getChronoUnit(granularity);
+                bucketCount = (int) unit.between(from, to) + 1;
+            }
         }
 
-        // Nếu không có customFrom hoặc customTo, trả về hourly, daily, monthly
-        Instant to = now;
-
-        // Hourly stats
-        Instant fromHourly = to.minus(24, ChronoUnit.HOURS);
-        List<ClickStat> hourlyStats = clickStatRepository.findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanOrderByBucketAsc(
-                shortUrl, Granularity.HOURLY, fromHourly, to);
-        long totalHourlyClicks = hourlyStats.stream().mapToLong(ClickStat::getTotalClicks).sum();
-        StatsCategory hourly = new StatsCategory(
-                "Hourly (Custom or Last 24h)",
-                totalHourlyClicks,
-                hourlyStats.stream()
-                        .map(stat -> new StatEntry(stat.getBucket().toString(), stat.getTotalClicks()))
-                        .collect(Collectors.toList())
+        List<ClickStat> stats = clickStatRepository.findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanOrderByBucketAsc(
+                shortUrl, granularity, from, to
         );
+        // Map bucket -> clicks
+        Map<Instant, Long> bucketClicks = stats.stream()
+                .collect(Collectors.toMap(ClickStat::getBucket, ClickStat::getTotalClicks));
 
-        // Daily stats
-        Instant fromDaily = to.minus(30, ChronoUnit.DAYS);
-        List<ClickStat> dailyStats = clickStatRepository.findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanOrderByBucketAsc(
-                shortUrl, Granularity.DAILY, fromDaily, to);
-        long totalDailyClicks = dailyStats.stream().mapToLong(ClickStat::getTotalClicks).sum();
-        StatsCategory daily = new StatsCategory(
-                "Daily (Custom or Last 30 days)",
-                totalDailyClicks,
-                dailyStats.stream()
-                        .map(stat -> new StatEntry(stat.getBucket().toString(), stat.getTotalClicks()))
-                        .collect(Collectors.toList())
-        );
+        // Tạo danh sách StatEntry đủ bucket
+        List<TimeStatsResponse.Bucket> buckets = new ArrayList<>();
+        Instant bucket = from;
 
-        // Monthly stats
-        Instant fromMonthly = to.minus(365, ChronoUnit.DAYS);
-        List<ClickStat> monthlyStats = clickStatRepository.findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanOrderByBucketAsc(
-                shortUrl, Granularity.MONTHLY, fromMonthly, to);
-        long totalMonthlyClicks = monthlyStats.stream().mapToLong(ClickStat::getTotalClicks).sum();
-        StatsCategory monthly = new StatsCategory(
-                "Monthly (Custom or Last 12 months)",
-                totalMonthlyClicks,
-                monthlyStats.stream()
-                        .map(stat -> new StatEntry(stat.getBucket().toString(), stat.getTotalClicks()))
-                        .collect(Collectors.toList())
-        );
+        for (int i = 0; i < bucketCount; i++) {
+            long clicks = bucketClicks.getOrDefault(bucket, 0L);
+            buckets.add(new TimeStatsResponse.Bucket(bucket.toString(), clicks));
+            switch (granularity) {
+                case HOURLY -> bucket = bucket.plus(1, ChronoUnit.HOURS);
+                case DAILY -> bucket = bucket.plus(1, ChronoUnit.DAYS);
+                case MONTHLY -> {
+                    ZonedDateTime zdt = bucket.atZone(zoneId).plusMonths(1);
+                    bucket = zdt.toInstant();
+                }
+                case YEARLY -> {
+                    ZonedDateTime zdt = bucket.atZone(zoneId).plusYears(1);
+                    bucket = zdt.toInstant();
+                }
+            }
+        }
 
-        return new TimeStatsResponse(hourly, daily, monthly);
+        long totalClicks = buckets.stream().mapToLong(TimeStatsResponse.Bucket::getClicks).sum();
+        return new TimeStatsResponse(granularity.name(), from.toString(), to.toString(), totalClicks, buckets);
     }
 
     @Override
@@ -266,4 +287,6 @@ public class StatisticsService implements IStatisticsService {
             );
         };
     }
+
+
 }

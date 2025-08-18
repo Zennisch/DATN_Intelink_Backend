@@ -13,7 +13,7 @@ public interface IStatisticsService {
 
     Map<String, Object> getLocationStats(String shortCode);
 
-    TimeStatsResponse getTimeStats(String shortCode, String customFrom, String customTo);
+    TimeStatsResponse getTimeStats(String shortCode, String customFrom, String customTo, String granularityStr);
 
     StatisticsResponse getDimensionStats(String shortCode, String type);
 }

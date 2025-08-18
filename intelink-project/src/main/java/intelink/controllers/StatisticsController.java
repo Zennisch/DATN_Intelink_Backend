@@ -40,10 +40,11 @@ public class StatisticsController {
     @GetMapping("/{shortCode}/time")
     public ResponseEntity<?> getTimeStats(@PathVariable String shortCode,
                                           @RequestParam(required = false) String customFrom,
-                                          @RequestParam(required = false) String customTo) {
-        log.info("StatisticsController.getTimeStats: Fetching time stats for shortCode: {}, from: {}, to: {}",
-                shortCode, customFrom, customTo);
-        TimeStatsResponse stats = statisticsService.getTimeStats(shortCode, customFrom, customTo);
+                                          @RequestParam(required = false) String customTo,
+                                          @RequestParam(required = false, defaultValue = "HOURLY") String granularity) {
+        log.info("StatisticsController.getTimeStats: Fetching time stats for shortCode: {}, from: {}, to: {}, granularity: {}",
+                shortCode, customFrom, customTo, granularity);
+        TimeStatsResponse stats = statisticsService.getTimeStats(shortCode, customFrom, customTo, granularity);
         return ResponseEntity.ok(stats);
     }
 
