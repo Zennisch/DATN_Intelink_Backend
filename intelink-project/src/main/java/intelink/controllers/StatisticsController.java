@@ -4,6 +4,7 @@ import intelink.dto.response.StatisticsResponse;
 import intelink.dto.response.TimeStatsResponse;
 import intelink.models.enums.DimensionType;
 import intelink.services.StatisticsService;
+import intelink.services.interfaces.IStatisticsService;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/statistics")
 public class StatisticsController {
 
-    private final StatisticsService statisticsService;
+    private final IStatisticsService statisticsService;
 
     @GetMapping("/{shortCode}/device")
     public ResponseEntity<Map<String, Object>> getDeviceStats(@PathVariable String shortCode) {
