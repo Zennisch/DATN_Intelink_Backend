@@ -20,4 +20,6 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
     void incrementTotalClicks(@Param("shortCode") String shortCode);
 
     Page<ShortUrl> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    
+    Page<ShortUrl> findByUserId(Long userId, Pageable pageable);
 }

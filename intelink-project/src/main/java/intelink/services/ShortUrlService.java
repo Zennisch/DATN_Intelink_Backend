@@ -106,7 +106,7 @@ public class ShortUrlService implements IShortUrlService {
         shortUrlRepository.save(shortUrl);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void disableShortUrl(Long userId, String shortCode) {
         Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
         if (shortUrlOpt.isEmpty() || !shortUrlOpt.get().getUser().getId().equals(userId)) {
@@ -118,7 +118,7 @@ public class ShortUrlService implements IShortUrlService {
         shortUrlRepository.save(shortUrl);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void deleteShortUrl(Long userId, String shortCode) {
         Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
         if (shortUrlOpt.isEmpty() || !shortUrlOpt.get().getUser().getId().equals(userId)) {
@@ -144,6 +144,12 @@ public class ShortUrlService implements IShortUrlService {
     }
 
     @Transactional(readOnly = true)
+    public Page<ShortUrl> getUserShortUrlsWithSorting(Long userId, Pageable pageable) {
+        log.debug("ShortUrlService.getUserShortUrlsWithSorting: Fetching short URLs for user ID: {} with custom sorting", userId);
+        return shortUrlRepository.findByUserId(userId, pageable);
+    }
+
+    @Transactional
     public void incrementTotalClicks(String shortCode) {
         log.debug("ShortUrlService.incrementTotalClicks: Incrementing total clicks for short code: {}", shortCode);
         shortUrlRepository.incrementTotalClicks(shortCode);
@@ -171,5 +177,68 @@ public class ShortUrlService implements IShortUrlService {
         }
 
         return true;
+    }
+
+    @Transactional
+    public ShortUrl updateShortUrl(Long userId, String shortCode, String description, Long maxUsage, Integer availableDays) {
+        Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
+        if (shortUrlOpt.isEmpty() || !shortUrlOpt.get().getUser().getId().equals(userId)) {
+            log.warn("ShortUrlService.updateShortUrl: Short URL with code {} not found for user ID {}", shortCode, userId);
+            throw new IllegalArgumentException("Short URL not found or does not belong to the user");
+        }
+        
+        ShortUrl shortUrl = shortUrlOpt.get();
+        
+        if (description != null) {
+            shortUrl.setDescription(description);
+        }
+        
+        if (maxUsage != null) {
+            shortUrl.setMaxUsage(maxUsage);
+        }
+        
+        if (availableDays != null) {
+            Instant newExpiresAt = Instant.now().plusSeconds(availableDays * 24 * 60 * 60);
+            shortUrl.setExpiresAt(newExpiresAt);
+        }
+        
+        return shortUrlRepository.save(shortUrl);
+    }
+
+    @Transactional
+    public ShortUrl updatePassword(Long userId, String shortCode, String newPassword, String currentPassword) {
+        Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
+        if (shortUrlOpt.isEmpty() || !shortUrlOpt.get().getUser().getId().equals(userId)) {
+            log.warn("ShortUrlService.updatePassword: Short URL with code {} not found for user ID {}", shortCode, userId);
+            throw new IllegalArgumentException("Short URL not found or does not belong to the user");
+        }
+        
+        ShortUrl shortUrl = shortUrlOpt.get();
+        
+        // Verify current password if URL already has a password
+        if (shortUrl.getPassword() != null) {
+            if (currentPassword == null || !passwordEncoder.matches(currentPassword, shortUrl.getPassword())) {
+                throw new IllegalArgumentException("Current password is incorrect");
+            }
+        }
+        
+        // Set new password
+        if (newPassword != null && !newPassword.trim().isEmpty()) {
+            shortUrl.setPassword(passwordEncoder.encode(newPassword));
+        } else {
+            shortUrl.setPassword(null); // Remove password
+        }
+        
+        return shortUrlRepository.save(shortUrl);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ShortUrl> findByShortCodeAndUserId(String shortCode, Long userId) {
+        log.debug("ShortUrlService.findByShortCodeAndUserId: Finding short URL with code: {} for user: {}", shortCode, userId);
+        Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
+        if (shortUrlOpt.isPresent() && shortUrlOpt.get().getUser().getId().equals(userId)) {
+            return shortUrlOpt;
+        }
+        return Optional.empty();
     }
 }
