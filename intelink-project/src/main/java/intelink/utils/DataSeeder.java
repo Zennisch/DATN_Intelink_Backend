@@ -23,6 +23,9 @@ public class DataSeeder implements CommandLineRunner {
     private final SecurityDataSeeder securityDataSeeder;
     private final AnalysisDataSeeder analysisDataSeeder;
     private final ClickDataSeeder clickDataSeeder;
+    private final PremiumDataSeeder premiumDataSeeder;
+    private final ApiKeyDataSeeder apiKeyDataSeeder;
+    private final CustomDomainDataSeeder customDomainDataSeeder;
 
     @Override
     @Transactional
@@ -49,6 +52,17 @@ public class DataSeeder implements CommandLineRunner {
 
         clickDataSeeder.createClickLogsAndStats(shortUrls, 50000);
         log.info("Created click logs and statistics");
+
+        apiKeyDataSeeder.createApiKeys(users, 40);
+        log.info("Created API keys");
+
+        customDomainDataSeeder.createCustomDomains(users, 25);
+        log.info("Created custom domains");
+
+        var premiumPlans = premiumDataSeeder.createPremiumPlans();
+        var payments = premiumDataSeeder.createPayments(users, 80);
+        premiumDataSeeder.createPremiumSubscriptions(users, premiumPlans, payments, 30);
+        log.info("Created premium data");
 
         log.info("Data seeding completed successfully!");
     }

@@ -1,0 +1,16 @@
+package intelink.repositories;
+
+import intelink.models.PremiumPlan;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface PremiumPlanRepository extends JpaRepository<PremiumPlan, Long> {
+    
+    List<PremiumPlan> findByActiveTrue();
+    
+    PremiumPlan findByName(String name);
+    
+}
