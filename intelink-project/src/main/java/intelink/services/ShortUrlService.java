@@ -241,4 +241,18 @@ public class ShortUrlService implements IShortUrlService {
         }
         return Optional.empty();
     }
+
+    @Transactional(readOnly = true)
+    public Boolean unlockUrl(String shortCode, String password) {
+        log.debug("ShortUrlService.unlockUrl: Attempting to unlock URL with code: {}", shortCode);
+        Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
+        
+        if (shortUrlOpt.isEmpty()) {
+            log.warn("ShortUrlService.unlockUrl: Short URL with code {} not found", shortCode);
+            return false;
+        }
+        
+        ShortUrl shortUrl = shortUrlOpt.get();
+        return isUrlAccessible(shortUrl, password);
+    }
 }
