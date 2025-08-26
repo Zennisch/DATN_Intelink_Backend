@@ -1,13 +1,19 @@
 package intelink.controllers;
 
+import intelink.dto.response.StatisticsResponse;
+import intelink.dto.response.TimeStatsResponse;
 import intelink.models.enums.DimensionType;
 import intelink.services.StatisticsService;
+import intelink.services.interfaces.IStatisticsService;
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -16,7 +22,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/statistics")
 public class StatisticsController {
 
-    private final StatisticsService statisticsService;
+    private final IStatisticsService statisticsService;
 
     @GetMapping("/{shortCode}/device")
     public ResponseEntity<Map<String, Object>> getDeviceStats(@PathVariable String shortCode) {
@@ -33,9 +39,13 @@ public class StatisticsController {
     }
 
     @GetMapping("/{shortCode}/time")
-    public ResponseEntity<Map<String, Object>> getTimeStats(@PathVariable String shortCode) {
-        log.info("StatisticsController.getTimeStats: Getting time stats for short code: {}", shortCode);
-        Map<String, Object> stats = statisticsService.getTimeStats(shortCode);
+    public ResponseEntity<?> getTimeStats(@PathVariable String shortCode,
+                                          @RequestParam(required = false) String customFrom,
+                                          @RequestParam(required = false) String customTo,
+                                          @RequestParam(required = false, defaultValue = "HOURLY") String granularity) {
+        log.info("StatisticsController.getTimeStats: Fetching time stats for shortCode: {}, from: {}, to: {}, granularity: {}",
+                shortCode, customFrom, customTo, granularity);
+        TimeStatsResponse stats = statisticsService.getTimeStats(shortCode, customFrom, customTo, granularity);
         return ResponseEntity.ok(stats);
     }
 
@@ -44,21 +54,9 @@ public class StatisticsController {
             @PathVariable String shortCode,
             @RequestParam String type) {
         log.info("StatisticsController.getDimensionStats: Getting {} dimension stats for short code: {}", type, shortCode);
+        StatisticsResponse stats = statisticsService.getDimensionStats(shortCode,type);
+        return ResponseEntity.ok(stats);
 
-        try {
-            DimensionType dimensionType = DimensionType.fromString(type);
-
-            Map<String, Object> stats = statisticsService.getDimensionStats(shortCode, dimensionType);
-            return ResponseEntity.ok(stats);
-
-        } catch (IllegalArgumentException e) {
-            log.error("StatisticsController.getDimensionStats: Invalid dimension type: {}", type);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Invalid dimension type");
-            errorResponse.put("message", e.getMessage());
-            errorResponse.put("providedType", type);
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
     }
 
     @GetMapping("/{shortCode}/overview")
@@ -67,8 +65,7 @@ public class StatisticsController {
         Map<String, Object> overview = new HashMap<>();
         overview.put("device", statisticsService.getDeviceStats(shortCode));
         overview.put("location", statisticsService.getLocationStats(shortCode));
-        overview.put("time", statisticsService.getTimeStats(shortCode));
+//        overview.put("time", statisticsService.getTimeStats(shortCode));
         return ResponseEntity.ok(overview);
     }
 }
-
