@@ -58,7 +58,7 @@ public class User {
 
     @Builder.Default
     @Column(name = "max_short_urls", nullable = false)
-    private Integer maxShortUrls = 10; // Default limit for free users
+    private Integer maxShortUrls = 10;
 
     @Builder.Default
     @Column(name = "custom_domain_enabled", nullable = false)

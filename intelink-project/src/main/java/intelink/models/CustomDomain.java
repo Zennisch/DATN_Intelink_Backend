@@ -1,6 +1,7 @@
 package intelink.models;
 
 import intelink.models.enums.DomainStatus;
+import intelink.models.enums.VerificationMethod;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,10 +31,10 @@ public class CustomDomain {
     private UUID id;
 
     @Column(name = "domain", nullable = false, unique = true, length = 255)
-    private String domain; // go.mycompany.com
+    private String domain;
 
     @Column(name = "subdomain", nullable = true, length = 100)
-    private String subdomain; // "go" (optional)
+    private String subdomain;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -41,11 +42,12 @@ public class CustomDomain {
     private DomainStatus status = DomainStatus.PENDING_VERIFICATION;
 
     @Column(name = "verification_token", nullable = false)
-    private String verificationToken; // Random token for verification
+    private String verificationToken;
 
-    @Column(name = "verification_method", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_method", nullable = false)
     @Builder.Default
-    private String verificationMethod = "TXT_RECORD"; // TXT, CNAME, HTML
+    private VerificationMethod verificationMethod = VerificationMethod.TXT_RECORD;
 
     @Builder.Default
     @Column(name = "verified", nullable = false)

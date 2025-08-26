@@ -9,6 +9,7 @@ import java.time.Instant;
 @Entity
 @Table(name = "short_urls", indexes = {
         @Index(name = "idx_short_urls_short_code", columnList = "short_code", unique = true),
+        @Index(name = "idx_short_urls_alias", columnList = "alias"),
         @Index(name = "idx_short_urls_user", columnList = "user_id"),
         @Index(name = "idx_short_urls_status", columnList = "status"),
         @Index(name = "idx_short_urls_expires_at", columnList = "expires_at"),
@@ -32,6 +33,9 @@ public class ShortUrl {
 
     @Column(name = "short_code", nullable = false, unique = true)
     private String shortCode;
+
+    @Column(name = "alias", nullable = true, length = 100)
+    private String alias;
 
     @Column(name = "original_url", nullable = false, columnDefinition = "TEXT")
     private String originalUrl;
@@ -76,7 +80,6 @@ public class ShortUrl {
     @ToString.Exclude
     private User user;
 
-    // Custom domain support for premium users
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "custom_domain_id", nullable = true)
     @ToString.Exclude
@@ -118,13 +121,6 @@ public class ShortUrl {
     public void restore() {
         this.deletedAt = null;
         this.deletedBy = null;
-    }
-
-    public String getFullUrl() {
-        if (customDomain != null && customDomain.isVerified()) {
-            return "https://" + customDomain.getDomain() + "/" + shortCode;
-        }
-        return "https://intelink.com/" + shortCode; // Default domain
     }
 
 }

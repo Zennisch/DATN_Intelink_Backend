@@ -29,17 +29,17 @@ public class ApiKey {
     private UUID id;
 
     @Column(name = "name", nullable = false, length = 100)
-    private String name; // "Marketing Team API"
+    private String name;
 
     @Column(name = "key_hash", nullable = false, unique = true, length = 255)
-    private String keyHash; // Hashed version of API key
+    private String keyHash;
 
     @Column(name = "key_prefix", nullable = false, length = 20)
-    private String keyPrefix; // First 8 chars for display: "il_1234..."
+    private String keyPrefix;
 
     @Builder.Default
     @Column(name = "rate_limit_per_hour", nullable = false)
-    private Integer rateLimitPerHour = 1000; // Premium: 1000/hour vs Free: 100/hour
+    private Integer rateLimitPerHour = 1000;
 
     @Builder.Default
     @Column(name = "active", nullable = false)
