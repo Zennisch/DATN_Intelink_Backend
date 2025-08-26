@@ -29,7 +29,7 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     @Transactional
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (userRepository.count() > 0) {
             log.info("Data already exists, skipping seeding");
             return;
@@ -60,7 +60,7 @@ public class DataSeeder implements CommandLineRunner {
         log.info("Created custom domains");
 
         var premiumPlans = premiumDataSeeder.createPremiumPlans();
-        var payments = premiumDataSeeder.createPayments(users, 80);
+        var payments = premiumDataSeeder.createPayments(users, premiumPlans, 80);
         premiumDataSeeder.createPremiumSubscriptions(users, premiumPlans, payments, 30);
         log.info("Created premium data");
 

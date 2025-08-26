@@ -77,7 +77,7 @@ public class PremiumDataSeeder {
         return premiumPlanRepository.saveAll(plans);
     }
 
-    public List<Payment> createPayments(List<User> users, int count) {
+    public List<Payment> createPayments(List<User> users, List<PremiumPlan> plans, int count) {
         log.info("Creating {} payments...", count);
         List<Payment> payments = new ArrayList<>();
 
@@ -86,21 +86,24 @@ public class PremiumDataSeeder {
 
         for (int i = 0; i < count; i++) {
             User randomUser = utils.getRandomElement(users);
+            PremiumPlan randomPlan = utils.getRandomElement(plans);
             Instant createdAt = utils.getRandomInstantBetween(2023, 2024);
 
             Payment payment = Payment.builder()
                     .transactionId("TXN_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                    .amount(new BigDecimal(utils.getRandom().nextInt(400) + 99).multiply(new BigDecimal("1000")))
+                    .amount(randomPlan.getPrice())
                     .currency("VND")
                     .paymentMethod(utils.getRandomElement(List.of(methods)))
                     .status(utils.getRandomElement(List.of(statuses)))
                     .paymentGatewayReference("GW_" + UUID.randomUUID().toString().substring(0, 12))
-                    .description("Premium subscription payment")
-                    .metadata("{\"user_id\": " + randomUser.getId() + ", \"plan\": \"premium\"}")
+                    .description("Premium subscription payment for " + randomPlan.getName())
+                    .metadata("{\"user_id\": " + randomUser.getId() + ", \"plan\": \"" + randomPlan.getName() + "\"}")
                     .processedAt(utils.getRandom().nextDouble() < 0.8 ? 
                         createdAt.plus(utils.getRandom().nextInt(60), ChronoUnit.MINUTES) : null)
                     .createdAt(createdAt)
                     .updatedAt(utils.getRandomInstantAfter(createdAt))
+                    .user(randomUser)
+                    .premiumPlan(randomPlan)
                     .build();
 
             payments.add(payment);
