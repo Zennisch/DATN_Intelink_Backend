@@ -53,6 +53,25 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
+    @Column(name = "premium_expires_at", nullable = true)
+    private Instant premiumExpiresAt;
+
+    @Builder.Default
+    @Column(name = "max_short_urls", nullable = false)
+    private Integer maxShortUrls = 10; // Default limit for free users
+
+    @Builder.Default
+    @Column(name = "custom_domain_enabled", nullable = false)
+    private Boolean customDomainEnabled = false;
+
+    @Builder.Default
+    @Column(name = "analytics_enabled", nullable = false)
+    private Boolean analyticsEnabled = false;
+
+    @Builder.Default
+    @Column(name = "api_access_enabled", nullable = false)
+    private Boolean apiAccessEnabled = false;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", nullable = false)
     @Builder.Default
@@ -79,6 +98,17 @@ public class User {
     @PreUpdate
     private void onUpdate() {
         this.updatedAt = Instant.now();
+    }
+
+    public boolean isPremiumActive() {
+        return role == UserRole.PREMIUM && 
+               premiumExpiresAt != null && 
+               Instant.now().isBefore(premiumExpiresAt);
+    }
+
+    public boolean isPremiumExpired() {
+        return role == UserRole.PREMIUM && 
+               (premiumExpiresAt == null || Instant.now().isAfter(premiumExpiresAt));
     }
 
 }
