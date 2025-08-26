@@ -126,7 +126,7 @@ public class ShortUrlService implements IShortUrlService {
             throw new IllegalArgumentException("Short URL not found or does not belong to the user");
         }
         ShortUrl shortUrl = shortUrlOpt.get();
-        shortUrl.setStatus(ShortUrlStatus.DELETED);
+        // shortUrl.setStatus(ShortUrlStatus.DELETED);
         shortUrlRepository.save(shortUrl);
         userService.decrementTotalShortUrls(userId);
     }
@@ -157,10 +157,10 @@ public class ShortUrlService implements IShortUrlService {
 
     @Transactional
     public Boolean isUrlAccessible(ShortUrl shortUrl, String password) {
-        if (shortUrl.getStatus() == ShortUrlStatus.DELETED || shortUrl.getStatus() == ShortUrlStatus.DISABLED) {
-            log.warn("ShortUrlService.isUrlAccessible: URL with code {} is deleted or disabled", shortUrl.getShortCode());
-            return false;
-        }
+        // if (shortUrl.getStatus() == ShortUrlStatus.DELETED || shortUrl.getStatus() == ShortUrlStatus.DISABLED) {
+        //     log.warn("ShortUrlService.isUrlAccessible: URL with code {} is deleted or disabled", shortUrl.getShortCode());
+        //     return false;
+        // }
 
         if (shortUrl.getExpiresAt() != null && Instant.now().isAfter(shortUrl.getExpiresAt())) {
             log.warn("ShortUrlService.isUrlAccessible: URL with code {} has expired", shortUrl.getShortCode());

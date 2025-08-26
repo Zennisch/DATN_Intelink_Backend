@@ -1,7 +1,7 @@
 package intelink.models.enums;
 
 public enum ShortUrlStatus {
-    ENABLED, DISABLED, DELETED;
+    ENABLED, DISABLED;
 
     public static ShortUrlStatus fromString(String status) {
         try {

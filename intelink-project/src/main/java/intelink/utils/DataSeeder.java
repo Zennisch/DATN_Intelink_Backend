@@ -114,7 +114,7 @@ public class DataSeeder implements CommandLineRunner {
                     .originalUrl("https://" + getRandomElement(domains) + "/page/" + i)
                     .password(random.nextDouble() < 0.2 ? passwordEncoder.encode("secret123") : null)
                     .description(random.nextDouble() < 0.5 ? "Description for URL " + i : null)
-                    .status(getRandomShortUrlStatus())
+                    // .status(getRandomShortUrlStatus())
                     .maxUsage(random.nextDouble() < 0.3 ? ThreadLocalRandom.current().nextLong(10, 1000) : null)
                     .totalClicks(ThreadLocalRandom.current().nextLong(0, 500))
                     .expiresAt(createdAt.plus(ThreadLocalRandom.current().nextLong(30, 365), ChronoUnit.DAYS))
@@ -335,10 +335,10 @@ public class DataSeeder implements CommandLineRunner {
         return providers[random.nextInt(providers.length)];
     }
 
-    private ShortUrlStatus getRandomShortUrlStatus() {
-        return random.nextDouble() < 0.8 ? ShortUrlStatus.ENABLED :
-                random.nextDouble() < 0.9 ? ShortUrlStatus.DISABLED : ShortUrlStatus.DELETED;
-    }
+    // private ShortUrlStatus getRandomShortUrlStatus() {
+    //     return random.nextDouble() < 0.8 ? ShortUrlStatus.ENABLED :
+    //             random.nextDouble() < 0.9 ? ShortUrlStatus.DISABLED : ShortUrlStatus.DELETED;
+    // }
 
     private TokenType getRandomTokenType() {
         TokenType[] types = TokenType.values();

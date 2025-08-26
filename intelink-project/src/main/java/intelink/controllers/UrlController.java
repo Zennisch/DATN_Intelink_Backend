@@ -54,9 +54,9 @@ public class UrlController {
 
         User user = userOpt.get();
         ShortUrl shortUrl = shortUrlService.create(user, request);
-        if (shortUrl.getStatus() == ShortUrlStatus.DELETED) {
-            throw new IllegalArgumentException("The URL is unsafe and has been deleted");
-        }
+        // if (shortUrl.getStatus() == ShortUrlStatus.DELETED) {
+        //     throw new IllegalArgumentException("The URL is unsafe and has been deleted");
+        // }
         CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, accessUrl);
         return ResponseEntity.ok(response);
     }
