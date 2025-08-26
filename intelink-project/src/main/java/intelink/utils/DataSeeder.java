@@ -3,7 +3,7 @@ package intelink.utils;
 import intelink.models.ShortUrl;
 import intelink.models.User;
 import intelink.repositories.UserRepository;
-import intelink.utils.dataseeding.*;
+import intelink.utils.seeder.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

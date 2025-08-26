@@ -1,4 +1,4 @@
-package intelink.utils.dataseeding;
+package intelink.utils.seeder;
 
 import intelink.models.OAuthAccount;
 import intelink.models.User;

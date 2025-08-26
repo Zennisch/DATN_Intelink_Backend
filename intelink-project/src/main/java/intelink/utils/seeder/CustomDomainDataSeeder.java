@@ -1,4 +1,4 @@
-package intelink.utils.dataseeding;
+package intelink.utils.seeder;
 
 import intelink.models.CustomDomain;
 import intelink.models.User;

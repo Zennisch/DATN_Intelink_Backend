@@ -1,4 +1,4 @@
-package intelink.utils.dataseeding;
+package intelink.utils.seeder;
 
 import intelink.models.AnalysisResult;
 import intelink.models.ShortUrl;
