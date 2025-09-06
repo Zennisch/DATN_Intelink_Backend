@@ -1,0 +1,13 @@
+package intelink.models.news.enums;
+
+public enum ShortUrlStatus {
+    ENABLED, DISABLED;
+
+    public static ShortUrlStatus fromString(String status) {
+        try {
+            return ShortUrlStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid short URL status: " + status);
+        }
+    }
+}

@@ -11,11 +11,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Entity
-@Table(name = "subscription_plans", indexes = {
-        @Index(name = "idx_subscription_plans_type", columnList = "type"),
-        @Index(name = "idx_subscription_plans_active", columnList = "active"),
-        @Index(name = "idx_subscription_plans_active_type", columnList = "active, type")
-})
+@Table(name = "subscription_plans")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -67,7 +63,7 @@ public class SubscriptionPlan {
     @Column(name = "api_access_enabled", nullable = false)
     private Boolean apiAccessEnabled;
 
-    // Configuration group
+    // Audit group
     @Builder.Default
     @Column(name = "active", nullable = false)
     private Boolean active = true;

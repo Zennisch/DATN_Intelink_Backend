@@ -9,13 +9,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subscriptions", indexes = {
-        @Index(name = "idx_subscriptions_user_id", columnList = "user_id"),
-        @Index(name = "idx_subscriptions_status", columnList = "status"),
-        @Index(name = "idx_subscriptions_expires_at", columnList = "expires_at"),
-        @Index(name = "idx_subscriptions_user_status", columnList = "user_id, status"),
-        @Index(name = "idx_subscriptions_payment_id", columnList = "payment_id")
-})
+@Table(name = "subscriptions")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -57,7 +51,7 @@ public class Subscription {
     @Column(name = "status", nullable = false, length = 16)
     private SubscriptionStatus status;
 
-    // Configuration group
+    // Audit group
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

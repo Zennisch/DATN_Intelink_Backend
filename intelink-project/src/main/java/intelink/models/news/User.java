@@ -13,12 +13,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Entity
-@Table(name = "users", indexes = {
-        @Index(name = "idx_users_username", columnList = "username"),
-        @Index(name = "idx_users_email", columnList = "email"),
-        @Index(name = "idx_users_role", columnList = "role"),
-        @Index(name = "idx_users_status", columnList = "status")
-})
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -92,7 +87,7 @@ public class User {
     @Builder.Default
     private Long totalClicks = 0L;
 
-    // Configuration group
+    // Audit group
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
