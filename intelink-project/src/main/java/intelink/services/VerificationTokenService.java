@@ -2,7 +2,7 @@ package intelink.services;
 
 import intelink.models.User;
 import intelink.models.VerificationToken;
-import intelink.models.enums.TokenType;
+import intelink.models.enums.UserVerificationTokenType;
 import intelink.repositories.VerificationTokenRepository;
 import intelink.services.interfaces.IVerificationTokenService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class VerificationTokenService implements IVerificationTokenService {
 
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public VerificationToken create(User user, TokenType tokenType, Integer lifetimeInHours) {
+    public VerificationToken create(User user, UserVerificationTokenType tokenType, Integer lifetimeInHours) {
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
@@ -38,7 +38,7 @@ public class VerificationTokenService implements IVerificationTokenService {
         return verificationToken;
     }
 
-    public Optional<VerificationToken> findValidToken(String token, TokenType tokenType) {
+    public Optional<VerificationToken> findValidToken(String token, UserVerificationTokenType tokenType) {
         Instant now = Instant.now();
         return verificationTokenRepository.findByTokenAndTypeAndExpiresAtAfter(token, tokenType, now)
                 .filter(verificationToken -> verificationToken.getExpiresAt().isAfter(now));
