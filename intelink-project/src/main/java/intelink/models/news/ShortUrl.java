@@ -1,5 +1,6 @@
 package intelink.models.news;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.news.enums.ShortUrlStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,6 +28,7 @@ public class ShortUrl {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude
+    @JsonIgnore
     private User user;
 
     // Information group

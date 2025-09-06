@@ -1,5 +1,6 @@
 package intelink.models.news;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.news.enums.UserProvider;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,11 +26,17 @@ public class OAuthAccount {
     @EqualsAndHashCode.Include
     private UUID id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @JsonIgnore
+    private User user;
+
+    // Information group
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", nullable = false)
     private UserProvider provider;
 
-    // Information group
     @Column(name = "provider_user_id", nullable = false)
     private String providerUserId;
 

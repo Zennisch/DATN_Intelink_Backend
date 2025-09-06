@@ -1,5 +1,6 @@
 package intelink.models.news;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.news.enums.ShortUrlAnalysisEngine;
 import intelink.models.news.enums.ShortUrlAnalysisPlatformType;
 import intelink.models.news.enums.ShortUrlAnalysisStatus;
@@ -31,6 +32,7 @@ public class ShortUrlAnalysisResult {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_url_id", nullable = false)
     @ToString.Exclude
+    @JsonIgnore
     private ShortUrl shortUrl;
 
     // Status group

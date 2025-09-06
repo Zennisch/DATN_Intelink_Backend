@@ -1,5 +1,6 @@
 package intelink.models.news;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.news.enums.IpVersion;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,6 +29,7 @@ public class ClickLog {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_url_id", nullable = false)
     @ToString.Exclude
+    @JsonIgnore
     private ShortUrl shortUrl;
 
     // Attribute group

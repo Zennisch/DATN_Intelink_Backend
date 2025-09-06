@@ -1,14 +1,14 @@
 package intelink.models.news;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import intelink.models.news.enums.Granularity;
+import intelink.models.news.enums.DimensionType;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.util.UUID;
 
 @Entity
-@Table(name = "click_stats")
+@Table(name = "dimension_stats")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,14 +16,14 @@ import java.time.Instant;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString
 @Builder
-public class ClickStat {
+public class DimensionStat {
 
     // Key group
     @Id
     @Column(name = "id", nullable = false, unique = true)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    private Long id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_url_id", nullable = false)
@@ -33,14 +33,13 @@ public class ClickStat {
 
     // Stat group
     @Enumerated(EnumType.STRING)
-    @Column(name = "granularity", nullable = false)
-    private Granularity granularity;
+    @Column(name = "type", nullable = false)
+    private DimensionType type;
 
-    @Column(name = "bucket", nullable = false)
-    private Instant bucket;
+    @Column(name = "value", nullable = false)
+    private String value;
 
     @Column(name = "total_clicks", nullable = false)
     @Builder.Default
     private Long totalClicks = 0L;
-
 }
