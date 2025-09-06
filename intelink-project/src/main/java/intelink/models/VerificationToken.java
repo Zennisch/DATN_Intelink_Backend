@@ -1,7 +1,7 @@
 package intelink.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import intelink.models.enums.UserVerificationTokenType;
+import intelink.models.enums.VerificationTokenType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,7 +38,7 @@ public class VerificationToken {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    private UserVerificationTokenType type;
+    private VerificationTokenType type;
 
     @Column(name = "used", nullable = false)
     @Builder.Default

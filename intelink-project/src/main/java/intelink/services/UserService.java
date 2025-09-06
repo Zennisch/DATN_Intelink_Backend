@@ -9,7 +9,7 @@ import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
-import intelink.models.enums.UserVerificationTokenType;
+import intelink.models.enums.VerificationTokenType;
 import intelink.repositories.UserRepository;
 import intelink.services.interfaces.IUserService;
 import jakarta.mail.MessagingException;
@@ -83,7 +83,7 @@ public class UserService implements IUserService {
         User savedUser = userRepository.save(user);
         log.info("UserService.create: User created with ID: {}", savedUser.getId());
 
-        VerificationToken verificationToken = verificationTokenService.create(user, UserVerificationTokenType.EMAIL_VERIFICATION, 24);
+        VerificationToken verificationToken = verificationTokenService.create(user, VerificationTokenType.EMAIL_VERIFICATION, 24);
         String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
         emailService.sendVerificationEmail(user.getEmail(), verificationLink);
         log.info("UserService.create: Verification email sent to {}", user.getEmail());
@@ -93,7 +93,7 @@ public class UserService implements IUserService {
 
     @Transactional
     public void verifyEmail(String token) {
-        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, UserVerificationTokenType.EMAIL_VERIFICATION);
+        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, VerificationTokenType.EMAIL_VERIFICATION);
         if (tokenOpt.isEmpty()) {
             throw new BadCredentialsException("Invalid or expired verification token");
         }
@@ -118,7 +118,7 @@ public class UserService implements IUserService {
         }
 
         User user = userOpt.get();
-        VerificationToken verificationToken = verificationTokenService.create(user, UserVerificationTokenType.PASSWORD_RESET, 1);
+        VerificationToken verificationToken = verificationTokenService.create(user, VerificationTokenType.PASSWORD_RESET, 1);
         String resetLink = resetPasswordEmailUrlTemplate.replace("{token}", verificationToken.getToken());
         emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
         log.info("UserService.forgotPassword: Password reset email sent to {}", user.getEmail());
@@ -136,7 +136,7 @@ public class UserService implements IUserService {
             throw new BadCredentialsException("New password and confirmation do not match");
         }
 
-        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, UserVerificationTokenType.PASSWORD_RESET);
+        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, VerificationTokenType.PASSWORD_RESET);
         if (tokenOpt.isEmpty()) {
             throw new BadCredentialsException("Invalid or expired password reset token");
         }
