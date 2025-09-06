@@ -57,7 +57,7 @@ public class VerificationToken {
         this.createdAt = Instant.now();
     }
 
-    public boolean isValid() {
+    public Boolean isValid() {
         return !this.used && !Instant.now().isAfter(this.expiresAt);
     }
 }
