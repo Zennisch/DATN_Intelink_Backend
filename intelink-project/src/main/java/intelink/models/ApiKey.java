@@ -1,5 +1,6 @@
 package intelink.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -7,12 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "api_keys", indexes = {
-        @Index(name = "idx_api_keys_key_hash", columnList = "key_hash", unique = true),
-        @Index(name = "idx_api_keys_user", columnList = "user_id"),
-        @Index(name = "idx_api_keys_active", columnList = "active"),
-        @Index(name = "idx_api_keys_expires_at", columnList = "expires_at")
-})
+@Table(name = "api_keys")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,13 +18,21 @@ import java.util.UUID;
 @Builder
 public class ApiKey {
 
+    // Key group
     @Id
     @Column(name = "id", nullable = false, unique = true)
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @JsonIgnore
+    private User user;
+
+    // Information group
+    @Column(name = "name", nullable = false, length = 128)
     private String name;
 
     @Column(name = "key_hash", nullable = false, unique = true, length = 255)
@@ -37,51 +41,51 @@ public class ApiKey {
     @Column(name = "key_prefix", nullable = false, length = 20)
     private String keyPrefix;
 
-    @Builder.Default
+    // Configuration group
     @Column(name = "rate_limit_per_hour", nullable = false)
-    private Integer rateLimitPerHour = 1000;
+    private Integer rateLimitPerHour;
 
-    @Builder.Default
     @Column(name = "active", nullable = false)
-    private Boolean active = true;
-
-    @Column(name = "last_used_at", nullable = true)
-    private Instant lastUsedAt;
+    private Boolean active;
 
     @Column(name = "expires_at", nullable = true)
     private Instant expiresAt;
 
-    @Column(name = "created_at", nullable = false)
+    // Audit group
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
-    private User user;
+    @Column(name = "last_used_at", nullable = true)
+    private Instant lastUsedAt;
 
     @PrePersist
-    private void onCreate() {
+    protected void onCreate() {
         this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
     }
 
     @PreUpdate
-    private void onUpdate() {
+    protected void onUpdate() {
         this.updatedAt = Instant.now();
     }
 
-    public boolean isExpired() {
-        return expiresAt != null && Instant.now().isAfter(expiresAt);
+    public Boolean isExpired() {
+        if (this.expiresAt == null) {
+            return false;
+        } else {
+            return Instant.now().isAfter(this.expiresAt);
+        }
     }
 
-    public boolean isUsable() {
-        return active && !isExpired();
+    public Boolean isUsable() {
+        return this.active && !isExpired();
     }
 
     public void updateLastUsed() {
         this.lastUsedAt = Instant.now();
     }
+
 }

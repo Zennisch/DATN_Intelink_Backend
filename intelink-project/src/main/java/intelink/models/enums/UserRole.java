@@ -1,7 +1,7 @@
 package intelink.models.enums;
 
 public enum UserRole {
-    ADMIN, USER, PREMIUM, GUEST;
+    ADMIN, USER, GUEST;
 
     public static UserRole fromString(String role) {
         try {

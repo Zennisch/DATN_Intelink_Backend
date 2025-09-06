@@ -1,4 +1,4 @@
-package intelink.models.news.enums;
+package intelink.models.enums;
 
 public enum UserStatus {
     ACTIVE, INACTIVE, BANNED;

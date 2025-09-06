@@ -1,4 +1,4 @@
-package intelink.models.news.enums;
+package intelink.models.enums;
 
 public enum SubscriptionPlanType {
     FREE, PRO, ENTERPRISE;

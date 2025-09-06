@@ -1,10 +1,10 @@
-package intelink.models.news;
+package intelink.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import intelink.models.news.enums.ShortUrlAnalysisEngine;
-import intelink.models.news.enums.ShortUrlAnalysisPlatformType;
-import intelink.models.news.enums.ShortUrlAnalysisStatus;
-import intelink.models.news.enums.ShortUrlAnalysisThreatType;
+import intelink.models.enums.ShortUrlAnalysisEngine;
+import intelink.models.enums.ShortUrlAnalysisPlatformType;
+import intelink.models.enums.ShortUrlAnalysisStatus;
+import intelink.models.enums.ShortUrlAnalysisThreatType;
 import jakarta.persistence.*;
 import lombok.*;
 

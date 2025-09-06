@@ -1,5 +1,6 @@
 package intelink.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.enums.Granularity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,11 +8,7 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "click_stats", indexes = {
-        @Index(name = "idx_hourly_stats_short_url", columnList = "short_url_id"),
-        @Index(name = "idx_hourly_stats_bucket", columnList = "bucket"),
-        @Index(name = "idx_hourly_stats_short_url_bucket", columnList = "short_url_id,bucket")
-})
+@Table(name = "click_stats")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,12 +18,20 @@ import java.time.Instant;
 @Builder
 public class ClickStat {
 
+    // Key group
     @Id
     @Column(name = "id", nullable = false, unique = true)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "short_url_id", nullable = false)
+    @ToString.Exclude
+    @JsonIgnore
+    private ShortUrl shortUrl;
+
+    // Stat group
     @Enumerated(EnumType.STRING)
     @Column(name = "granularity", nullable = false)
     private Granularity granularity;
@@ -34,13 +39,8 @@ public class ClickStat {
     @Column(name = "bucket", nullable = false)
     private Instant bucket;
 
-    @Builder.Default
     @Column(name = "total_clicks", nullable = false)
+    @Builder.Default
     private Long totalClicks = 0L;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "short_url_id", nullable = false)
-    @ToString.Exclude
-    private ShortUrl shortUrl;
 
 }

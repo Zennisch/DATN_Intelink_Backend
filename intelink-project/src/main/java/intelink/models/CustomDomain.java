@@ -1,7 +1,7 @@
 package intelink.models;
 
-import intelink.models.enums.DomainStatus;
-import intelink.models.enums.VerificationMethod;
+import intelink.models.enums.CustomDomainStatus;
+import intelink.models.enums.CustomDomainVerificationMethod;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,12 +9,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "custom_domains", indexes = {
-        @Index(name = "idx_custom_domains_domain", columnList = "domain", unique = true),
-        @Index(name = "idx_custom_domains_user", columnList = "user_id"),
-        @Index(name = "idx_custom_domains_status", columnList = "status"),
-        @Index(name = "idx_custom_domains_verified", columnList = "verified")
-})
+@Table(name = "custom_domains")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,12 +19,19 @@ import java.util.UUID;
 @Builder
 public class CustomDomain {
 
+    // Key group
     @Id
     @Column(name = "id", nullable = false, unique = true)
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    private User user;
+
+    // Configuration group
     @Column(name = "domain", nullable = false, unique = true, length = 255)
     private String domain;
 
@@ -39,49 +41,36 @@ public class CustomDomain {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private DomainStatus status = DomainStatus.PENDING_VERIFICATION;
-
-    @Column(name = "verification_token", nullable = false)
-    private String verificationToken;
+    private CustomDomainStatus status = CustomDomainStatus.PENDING_VERIFICATION;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "verification_method", nullable = false)
     @Builder.Default
-    private VerificationMethod verificationMethod = VerificationMethod.TXT_RECORD;
+    private CustomDomainVerificationMethod verificationMethod = CustomDomainVerificationMethod.TXT_RECORD;
 
-    @Builder.Default
-    @Column(name = "verified", nullable = false)
-    private Boolean verified = false;
-
-    @Builder.Default
     @Column(name = "ssl_enabled", nullable = false)
+    @Builder.Default
     private Boolean sslEnabled = false;
 
-    @Builder.Default
+    @Column(name = "verification_token", nullable = false)
+    private String verificationToken;
+
     @Column(name = "active", nullable = false)
+    @Builder.Default
     private Boolean active = true;
 
-    @Column(name = "created_at", nullable = false)
+    // Audit group
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
-
-    @Column(name = "verified_at", nullable = true)
-    private Instant verifiedAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
-    private User user;
-
+    // Lifecycle hooks
     @PrePersist
     private void onCreate() {
         this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
-        if (this.verificationToken == null) {
-            this.verificationToken = UUID.randomUUID().toString();
-        }
     }
 
     @PreUpdate
@@ -89,18 +78,15 @@ public class CustomDomain {
         this.updatedAt = Instant.now();
     }
 
-    public boolean isVerified() {
-        return verified && status == DomainStatus.VERIFIED;
+    public Boolean isVerified() {
+        return this.status == CustomDomainStatus.VERIFIED;
     }
 
     public void markAsVerified() {
-        this.verified = true;
-        this.status = DomainStatus.VERIFIED;
-        this.verifiedAt = Instant.now();
+        this.status = CustomDomainStatus.VERIFIED;
     }
 
-    public void markAsFailed() {
-        this.verified = false;
-        this.status = DomainStatus.FAILED_VERIFICATION;
+    public void markAsFailedVerification() {
+        this.status = CustomDomainStatus.FAILED_VERIFICATION;
     }
 }

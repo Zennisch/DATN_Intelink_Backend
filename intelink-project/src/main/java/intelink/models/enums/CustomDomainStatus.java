@@ -1,4 +1,4 @@
-package intelink.models.news.enums;
+package intelink.models.enums;
 
 public enum CustomDomainStatus {
     PENDING_VERIFICATION, VERIFIED, FAILED_VERIFICATION, SUSPENDED, DELETED;

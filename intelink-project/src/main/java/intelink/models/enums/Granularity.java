@@ -7,7 +7,7 @@ public enum Granularity {
         try {
             return Granularity.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown Granularity: " + value, e);
+            throw new IllegalArgumentException("Invalid granularity: " + value);
         }
     }
 }

@@ -1,7 +1,7 @@
-package intelink.models.news;
+package intelink.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import intelink.models.news.enums.UserVerificationTokenType;
+import intelink.models.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "verification_tokens")
+@Table(name = "subscriptions")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,7 +17,7 @@ import java.util.UUID;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString
 @Builder
-public class VerificationToken {
+public class Subscription {
 
     // Key group
     @Id
@@ -32,32 +32,35 @@ public class VerificationToken {
     @JsonIgnore
     private User user;
 
-    // Configuration group
-    @Column(name = "token", nullable = false, unique = true)
-    private String token;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subscription_plan_id", nullable = false)
+    @ToString.Exclude
+    @JsonIgnore
+    private SubscriptionPlan subscriptionPlan;
 
+    @OneToOne(mappedBy = "subscription", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private Payment payment;
+
+    // Status group
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    private UserVerificationTokenType type;
-
-    @Column(name = "used", nullable = false)
-    @Builder.Default
-    private Boolean used = false;
-
-    @Column(name = "expires_at", nullable = false)
-    private Instant expiresAt;
+    @Column(name = "status", nullable = false, length = 16)
+    private SubscriptionStatus status;
 
     // Audit group
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "starts_at", nullable = false)
+    private Instant startsAt;
+
+    @Column(name = "expires_at", nullable = false)
+    private Instant expiresAt;
+
     // Lifecycle hooks
     @PrePersist
     private void onCreate() {
         this.createdAt = Instant.now();
-    }
-
-    public Boolean isValid() {
-        return !this.used && !Instant.now().isAfter(this.expiresAt);
     }
 }

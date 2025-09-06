@@ -1,8 +1,8 @@
-package intelink.models.news;
+package intelink.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import intelink.models.news.enums.SubscriptionPlanBillingInterval;
-import intelink.models.news.enums.SubscriptionPlanType;
+import intelink.models.enums.SubscriptionPlanBillingInterval;
+import intelink.models.enums.SubscriptionPlanType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;

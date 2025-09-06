@@ -1,4 +1,4 @@
-package intelink.models.news.enums;
+package intelink.models.enums;
 
 public enum UserVerificationTokenType {
     EMAIL_VERIFICATION, PASSWORD_RESET, OAUTH_STATE;

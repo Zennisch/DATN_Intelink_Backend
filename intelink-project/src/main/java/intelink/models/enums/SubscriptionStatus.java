@@ -1,4 +1,4 @@
-package intelink.models.news.enums;
+package intelink.models.enums;
 
 public enum SubscriptionStatus {
     ACTIVE, TRIALING, PAST_DUE, CANCELED, EXPIRED;

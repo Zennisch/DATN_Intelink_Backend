@@ -1,6 +1,6 @@
-package intelink.models.news;
+package intelink.models;
 
-import intelink.models.news.enums.SubscriptionStatus;
+import intelink.models.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

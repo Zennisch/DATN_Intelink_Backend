@@ -1,4 +1,4 @@
-package intelink.models.news.enums;
+package intelink.models.enums;
 
 public enum ShortUrlAnalysisEngine {
     GOOGLE_SAFE_BROWSING,

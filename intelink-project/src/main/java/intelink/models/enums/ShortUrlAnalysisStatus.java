@@ -1,11 +1,11 @@
 package intelink.models.enums;
 
-public enum AnalysisStatus {
+public enum ShortUrlAnalysisStatus {
     PENDING, SAFE, MALICIOUS, SUSPICIOUS, MALWARE, SOCIAL_ENGINEERING, UNKNOWN;
 
-    public static AnalysisStatus fromString(String status) {
+    public static ShortUrlAnalysisStatus fromString(String status) {
         try {
-            return AnalysisStatus.valueOf(status.toUpperCase());
+            return ShortUrlAnalysisStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid analysis status: " + status);
         }
