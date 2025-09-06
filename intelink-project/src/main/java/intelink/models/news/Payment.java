@@ -1,9 +1,11 @@
 package intelink.models.news;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.news.enums.PaymentProvider;
 import intelink.models.news.enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
@@ -29,9 +31,16 @@ public class Payment {
     @EqualsAndHashCode.Include
     private UUID id;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subscription_id", nullable = false, unique = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private Subscription subscription;
+
     // Details group
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", nullable = false, length = 16)
+    @NotNull
     private PaymentProvider provider;
 
     @Enumerated(EnumType.STRING)

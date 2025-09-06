@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.news.enums.SubscriptionPlanBillingInterval;
 import intelink.models.news.enums.SubscriptionPlanType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -28,7 +30,7 @@ public class SubscriptionPlan {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @OneToMany(mappedBy = "subscriptionPlan", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "subscriptionPlan", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @JsonIgnore
     private List<Subscription> subscriptions;
@@ -41,6 +43,8 @@ public class SubscriptionPlan {
     private String description;
 
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
+    @NotNull
+    @DecimalMin(value = "0.00", inclusive = true, message = "Price must be non-negative")
     private BigDecimal price;
 
     @Enumerated(EnumType.STRING)

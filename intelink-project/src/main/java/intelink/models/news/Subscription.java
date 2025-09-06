@@ -32,16 +32,13 @@ public class Subscription {
     @JsonIgnore
     private User user;
 
-    // SubscriptionPlan here
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_plan_id", nullable = false)
     @ToString.Exclude
     @JsonIgnore
     private SubscriptionPlan subscriptionPlan;
 
-    // Payment here
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", nullable = false, unique = true)
+    @OneToOne(mappedBy = "subscription", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @JsonIgnore
     private Payment payment;

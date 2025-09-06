@@ -1,11 +1,15 @@
 package intelink.models.news;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import intelink.models.DimensionStat;
 import intelink.models.news.enums.ShortUrlStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "short_urls")
@@ -31,8 +35,30 @@ public class ShortUrl {
     @JsonIgnore
     private User user;
 
+    @OneToMany(mappedBy = "shortUrl", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<ClickLog> clickLogs;
+
+    @OneToMany(mappedBy = "shortUrl", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<ClickStat> clickStats;
+
+    @OneToMany(mappedBy = "shortUrl", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<DimensionStat> dimensionStats;
+
+    @OneToMany(mappedBy = "shortUrl", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<ShortUrlAnalysisResult> analysisResults;
+
     // Information group
     @Column(name = "short_code", nullable = false, unique = true)
+    @NotBlank
+    @Size(min = 6, max = 32)
     private String shortCode;
 
     @Column(name = "original_url", nullable = false, columnDefinition = "TEXT")
