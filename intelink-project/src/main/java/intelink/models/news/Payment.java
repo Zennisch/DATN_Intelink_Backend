@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Entity
 @Table(name = "payments", indexes = {
         @Index(name = "idx_payments_status", columnList = "status"),
         @Index(name = "idx_payments_provider", columnList = "provider"),

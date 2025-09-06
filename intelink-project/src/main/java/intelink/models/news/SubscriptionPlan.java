@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.util.List;
 
 @Entity
-@Entity
 @Table(name = "subscription_plans", indexes = {
         @Index(name = "idx_subscription_plans_type", columnList = "type"),
         @Index(name = "idx_subscription_plans_active", columnList = "active"),
