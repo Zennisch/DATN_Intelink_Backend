@@ -11,7 +11,12 @@ import java.time.Instant;
 import java.util.List;
 
 @Entity
-@Table(name = "subscription_plans")
+@Entity
+@Table(name = "subscription_plans", indexes = {
+        @Index(name = "idx_subscription_plans_type", columnList = "type"),
+        @Index(name = "idx_subscription_plans_active", columnList = "active"),
+        @Index(name = "idx_subscription_plans_active_type", columnList = "active, type")
+})
 @Getter
 @Setter
 @NoArgsConstructor

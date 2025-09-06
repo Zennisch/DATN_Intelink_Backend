@@ -9,7 +9,14 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subscriptions")
+@Entity
+@Table(name = "subscriptions", indexes = {
+        @Index(name = "idx_subscriptions_user_id", columnList = "user_id"),
+        @Index(name = "idx_subscriptions_status", columnList = "status"),
+        @Index(name = "idx_subscriptions_expires_at", columnList = "expires_at"),
+        @Index(name = "idx_subscriptions_user_status", columnList = "user_id, status"),
+        @Index(name = "idx_subscriptions_payment_id", columnList = "payment_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor

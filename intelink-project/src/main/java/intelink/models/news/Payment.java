@@ -1,6 +1,5 @@
 package intelink.models.news;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.news.enums.PaymentProvider;
 import intelink.models.news.enums.PaymentStatus;
 import jakarta.persistence.*;
@@ -13,7 +12,14 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "payments")
+@Entity
+@Table(name = "payments", indexes = {
+        @Index(name = "idx_payments_status", columnList = "status"),
+        @Index(name = "idx_payments_provider", columnList = "provider"),
+        @Index(name = "idx_payments_transaction_id", columnList = "transaction_id"),
+        @Index(name = "idx_payments_created_at", columnList = "created_at"),
+        @Index(name = "idx_payments_status_created", columnList = "status, created_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor
