@@ -1,5 +1,6 @@
 package intelink.models.news;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.news.enums.UserProvider;
 import intelink.models.news.enums.UserRole;
 import intelink.models.news.enums.UserStatus;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "users", indexes = {
@@ -22,7 +24,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"passwordHash"})
+@ToString
 @Builder
 public class User {
 
@@ -32,6 +34,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<Subscription> subscriptions;
 
     // Auth group
     @Size(min = 3, max = 16)
@@ -43,6 +50,7 @@ public class User {
     private String email;
 
     @Column(name = "password_hash", nullable = true, length = 255)
+    @ToString.Exclude
     private String passwordHash;
 
     @Column(name = "email_verified", nullable = false)
@@ -96,6 +104,7 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    // Lifecycle hooks
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
