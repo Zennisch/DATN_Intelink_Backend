@@ -29,7 +29,7 @@ public class ShortUrl {
     @ToString.Exclude
     private User user;
 
-    // Info group
+    // Information group
     @Column(name = "short_code", nullable = false, unique = true)
     private String shortCode;
 
@@ -45,7 +45,7 @@ public class ShortUrl {
     @Column(name = "description", nullable = true, length = 255)
     private String description;
 
-    // Stats group
+    // Stat group
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
