@@ -33,8 +33,6 @@ public class ClickLogService implements IClickLogService {
         IpProcessResult ipProcessResult = IpUtil.process(request);
         IpVersion ipVersion = ipProcessResult.getIpVersion();
         String ipAddress = ipProcessResult.getIpAddress();
-        String ipNormalized = ipProcessResult.getIpNormalized();
-        String subnet = ipProcessResult.getSubnet();
         String userAgent = request.getHeader("User-Agent");
         String referrer = request.getHeader("Referer");
 
@@ -63,8 +61,8 @@ public class ClickLogService implements IClickLogService {
         DimensionInfo dimensionInfo = new DimensionInfo(
                 country, city, userAgentInfo.getBrowser(), userAgentInfo.getOs(), userAgentInfo.getDeviceType()
         );
-        analyticService.recordDimensionStats(shortCode, dimensionInfo);
 
+        analyticService.recordDimensionStats(shortCode, dimensionInfo);
         analyticService.recordClickStats(shortCode);
 
         clickLogRepository.save(clickLog);
