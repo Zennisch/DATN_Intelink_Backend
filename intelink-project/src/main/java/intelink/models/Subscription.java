@@ -48,6 +48,9 @@ public class Subscription {
     @Column(name = "status", nullable = false, length = 16)
     private SubscriptionStatus status;
 
+    @Column(name = "active", nullable = false)
+    private Boolean active;
+
     // Audit group
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

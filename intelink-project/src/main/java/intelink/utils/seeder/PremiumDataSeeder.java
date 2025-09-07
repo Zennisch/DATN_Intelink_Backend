@@ -7,8 +7,8 @@ import intelink.models.User;
 import intelink.models.enums.PaymentMethod;
 import intelink.models.enums.PaymentStatus;
 import intelink.repositories.PaymentRepository;
-import intelink.repositories.PremiumPlanRepository;
-import intelink.repositories.PremiumSubscriptionRepository;
+import intelink.repositories.SubscriptionPlanRepository;
+import intelink.repositories.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,9 +25,9 @@ import java.util.UUID;
 @Slf4j
 public class PremiumDataSeeder {
 
-    private final PremiumPlanRepository premiumPlanRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final PaymentRepository paymentRepository;
-    private final PremiumSubscriptionRepository premiumSubscriptionRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final DataSeedingUtils utils;
 
     public List<PremiumPlan> createPremiumPlans() {
@@ -74,7 +74,7 @@ public class PremiumDataSeeder {
         plans.add(proPlan);
         plans.add(enterprisePlan);
 
-        return premiumPlanRepository.saveAll(plans);
+        return subscriptionPlanRepository.saveAll(plans);
     }
 
     public List<Payment> createPayments(List<User> users, List<PremiumPlan> plans, int count) {
@@ -140,6 +140,6 @@ public class PremiumDataSeeder {
             subscriptions.add(subscription);
         }
 
-        premiumSubscriptionRepository.saveAll(subscriptions);
+        subscriptionRepository.saveAll(subscriptions);
     }
 }

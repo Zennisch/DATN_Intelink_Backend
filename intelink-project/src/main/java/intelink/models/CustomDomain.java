@@ -43,6 +43,9 @@ public class CustomDomain {
     @Builder.Default
     private CustomDomainStatus status = CustomDomainStatus.PENDING_VERIFICATION;
 
+    @Column(name = "verified", nullable = false)
+    private Boolean verified;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "verification_method", nullable = false)
     @Builder.Default

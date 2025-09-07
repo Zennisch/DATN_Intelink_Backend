@@ -3,7 +3,7 @@ package intelink.utils.seeder;
 import intelink.models.AnalysisResult;
 import intelink.models.ShortUrl;
 import intelink.models.enums.AnalysisStatus;
-import intelink.repositories.AnalysisResultRepository;
+import intelink.repositories.ShortUrlAnalysisResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import java.util.List;
 @Slf4j
 public class AnalysisDataSeeder {
 
-    private final AnalysisResultRepository analysisResultRepository;
+    private final ShortUrlAnalysisResultRepository shortUrlAnalysisResultRepository;
     private final DataSeedingUtils utils;
 
     public void createAnalysisResults(List<ShortUrl> shortUrls, int count) {
@@ -41,6 +41,6 @@ public class AnalysisDataSeeder {
             results.add(result);
         }
 
-        analysisResultRepository.saveAll(results);
+        shortUrlAnalysisResultRepository.saveAll(results);
     }
 }
