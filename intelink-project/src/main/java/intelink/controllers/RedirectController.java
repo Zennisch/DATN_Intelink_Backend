@@ -1,7 +1,7 @@
 package intelink.controllers;
 
-import intelink.dto.request.UnlockUrlRequest;
-import intelink.dto.response.UnlockUrlResponse;
+import intelink.dto.request.url.UnlockUrlRequest;
+import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.dto.response.redirect.RedirectResult;
 import intelink.exceptions.IncorrectPasswordException;
 import intelink.exceptions.ShortUrlUnavailableException;

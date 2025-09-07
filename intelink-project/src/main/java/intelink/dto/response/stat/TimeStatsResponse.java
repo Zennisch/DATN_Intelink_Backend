@@ -1,4 +1,4 @@
-package intelink.dto.response;
+package intelink.dto.response.stat;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,7 +1,7 @@
 package intelink.services.interfaces;
 
-import intelink.dto.request.CreateShortUrlRequest;
-import intelink.dto.response.UnlockUrlResponse;
+import intelink.dto.request.url.CreateShortUrlRequest;
+import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
 import jakarta.servlet.http.HttpServletRequest;

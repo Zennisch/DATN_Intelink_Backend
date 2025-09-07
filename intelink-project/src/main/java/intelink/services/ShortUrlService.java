@@ -1,8 +1,8 @@
 package intelink.services;
 
 import intelink.dto.object.Cipher;
-import intelink.dto.request.CreateShortUrlRequest;
-import intelink.dto.response.UnlockUrlResponse;
+import intelink.dto.request.url.CreateShortUrlRequest;
+import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.dto.response.analysis.ThreatAnalysisResult;
 import intelink.dto.response.analysis.ThreatMatchInfo;
 import intelink.models.ShortUrl;

@@ -1,4 +1,4 @@
-package intelink.dto.response;
+package intelink.dto.response.url;
 
 import intelink.models.ShortUrl;
 import lombok.Builder;
@@ -28,7 +28,7 @@ public class ShortUrlListResponse {
                 .id(shortUrl.getId())
                 .shortCode(shortUrl.getShortCode())
                 .originalUrl(shortUrl.getOriginalUrl())
-                .hasPassword(shortUrl.getPassword() != null)
+                .hasPassword(shortUrl.getPasswordHash() != null)
                 .description(shortUrl.getDescription())
                 .status(shortUrl.getStatus().toString())
                 .maxUsage(shortUrl.getMaxUsage())

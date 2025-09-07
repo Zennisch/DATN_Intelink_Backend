@@ -1,4 +1,4 @@
-package intelink.dto.response;
+package intelink.dto.response.url;
 
 import lombok.Builder;
 import lombok.Data;

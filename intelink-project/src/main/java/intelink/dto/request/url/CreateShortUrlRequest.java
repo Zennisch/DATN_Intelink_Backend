@@ -1,4 +1,4 @@
-package intelink.dto.request;
+package intelink.dto.request.url;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

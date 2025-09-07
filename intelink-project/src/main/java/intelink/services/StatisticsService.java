@@ -1,7 +1,7 @@
 package intelink.services;
 
-import intelink.dto.response.StatisticsResponse;
-import intelink.dto.response.TimeStatsResponse;
+import intelink.dto.response.stat.StatisticsResponse;
+import intelink.dto.response.stat.TimeStatsResponse;
 import intelink.models.ClickStat;
 import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;

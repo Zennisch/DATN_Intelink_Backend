@@ -1,13 +1,13 @@
 package intelink.controllers;
 
-import intelink.dto.request.CreateShortUrlRequest;
-import intelink.dto.request.UpdatePasswordRequest;
-import intelink.dto.request.UpdateShortUrlRequest;
-import intelink.dto.response.CreateShortUrlResponse;
-import intelink.dto.response.ShortUrlDetailResponse;
-import intelink.dto.response.ShortUrlListResponse;
+import intelink.dto.request.url.CreateShortUrlRequest;
+import intelink.dto.request.url.UpdatePasswordRequest;
+import intelink.dto.request.url.UpdateShortUrlRequest;
+import intelink.dto.response.url.CreateShortUrlResponse;
+import intelink.dto.response.url.ShortUrlDetailResponse;
+import intelink.dto.response.url.ShortUrlListResponse;
 import intelink.dto.response.PagedResponse;
-import intelink.dto.response.UpdateShortUrlResponse;
+import intelink.dto.response.url.UpdateShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
 import intelink.services.interfaces.IShortUrlService;
