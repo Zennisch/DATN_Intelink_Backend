@@ -11,5 +11,5 @@ public class IpProcessResult {
     private String ipAddress;
     private String ipNormalized;
     private String subnet;
-    private boolean isPrivate;
+    private Boolean isPrivate;
 }
