@@ -1,4 +1,4 @@
-package intelink.dto.object.threat.request;
+package intelink.dto.request.analysis;
 
 import intelink.dto.object.threat.ThreatEntry;
 import intelink.dto.object.threat.enums.PlatformType;

@@ -1,4 +1,4 @@
-package intelink.dto.object.threat.request;
+package intelink.dto.request.analysis;
 
 public record SafeBrowsingRequest(
         SafeBrowsingClient client,

@@ -1,6 +1,5 @@
 package intelink.dto.response;
 
-import intelink.dto.object.StatsCategory;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
