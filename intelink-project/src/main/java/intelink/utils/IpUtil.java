@@ -58,12 +58,12 @@ public class IpUtil {
             boolean isPrivate = isPrivateIp(inetAddress);
 
             if (inetAddress instanceof Inet4Address) {
-                ipVersion = IpVersion.IPV4;
+                ipVersion = IpVersion.IPv4;
                 ipNormalized = inetAddress.getHostAddress();
                 String[] parts = ipNormalized.split("\\.");
                 subnet = parts[0] + "." + parts[1] + "." + parts[2] + ".0/24";
             } else if (inetAddress instanceof Inet6Address) {
-                ipVersion = IpVersion.IPV6;
+                ipVersion = IpVersion.IPv6;
                 ipNormalized = inetAddress.getHostAddress();
 
                 int endOfNetworkPortion = ipNormalized.lastIndexOf(':');
