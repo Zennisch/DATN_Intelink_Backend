@@ -13,6 +13,7 @@ import intelink.models.enums.VerificationTokenType;
 import intelink.repositories.UserRepository;
 import intelink.services.interfaces.IEmailService;
 import intelink.services.interfaces.IUserService;
+import intelink.services.interfaces.IVerificationTokenService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class UserService implements IUserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final VerificationTokenService verificationTokenService;
+    private final IVerificationTokenService verificationTokenService;
     private final IEmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
@@ -84,7 +85,7 @@ public class UserService implements IUserService {
         log.info("UserService.create: User created with ID: {}", savedUser.getId());
 
         // 3. Generate email verification token and send email
-        VerificationToken verificationToken = verificationTokenService.create(user, VerificationTokenType.EMAIL_VERIFICATION, 24);
+        VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.EMAIL_VERIFICATION, 24);
 
         String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
         emailService.sendVerificationEmail(user.getEmail(), verificationLink);
@@ -95,20 +96,22 @@ public class UserService implements IUserService {
 
     @Transactional
     public void verifyEmail(String token) {
+        // 1. Validate token
         Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, VerificationTokenType.EMAIL_VERIFICATION);
         if (tokenOpt.isEmpty()) {
             throw new BadCredentialsException("Invalid or expired verification token");
         }
 
+        // 2. Mark token as used
         VerificationToken verificationToken = tokenOpt.get();
+        verificationTokenService.markAsUsed(verificationToken);
+        log.info("UserService.verifyEmail: Verification token marked as used for user ID: {}", user.getId());
 
+        // 3. Mark user's email as verified
         User user = verificationToken.getUser();
         user.setEmailVerified(true);
         userRepository.save(user);
         log.info("UserService.verifyEmail: Email verified for user ID: {}", user.getId());
-
-        verificationTokenService.markTokenAsUsed(verificationToken);
-        log.info("UserService.verifyEmail: Verification token marked as used for user ID: {}", user.getId());
     }
 
     @Transactional
@@ -120,7 +123,7 @@ public class UserService implements IUserService {
         }
 
         User user = userOpt.get();
-        VerificationToken verificationToken = verificationTokenService.create(user, VerificationTokenType.PASSWORD_RESET, 1);
+        VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.PASSWORD_RESET, 1);
         String resetLink = resetPasswordEmailUrlTemplate.replace("{token}", verificationToken.getToken());
         emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
         log.info("UserService.forgotPassword: Password reset email sent to {}", user.getEmail());
@@ -149,7 +152,7 @@ public class UserService implements IUserService {
         userRepository.save(user);
         log.info("UserService.resetPassword: Password reset for user ID: {}", user.getId());
 
-        verificationTokenService.markTokenAsUsed(verificationToken);
+        verificationTokenService.markAsUsed(verificationToken);
         log.info("UserService.resetPassword: Password reset token marked as used for user ID: {}", user.getId());
     }
 

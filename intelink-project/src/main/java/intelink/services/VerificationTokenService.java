@@ -23,7 +23,7 @@ public class VerificationTokenService implements IVerificationTokenService {
 
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public VerificationToken create(User user, VerificationTokenType tokenType, Integer lifetimeInHours) {
+    public VerificationToken createToken(User user, VerificationTokenType tokenType, Integer lifetimeInHours) {
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
@@ -44,7 +44,7 @@ public class VerificationTokenService implements IVerificationTokenService {
                 .filter(verificationToken -> verificationToken.getExpiresAt().isAfter(now));
     }
 
-    public void markTokenAsUsed(VerificationToken verificationToken) {
+    public void markAsUsed(VerificationToken verificationToken) {
         verificationToken.setUsed(true);
         verificationTokenRepository.save(verificationToken);
     }

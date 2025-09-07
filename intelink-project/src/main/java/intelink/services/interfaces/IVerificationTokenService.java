@@ -8,10 +8,10 @@ import java.util.Optional;
 
 public interface IVerificationTokenService {
 
-    VerificationToken create(User user, VerificationTokenType tokenType, Integer lifetimeInHours);
+    VerificationToken createToken(User user, VerificationTokenType tokenType, Integer lifetimeInHours);
 
     Optional<VerificationToken> findValidToken(String token, VerificationTokenType tokenType);
 
-    void markTokenAsUsed(VerificationToken verificationToken);
+    void markAsUsed(VerificationToken verificationToken);
 
 }
