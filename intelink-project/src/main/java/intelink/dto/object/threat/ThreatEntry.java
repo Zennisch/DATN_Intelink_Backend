@@ -1,4 +1,4 @@
-package intelink.dto.helper.threat;
+package intelink.dto.object.threat;
 
 public record ThreatEntry(String url) {
     public ThreatEntry {

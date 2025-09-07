@@ -1,4 +1,4 @@
-package intelink.dto.helper;
+package intelink.dto.object;
 
 import intelink.models.enums.IpVersion;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package intelink.dto.helper.threat.enums;
+package intelink.dto.object.threat.enums;
 
 public enum ThreatEntryType {
     THREAT_ENTRY_TYPE_UNSPECIFIED,

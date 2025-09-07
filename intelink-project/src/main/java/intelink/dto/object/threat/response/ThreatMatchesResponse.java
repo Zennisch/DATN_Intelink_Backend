@@ -1,4 +1,4 @@
-package intelink.dto.helper.threat.response;
+package intelink.dto.object.threat.response;
 
 import java.util.List;
 

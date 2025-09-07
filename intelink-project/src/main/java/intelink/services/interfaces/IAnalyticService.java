@@ -1,6 +1,6 @@
 package intelink.services.interfaces;
 
-import intelink.dto.helper.DimensionInfo;
+import intelink.dto.object.DimensionInfo;
 
 
 public interface IAnalyticService {

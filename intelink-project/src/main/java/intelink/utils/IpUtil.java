@@ -1,6 +1,6 @@
 package intelink.utils;
 
-import intelink.dto.helper.IpProcessResult;
+import intelink.dto.object.IpProcessResult;
 import intelink.models.enums.IpVersion;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
