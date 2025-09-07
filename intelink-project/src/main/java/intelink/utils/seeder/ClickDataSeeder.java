@@ -48,17 +48,10 @@ public class ClickDataSeeder {
             String deviceType = utils.getRandomElement(utils.deviceTypes);
 
             ClickLog clickLog = ClickLog.builder()
-                    .ipVersion(utils.getRandom().nextDouble() < 0.9 ? IpVersion.IPV4 : IpVersion.IPV6)
+                    .ipVersion(utils.getRandom().nextDouble() < 0.9 ? IpVersion.IPv4 : IpVersion.IPv6)
                     .ipAddress(utils.generateRandomIp())
-                    .ipNormalized(utils.generateRandomIp())
-                    .subnet(utils.generateRandomSubnet())
                     .userAgent(utils.getRandomElement(utils.userAgents))
                     .referrer(utils.getRandom().nextDouble() < 0.6 ? "https://" + utils.getRandomElement(utils.domains) : null)
-                    .country(country)
-                    .city(city)
-                    .browser(browser)
-                    .os(os)
-                    .deviceType(deviceType)
                     .timestamp(timestamp)
                     .shortUrl(randomShortUrl)
                     .build();

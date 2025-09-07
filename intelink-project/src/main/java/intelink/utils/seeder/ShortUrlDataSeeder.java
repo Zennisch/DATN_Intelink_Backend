@@ -34,7 +34,7 @@ public class ShortUrlDataSeeder {
             ShortUrl shortUrl = ShortUrl.builder()
                     .shortCode(utils.generateRandomShortCode())
                     .originalUrl("https://" + utils.getRandomElement(utils.domains) + "/page/" + i)
-                    .password(utils.getRandom().nextDouble() < 0.2 ? passwordEncoder.encode("secret123") : null)
+                    .passwordHash(utils.getRandom().nextDouble() < 0.2 ? passwordEncoder.encode("secret123") : null)
                     .description(utils.getRandom().nextDouble() < 0.5 ? "Description for URL " + i : null)
                     .maxUsage(utils.getRandom().nextDouble() < 0.3 ? ThreadLocalRandom.current().nextLong(10, 1000) : null)
                     .totalClicks(ThreadLocalRandom.current().nextLong(0, 500))

@@ -69,29 +69,45 @@ public class DataSeedingUtils {
         return list.get(random.nextInt(list.size()));
     }
 
-    public OAuthProvider getRandomOAuthProvider() {
-        OAuthProvider[] providers = {OAuthProvider.GOOGLE, OAuthProvider.GITHUB};
+    public UserProvider getRandomOAuthProvider() {
+        UserProvider[] providers = {UserProvider.GOOGLE, UserProvider.GITHUB};
         return providers[random.nextInt(providers.length)];
     }
 
-    public TokenType getRandomTokenType() {
-        TokenType[] types = TokenType.values();
+    public VerificationTokenType getRandomTokenType() {
+        VerificationTokenType[] types = VerificationTokenType.values();
         return types[random.nextInt(types.length)];
     }
 
-    public AnalysisStatus getRandomAnalysisStatus() {
-        return random.nextDouble() < 0.7 ? AnalysisStatus.SAFE :
-                random.nextDouble() < 0.9 ? AnalysisStatus.SUSPICIOUS : AnalysisStatus.MALICIOUS;
+    public ShortUrlAnalysisStatus getRandomAnalysisStatus() {
+        return random.nextDouble() < 0.7 ? ShortUrlAnalysisStatus.SAFE :
+                random.nextDouble() < 0.9 ? ShortUrlAnalysisStatus.SUSPICIOUS : ShortUrlAnalysisStatus.MALICIOUS;
     }
 
-    public String getRandomThreatType() {
-        String[] threats = {"MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"};
+    public ShortUrlAnalysisThreatType getRandomThreatType() {
+        ShortUrlAnalysisThreatType[] threats = {
+            ShortUrlAnalysisThreatType.MALWARE, 
+            ShortUrlAnalysisThreatType.PHISHING, 
+            ShortUrlAnalysisThreatType.SPAM,
+            ShortUrlAnalysisThreatType.SCAM,
+            ShortUrlAnalysisThreatType.OTHER
+        };
         return threats[random.nextInt(threats.length)];
     }
 
-    public String getRandomPlatformType() {
-        String[] platforms = {"WINDOWS", "LINUX", "ANDROID", "OSX", "IOS", "ANY_PLATFORM"};
+    public ShortUrlAnalysisPlatformType getRandomPlatformType() {
+        ShortUrlAnalysisPlatformType[] platforms = ShortUrlAnalysisPlatformType.values();
         return platforms[random.nextInt(platforms.length)];
+    }
+
+    public CustomDomainStatus getRandomDomainStatus() {
+        CustomDomainStatus[] statuses = CustomDomainStatus.values();
+        return statuses[random.nextInt(statuses.length)];
+    }
+
+    public CustomDomainVerificationMethod getRandomVerificationMethod() {
+        CustomDomainVerificationMethod[] methods = CustomDomainVerificationMethod.values();
+        return methods[random.nextInt(methods.length)];
     }
 
     public Random getRandom() {

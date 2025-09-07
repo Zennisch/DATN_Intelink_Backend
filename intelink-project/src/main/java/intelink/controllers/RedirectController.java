@@ -5,6 +5,7 @@ import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.dto.response.redirect.RedirectResult;
 import intelink.exceptions.IncorrectPasswordException;
 import intelink.exceptions.ShortUrlUnavailableException;
+import intelink.services.interfaces.IClickLogService;
 import intelink.services.interfaces.IRedirectService;
 import intelink.services.interfaces.IShortUrlService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,7 @@ public class RedirectController {
 
     private final IRedirectService redirectService;
     private final IShortUrlService shortUrlService;
+    private final IClickLogService clickLogService;
 
     @GetMapping("/{shortCode}")
     public ResponseEntity<?> redirect(
@@ -57,6 +59,8 @@ public class RedirectController {
             HttpServletRequest httpRequest
     ) {
         UnlockUrlResponse response = shortUrlService.unlockUrl(shortCode, request.getPassword(), httpRequest);
+        clickLogService.record(shortCode, httpRequest);
+        log.info("ShortUrlService.unlockUrl: URL unlocked successfully: {}", shortCode);
         return ResponseEntity.ok(response);
     }
 }

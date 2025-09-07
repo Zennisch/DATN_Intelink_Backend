@@ -12,7 +12,6 @@ import intelink.models.enums.ShortUrlAnalysisEngine;
 import intelink.models.enums.ShortUrlAnalysisStatus;
 import intelink.models.enums.ShortUrlStatus;
 import intelink.repositories.ShortUrlRepository;
-import intelink.services.interfaces.IClickLogService;
 import intelink.services.interfaces.IShortUrlService;
 import intelink.services.interfaces.IUserService;
 import intelink.utils.FPEUtil;
@@ -40,7 +39,6 @@ public class ShortUrlService implements IShortUrlService {
 
     private final ShortUrlRepository shortUrlRepository;
     private final IUserService userService;
-    private final IClickLogService clickLogService;
     private final PasswordEncoder passwordEncoder;
     private final GoogleSafeBrowsingUtil googleSafeBrowsingUtil;
     private final AnalysisResultService analysisResultService;
@@ -330,10 +328,6 @@ public class ShortUrlService implements IShortUrlService {
             log.warn("ShortUrlService.unlockUrl: Failed to unlock URL - incorrect password or URL unavailable: {}", shortCode);
             throw new IllegalArgumentException("Incorrect password or URL is unavailable");
         }
-
-        // 3. Record click log
-        clickLogService.record(shortCode, request);
-        log.info("ShortUrlService.unlockUrl: URL unlocked successfully: {}", shortCode);
         
         return UnlockUrlResponse.success(shortUrl.getOriginalUrl(), shortCode);
     }

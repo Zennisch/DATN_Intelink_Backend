@@ -1,7 +1,7 @@
 package intelink.utils.seeder;
 
 import intelink.models.User;
-import intelink.models.enums.OAuthProvider;
+import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
 import intelink.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class UserDataSeeder {
                     .totalClicks(ThreadLocalRandom.current().nextLong(0, 1000))
                     .totalShortUrls(ThreadLocalRandom.current().nextInt(0, 50))
                     .emailVerified(utils.getRandom().nextBoolean())
-                    .authProvider(utils.getRandom().nextDouble() < 0.7 ? OAuthProvider.LOCAL : utils.getRandomOAuthProvider())
+                    .provider(utils.getRandom().nextDouble() < 0.7 ? UserProvider.LOCAL : utils.getRandomOAuthProvider())
                     .providerUserId(utils.getRandom().nextDouble() < 0.3 ? "provider_" + UUID.randomUUID().toString().substring(0, 8) : null)
                     .lastLoginAt(utils.getRandomInstantBetween(2023, 2024))
                     .createdAt(utils.getRandomInstantBetween(2023, 2023))

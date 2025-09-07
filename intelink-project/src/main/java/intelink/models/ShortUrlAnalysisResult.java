@@ -60,11 +60,11 @@ public class ShortUrlAnalysisResult {
     @Column(name = "engine", nullable = false)
     private ShortUrlAnalysisEngine engine;
 
-    @Enumerated(EnumType.STRING)
+//    @Enumerated(EnumType.STRING)
     @Column(name = "threat_type", nullable = false)
     private String threatType;
 
-    @Enumerated(EnumType.STRING)
+//    @Enumerated(EnumType.STRING)
     @Column(name = "platform_type", nullable = false)
     private String platformType;
 

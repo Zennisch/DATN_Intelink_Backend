@@ -3,7 +3,7 @@ package intelink.utils.seeder;
 import intelink.models.OAuthAccount;
 import intelink.models.User;
 import intelink.models.VerificationToken;
-import intelink.models.enums.OAuthProvider;
+import intelink.models.enums.UserProvider;
 import intelink.repositories.OAuthAccountRepository;
 import intelink.repositories.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +54,7 @@ public class SecurityDataSeeder {
 
         for (int i = 0; i < count; i++) {
             User randomUser = utils.getRandomElement(users);
-            OAuthProvider provider = utils.getRandomOAuthProvider();
+            UserProvider provider = utils.getRandomOAuthProvider();
             Instant createdAt = utils.getRandomInstantBetween(2023, 2024);
 
             OAuthAccount account = OAuthAccount.builder()

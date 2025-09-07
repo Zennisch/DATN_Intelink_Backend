@@ -10,9 +10,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface DimensionStatRepository extends JpaRepository<DimensionStat, Long> {
+public interface DimensionStatRepository extends JpaRepository<DimensionStat, UUID> {
     Optional<DimensionStat> findByShortUrlAndTypeAndValue(ShortUrl shortUrl, DimensionType type, String value);
 
     List<DimensionStat> findByShortUrlAndType(ShortUrl shortUrl, DimensionType type);
