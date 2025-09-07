@@ -1,6 +1,7 @@
 package intelink.controllers;
 
 import intelink.dto.object.Auth;
+import intelink.dto.object.SubscriptionInfo;
 import intelink.dto.request.auth.ForgotPasswordRequest;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
@@ -91,21 +92,9 @@ public class AuthController {
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
         User user = userService.profile(authHeader);
+        SubscriptionInfo subscriptionInfo = null; // Will implement subscription logic later
 
-        return ResponseEntity.ok(UserProfileResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole().toString())
-                .totalClicks(user.getTotalClicks())
-                .totalShortUrls(user.getTotalShortUrls())
-                .emailVerified(user.getEmailVerified())
-                .authProvider(user.getAuthProvider().toString())
-                .lastLoginAt(user.getLastLoginAt())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build()
-        );
+        return ResponseEntity.ok(UserProfileResponse.fromEntities(user, subscriptionInfo));
     }
 
     // ========== Logout

@@ -1,7 +1,6 @@
 package intelink.dto.response.auth;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 
 @Data

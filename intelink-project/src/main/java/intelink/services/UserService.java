@@ -230,14 +230,17 @@ public class UserService implements IUserService {
 
     @Transactional
     public User profile(String authHeader) {
+        // 1. Validate token
         Token token = validateToken(authHeader);
         String username = token.getUsername();
 
+        // 2. If valid, check if user exists
         Optional<User> userOpt = findByUsername(username);
         if (userOpt.isEmpty()) {
             throw new BadCredentialsException("User not found");
         }
 
+        // 3. If exists, return user profile
         User user = userOpt.get();
         log.info("UserService.profile: Retrieved profile for user: {}", username);
         return user;
