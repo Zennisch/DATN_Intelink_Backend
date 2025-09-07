@@ -266,26 +266,21 @@ public class UserService implements IUserService {
     }
 
     @Transactional
-    public void incrementTotalClicks(Long userId) {
-        userRepository.incrementTotalClicks(userId);
+    public void increaseTotalClicks(Long userId) {
+        userRepository.increaseTotalClicks(userId);
         log.debug("UserService.incrementTotalClicks: Total clicks for user ID {} incremented", userId);
     }
 
     @Transactional
-    public void incrementTotalShortUrls(Long userId) {
-        userRepository.incrementTotalShortUrls(userId);
+    public void increaseTotalShortUrls(Long userId) {
+        userRepository.increaseTotalShortUrls(userId);
         log.debug("UserService.incrementTotalShortUrls: Total short URLs for user ID {} incremented", userId);
     }
 
     @Transactional
-    public void decrementTotalShortUrls(Long userId) {
-        userRepository.decrementTotalShortUrls(userId);
+    public void decreaseTotalShortUrls(Long userId) {
+        userRepository.decreaseTotalShortUrls(userId);
         log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
-    }
-
-    @Transactional
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
     }
 
 }

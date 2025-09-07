@@ -41,6 +41,7 @@ public class OAuthService extends DefaultOAuth2UserService {
     }
 
     private OAuth2User processOAuth2User(OAuth2User oAuth2User, UserProvider provider) {
+        // 1. Extract user info from OAuth2User
         String providerUserId;
         if (provider == UserProvider.GOOGLE) {
             providerUserId = oAuth2User.getAttribute("sub");
@@ -48,54 +49,74 @@ public class OAuthService extends DefaultOAuth2UserService {
             providerUserId = oAuth2User.getAttribute("id");
         }
 
+        // 2. Extract email and name
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
+        // 3. Check if OAuthAccount exists
         Optional<OAuthAccount> oAuthAccountOpt = oAuthAccountRepository
                 .findByProviderAndProviderUserId(provider, providerUserId);
 
+        // 4. If exists, update and return
         if (oAuthAccountOpt.isPresent()) {
             OAuthAccount oAuthAccount = oAuthAccountOpt.get();
             oAuthAccount.setProviderEmail(email);
             oAuthAccount.setProviderUsername(name);
 
             User user = oAuthAccount.getUser();
-            if (user.getProvider() == oAuthAccount.getProvider()
-                    && user.getEmail().equals(email)) {
+            if (user.getProvider() == oAuthAccount.getProvider() && user.getEmail().equals(email)) {
                 user.setEmail(email);
                 user.setEmailVerified(true);
             }
             user.setLastLoginAt(Instant.now());
+
             userRepository.save(user);
             oAuthAccountRepository.save(oAuthAccount);
 
             return oAuth2User;
         }
 
+        // 5. If not exists, find or create User
         Optional<User> existingUser = userRepository.findByEmail(email);
         User user;
+
         if (existingUser.isPresent()) {
+            // 5.1 This email already registered by normal signup or other provider
             user = existingUser.get();
         } else {
+            // 5.2.1 Create new User
+            if (name == null || name.isEmpty()) {
+                // Fallback to email prefix if name is missing
+                if (email == null || email.isEmpty()) {
+                    throw new RuntimeException("Cannot create user without name or email");
+                }
+                name = email.split("@")[0];
+            }
+
+            // 5.2.2 Ensure username is alphanumeric and lowercase
             String baseUsername = name.toLowerCase().replaceAll("[^a-z0-9]", "");
             String username = baseUsername;
-            int counter = 1;
 
+            // 5.2.3 Ensure username uniqueness
+            int counter = 1;
             while (userRepository.existsByUsername(username)) {
                 username = baseUsername + counter++;
             }
 
+            // 5.2.3 Create and save new user
             user = userRepository.save(User.builder()
                     .username(username)
                     .email(email)
-                    .passwordHash("")
+                    .passwordHash(null)
                     .role(UserRole.USER)
                     .emailVerified(true)
                     .provider(provider)
+                    .lastLoginAt(Instant.now())
                     .build()
             );
         }
 
+        // 6. Create and save new OAuthAccount
         OAuthAccount oAuthAccount = OAuthAccount.builder()
                 .user(user)
                 .provider(provider)
@@ -110,15 +131,17 @@ public class OAuthService extends DefaultOAuth2UserService {
     }
 
     public Auth callback(String authToken) {
+        // 1. Validate token
         String email = jwtTokenProvider.getUsernameFromToken(authToken);
-        Optional<User> userOpt = userRepository.findByEmail(email);
 
+        // 2. If valid, find user exists by email
+        Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found");
         }
 
+        // 3. Generate JWT token and return Auth object
         User user = userOpt.get();
-
         String token = jwtTokenProvider.generateToken(user.getUsername());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);

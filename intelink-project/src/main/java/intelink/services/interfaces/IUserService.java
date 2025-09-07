@@ -30,12 +30,10 @@ public interface IUserService {
 
     Optional<User> findByUsername(String username);
 
-    void incrementTotalClicks(Long userId);
+    void increaseTotalClicks(Long userId);
 
-    void incrementTotalShortUrls(Long userId);
+    void increaseTotalShortUrls(Long userId);
 
-    void decrementTotalShortUrls(Long userId);
-
-    Optional<User> findByEmail(String email);
+    void decreaseTotalShortUrls(Long userId);
 
 }

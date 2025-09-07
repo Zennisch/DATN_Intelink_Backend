@@ -63,7 +63,7 @@ public class ShortUrlService implements IShortUrlService {
                 .build();
 
         ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
-        userService.incrementTotalShortUrls(user.getId());
+        userService.increaseTotalShortUrls(user.getId());
 
         ThreatAnalysisResult threatAnalysisResult = googleSafeBrowsingUtil.checkUrls(List.of(shortUrl.getOriginalUrl()));
         if (!threatAnalysisResult.hasMatches() || threatAnalysisResult.matches().isEmpty()) {
@@ -128,7 +128,7 @@ public class ShortUrlService implements IShortUrlService {
         ShortUrl shortUrl = shortUrlOpt.get();
         // shortUrl.setStatus(ShortUrlStatus.DELETED);
         shortUrlRepository.save(shortUrl);
-        userService.decrementTotalShortUrls(userId);
+        userService.decreaseTotalShortUrls(userId);
     }
 
     @Transactional(readOnly = true)
