@@ -2,7 +2,6 @@ package intelink.dto.object;
 
 import intelink.models.User;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 
 @Data
