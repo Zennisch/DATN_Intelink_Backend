@@ -127,7 +127,7 @@ public class ShortUrlService implements IShortUrlService {
             throw new IllegalArgumentException("Short URL not found or does not belong to the user");
         }
         ShortUrl shortUrl = shortUrlOpt.get();
-        // shortUrl.setStatus(ShortUrlStatus.DELETED);
+        shortUrl.setDeletedAt(Instant.now());
         shortUrlRepository.save(shortUrl);
         userService.decreaseTotalShortUrls(userId);
     }
@@ -151,7 +151,7 @@ public class ShortUrlService implements IShortUrlService {
     }
 
     @Transactional
-    public void incrementTotalClicks(String shortCode) {
+    public void increaseTotalClicks(String shortCode) {
         log.debug("ShortUrlService.incrementTotalClicks: Incrementing total clicks for short code: {}", shortCode);
         shortUrlRepository.incrementTotalClicks(shortCode);
     }

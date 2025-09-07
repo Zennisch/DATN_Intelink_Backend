@@ -65,7 +65,7 @@ public class ClickLogService implements IClickLogService {
                 .build();
 
 
-        shortUrlService.incrementTotalClicks(shortCode);
+        shortUrlService.increaseTotalClicks(shortCode);
 
         DimensionInfo dimensionInfo = new DimensionInfo(
                 country, city, userAgentInfo.getBrowser(), userAgentInfo.getOs(), userAgentInfo.getDeviceType()
