@@ -209,18 +209,21 @@ public class UserService implements IUserService {
 
     @Transactional
     public Auth refreshToken(String authHeader) {
+        // 1. Validate token
         Token tokenObject = validateToken(authHeader);
         String username = tokenObject.getUsername();
 
-        String token = jwtTokenProvider.generateToken(username);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
-        Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
-
+        // 2. If valid, check if user exists
         Optional<User> userOpt = findByUsername(username);
         if (userOpt.isEmpty()) {
             throw new BadCredentialsException("User not found");
         }
+
+        // 3. If exists, generate new JWT token
         User user = userOpt.get();
+        String token = jwtTokenProvider.generateToken(username);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+        Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
         return new Auth(user, token, refreshToken, expiresAt);
     }

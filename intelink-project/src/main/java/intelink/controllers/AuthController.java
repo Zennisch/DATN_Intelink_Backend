@@ -83,13 +83,8 @@ public class AuthController {
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
         Auth obj = userService.refreshToken(authHeader);
 
-        return ResponseEntity.ok(AuthResponse.builder()
-                .token(obj.getToken())
-                .refreshToken(obj.getRefreshToken())
-                .username(obj.getUser().getUsername())
-                .expiresAt(obj.getExpiresAt())
-                .build()
-        );
+        AuthResponse resp = AuthResponse.fromEntity(obj);
+        return ResponseEntity.ok(resp);
     }
 
     // ========== Get User Profile
