@@ -1,18 +1,16 @@
 package intelink.controllers;
 
-import intelink.dto.request.CreateShortUrlRequest;
-import intelink.dto.request.UpdatePasswordRequest;
-import intelink.dto.request.UpdateShortUrlRequest;
-import intelink.dto.response.CreateShortUrlResponse;
-import intelink.dto.response.ShortUrlDetailResponse;
-import intelink.dto.response.ShortUrlListResponse;
+import intelink.dto.request.url.CreateShortUrlRequest;
+import intelink.dto.request.url.UpdatePasswordRequest;
+import intelink.dto.request.url.UpdateShortUrlRequest;
+import intelink.dto.response.url.CreateShortUrlResponse;
+import intelink.dto.response.url.ShortUrlDetailResponse;
+import intelink.dto.response.url.ShortUrlListResponse;
 import intelink.dto.response.PagedResponse;
-import intelink.dto.response.UpdateShortUrlResponse;
+import intelink.dto.response.url.UpdateShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
-import intelink.models.enums.ShortUrlStatus;
-import intelink.services.ShortUrlService;
-import intelink.services.UserService;
+import intelink.services.interfaces.IShortUrlService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,28 +33,18 @@ import java.util.Optional;
 @RequestMapping("/api/v1/url")
 public class UrlController {
 
-    private final ShortUrlService shortUrlService;
-    private final UserService userService;
+    private final IShortUrlService shortUrlService;
 
     @Value("${app.url.access}")
     private String accessUrl;
 
     @PostMapping
     public ResponseEntity<?> createShortUrl(
-            @Valid
-            @RequestBody CreateShortUrlRequest request,
+            @Valid @RequestBody CreateShortUrlRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) throws IllegalBlockSizeException, BadPaddingException {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
+        User user = shortUrlService.getCurrentUser(userDetails);
         ShortUrl shortUrl = shortUrlService.create(user, request);
-        // if (shortUrl.getStatus() == ShortUrlStatus.DELETED) {
-        //     throw new IllegalArgumentException("The URL is unsafe and has been deleted");
-        // }
         CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, accessUrl);
         return ResponseEntity.ok(response);
     }
@@ -67,12 +55,7 @@ public class UrlController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
+        User user = shortUrlService.getCurrentUser(userDetails);
         Pageable pageable = PageRequest.of(page, size);
         Page<ShortUrl> shortUrlPage = shortUrlService.getUserShortUrls(user.getId(), pageable);
         
@@ -89,15 +72,11 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
+        User user = shortUrlService.getCurrentUser(userDetails);
         Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCodeAndUserId(shortCode, user.getId());
+        
         if (shortUrlOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            throw new IllegalArgumentException("Short URL not found");
         }
 
         ShortUrl shortUrl = shortUrlOpt.get();
@@ -111,26 +90,16 @@ public class UrlController {
             @Valid @RequestBody UpdateShortUrlRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
-        try {
-            ShortUrl updatedUrl = shortUrlService.updateShortUrl(
-                user.getId(),
-                shortCode,
-                request.getDescription(),
-                request.getMaxUsage(),
-                request.getAvailableDays()
-            );
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.success(updatedUrl.getShortCode());
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.failure(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+        User user = shortUrlService.getCurrentUser(userDetails);
+        ShortUrl updatedUrl = shortUrlService.updateShortUrl(
+            user.getId(),
+            shortCode,
+            request.getDescription(),
+            request.getMaxUsage(),
+            request.getAvailableDays()
+        );
+        UpdateShortUrlResponse response = UpdateShortUrlResponse.success(updatedUrl.getShortCode());
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{shortCode}")
@@ -138,24 +107,15 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
-        try {
-            shortUrlService.deleteShortUrl(user.getId(), shortCode);
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-                .message("Short URL deleted successfully")
-                .shortCode(shortCode)
-                .success(true)
-                .build();
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.failure(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+        User user = shortUrlService.getCurrentUser(userDetails);
+        shortUrlService.deleteShortUrl(user.getId(), shortCode);
+        
+        UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
+            .message("Short URL deleted successfully")
+            .shortCode(shortCode)
+            .success(true)
+            .build();
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{shortCode}/enable")
@@ -163,24 +123,15 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
-        try {
-            shortUrlService.enableShortUrl(user.getId(), shortCode);
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-                .message("Short URL enabled successfully")
-                .shortCode(shortCode)
-                .success(true)
-                .build();
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.failure(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+        User user = shortUrlService.getCurrentUser(userDetails);
+        shortUrlService.enableShortUrl(user.getId(), shortCode);
+        
+        UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
+            .message("Short URL enabled successfully")
+            .shortCode(shortCode)
+            .success(true)
+            .build();
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{shortCode}/disable")
@@ -188,24 +139,15 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
-        try {
-            shortUrlService.disableShortUrl(user.getId(), shortCode);
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-                .message("Short URL disabled successfully")
-                .shortCode(shortCode)
-                .success(true)
-                .build();
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.failure(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+        User user = shortUrlService.getCurrentUser(userDetails);
+        shortUrlService.disableShortUrl(user.getId(), shortCode);
+        
+        UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
+            .message("Short URL disabled successfully")
+            .shortCode(shortCode)
+            .success(true)
+            .build();
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{shortCode}/password")
@@ -214,29 +156,20 @@ public class UrlController {
             @Valid @RequestBody UpdatePasswordRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
-        try {
-            ShortUrl updatedUrl = shortUrlService.updatePassword(
-                user.getId(),
-                shortCode,
-                request.getNewPassword(),
-                request.getCurrentPassword()
-            );
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-                .message("Password updated successfully")
-                .shortCode(updatedUrl.getShortCode())
-                .success(true)
-                .build();
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            UpdateShortUrlResponse response = UpdateShortUrlResponse.failure(e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+        User user = shortUrlService.getCurrentUser(userDetails);
+        ShortUrl updatedUrl = shortUrlService.updatePassword(
+            user.getId(),
+            shortCode,
+            request.getNewPassword(),
+            request.getCurrentPassword()
+        );
+        
+        UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
+            .message("Password updated successfully")
+            .shortCode(updatedUrl.getShortCode())
+            .success(true)
+            .build();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")
@@ -249,14 +182,9 @@ public class UrlController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        User user = userOpt.get();
+        User user = shortUrlService.getCurrentUser(userDetails);
         
-        // Tạo Pageable với sorting
+        // Create Pageable with sorting
         Pageable pageable;
         if ("asc".equalsIgnoreCase(sortDirection)) {
             pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sortBy).ascending());
@@ -264,7 +192,6 @@ public class UrlController {
             pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sortBy).descending());
         }
         
-        // Sử dụng method mới với custom sorting
         Page<ShortUrl> shortUrlPage = shortUrlService.getUserShortUrlsWithSorting(user.getId(), pageable);
         
         Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl -> 

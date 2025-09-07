@@ -1,6 +1,6 @@
 package intelink.services;
 
-import intelink.dto.helper.DimensionInfo;
+import intelink.dto.object.DimensionInfo;
 import intelink.models.ClickStat;
 import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;

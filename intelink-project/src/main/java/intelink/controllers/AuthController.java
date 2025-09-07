@@ -1,11 +1,12 @@
 package intelink.controllers;
 
-import intelink.dto.object.AuthObject;
-import intelink.dto.request.ForgotPasswordRequest;
-import intelink.dto.request.LoginRequest;
-import intelink.dto.request.RegisterRequest;
-import intelink.dto.request.ResetPasswordRequest;
-import intelink.dto.response.*;
+import intelink.dto.object.Auth;
+import intelink.dto.object.SubscriptionInfo;
+import intelink.dto.request.auth.ForgotPasswordRequest;
+import intelink.dto.request.auth.LoginRequest;
+import intelink.dto.request.auth.RegisterRequest;
+import intelink.dto.request.auth.ResetPasswordRequest;
+import intelink.dto.response.auth.*;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.services.OAuthService;
@@ -29,20 +30,10 @@ public class AuthController {
     // ========== Register
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) throws MessagingException {
-        User user = userService.create(
-                registerRequest.getUsername(),
-                registerRequest.getEmail(),
-                registerRequest.getPassword(),
-                UserRole.USER
-        );
+        User user = userService.register(registerRequest, UserRole.USER);
 
-        return ResponseEntity.ok(RegisterResponse.builder()
-                .success(true)
-                .message("Registration successful. Please check your email to verify your account.")
-                .email(user.getEmail())
-                .emailVerified(user.getEmailVerified())
-                .build()
-        );
+        String msg = "Registration successful. Please check your email to verify your account.";
+        return ResponseEntity.ok(new RegisterResponse(true, msg, user.getEmail(), user.getEmailVerified()));
     }
 
     // ========== Verify Email
@@ -63,11 +54,8 @@ public class AuthController {
         String email = forgotPasswordRequest.getEmail();
         userService.forgotPassword(email);
 
-        return ResponseEntity.ok(ForgotPasswordResponse.builder()
-                .success(true)
-                .message("If the email exists, a password reset link has been sent")
-                .build()
-        );
+        String msg = "If the email exists, a password reset link has been sent to " + email;
+        return ResponseEntity.ok(new ForgotPasswordResponse(true, msg));
     }
 
     // ========== Reset Password
@@ -78,62 +66,35 @@ public class AuthController {
     ) {
         userService.resetPassword(token, resetPasswordRequest);
 
-        return ResponseEntity.ok(ResetPasswordResponse.builder()
-                .success(true)
-                .message("Password reset successfully")
-                .build()
-        );
+        String msg = "Password reset successfully. You can now log in with your new password.";
+        return ResponseEntity.ok(new ForgotPasswordResponse(true, msg));
     }
 
     // ========== Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthObject obj = userService.login(loginRequest);
+        Auth obj = userService.login(loginRequest);
 
-        return ResponseEntity.ok(AuthResponse.builder()
-                .token(obj.getToken())
-                .refreshToken(obj.getRefreshToken())
-                .username(obj.getUser().getUsername())
-                .email(obj.getUser().getEmail())
-                .role(obj.getUser().getRole().toString())
-                .expiresAt(obj.getExpiresAt())
-                .build()
-        );
+        AuthResponse resp = AuthResponse.fromEntity(obj);
+        return ResponseEntity.ok(resp);
     }
 
     // ========== Refresh Token
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
-        AuthObject obj = userService.refreshToken(authHeader);
+        Auth obj = userService.refreshToken(authHeader);
 
-        return ResponseEntity.ok(AuthResponse.builder()
-                .token(obj.getToken())
-                .refreshToken(obj.getRefreshToken())
-                .username(obj.getUser().getUsername())
-                .expiresAt(obj.getExpiresAt())
-                .build()
-        );
+        AuthResponse resp = AuthResponse.fromEntity(obj);
+        return ResponseEntity.ok(resp);
     }
 
     // ========== Get User Profile
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
         User user = userService.profile(authHeader);
+        SubscriptionInfo subscriptionInfo = null; // Will implement subscription logic later
 
-        return ResponseEntity.ok(UserProfileResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole().toString())
-                .totalClicks(user.getTotalClicks())
-                .totalShortUrls(user.getTotalShortUrls())
-                .emailVerified(user.getEmailVerified())
-                .authProvider(user.getAuthProvider().toString())
-                .lastLoginAt(user.getLastLoginAt())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build()
-        );
+        return ResponseEntity.ok(UserProfileResponse.fromEntities(user, subscriptionInfo));
     }
 
     // ========== Logout
@@ -153,15 +114,15 @@ public class AuthController {
     public ResponseEntity<?> oAuthCallback(
             @RequestParam String token
     ) {
-        AuthObject authObject = oAuthService.callback(token);
+        Auth auth = oAuthService.callback(token);
 
         return ResponseEntity.ok(AuthResponse.builder()
-                .token(authObject.getToken())
-                .refreshToken(authObject.getRefreshToken())
-                .username(authObject.getUser().getUsername())
-                .email(authObject.getUser().getEmail())
-                .role(authObject.getUser().getRole().toString())
-                .expiresAt(authObject.getExpiresAt())
+                .token(auth.getToken())
+                .refreshToken(auth.getRefreshToken())
+                .username(auth.getUser().getUsername())
+                .email(auth.getUser().getEmail())
+                .role(auth.getUser().getRole().toString())
+                .expiresAt(auth.getExpiresAt())
                 .build()
         );
     }

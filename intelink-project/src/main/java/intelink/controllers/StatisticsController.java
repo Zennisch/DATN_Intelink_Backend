@@ -1,9 +1,7 @@
 package intelink.controllers;
 
-import intelink.dto.response.StatisticsResponse;
-import intelink.dto.response.TimeStatsResponse;
-import intelink.models.enums.DimensionType;
-import intelink.services.StatisticsService;
+import intelink.dto.response.stat.StatisticsResponse;
+import intelink.dto.response.stat.TimeStatsResponse;
 import intelink.services.interfaces.IStatisticsService;
 import lombok.RequiredArgsConstructor;
 
@@ -11,9 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController

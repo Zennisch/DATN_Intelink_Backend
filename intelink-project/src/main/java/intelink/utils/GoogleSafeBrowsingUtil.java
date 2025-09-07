@@ -1,15 +1,15 @@
 package intelink.utils;
 
-import intelink.dto.helper.threat.ThreatEntry;
-import intelink.dto.helper.threat.enums.PlatformType;
-import intelink.dto.helper.threat.enums.ThreatEntryType;
-import intelink.dto.helper.threat.enums.ThreatType;
-import intelink.dto.helper.threat.request.SafeBrowsingClient;
-import intelink.dto.helper.threat.request.SafeBrowsingRequest;
-import intelink.dto.helper.threat.request.ThreatInfo;
-import intelink.dto.helper.threat.response.ThreatAnalysisResult;
-import intelink.dto.helper.threat.response.ThreatMatchInfo;
-import intelink.dto.helper.threat.response.ThreatMatchesResponse;
+import intelink.dto.object.threat.ThreatEntry;
+import intelink.dto.object.threat.enums.PlatformType;
+import intelink.dto.object.threat.enums.ThreatEntryType;
+import intelink.dto.object.threat.enums.ThreatType;
+import intelink.dto.request.analysis.SafeBrowsingClient;
+import intelink.dto.request.analysis.SafeBrowsingRequest;
+import intelink.dto.request.analysis.ThreatInfo;
+import intelink.dto.response.analysis.ThreatAnalysisResult;
+import intelink.dto.response.analysis.ThreatMatchInfo;
+import intelink.dto.response.analysis.ThreatMatchesResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

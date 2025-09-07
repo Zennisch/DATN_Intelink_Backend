@@ -1,13 +1,13 @@
 package intelink.services.interfaces;
 
-import intelink.models.AnalysisResult;
-
 import java.util.List;
+
+import intelink.models.ShortUrlAnalysisResult;
 
 public interface IAnalysisResultService {
 
-    AnalysisResult save(AnalysisResult result);
+    ShortUrlAnalysisResult save(ShortUrlAnalysisResult result);
 
-    List<AnalysisResult> saveAll(List<AnalysisResult> results);
+    List<ShortUrlAnalysisResult> saveAll(List<ShortUrlAnalysisResult> results);
 
 }
