@@ -2,16 +2,17 @@ package intelink.controllers;
 
 import intelink.dto.request.UnlockUrlRequest;
 import intelink.dto.response.UnlockUrlResponse;
+import intelink.dto.response.redirect.RedirectResult;
 import intelink.exceptions.IncorrectPasswordException;
 import intelink.exceptions.ShortUrlUnavailableException;
 import intelink.models.ShortUrl;
 import intelink.services.interfaces.IClickLogService;
+import intelink.services.interfaces.IRedirectService;
 import intelink.services.interfaces.IShortUrlService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +26,9 @@ import java.util.Optional;
 @Slf4j
 public class RedirectController {
 
+    private final IRedirectService redirectService;
     private final IShortUrlService shortUrlService;
     private final IClickLogService clickLogService;
-
-    @Value("${app.url.password-unlock}")
-    private String passwordUnlockUrlTemplate;
 
     @GetMapping("/{shortCode}")
     public ResponseEntity<?> redirect(
@@ -37,33 +36,17 @@ public class RedirectController {
             @RequestParam(required = false) String password,
             HttpServletRequest request
     ) throws NoResourceFoundException {
-        Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCode(shortCode);
 
-        if (shortUrlOpt.isEmpty()) {
-            log.warn("Short URL not found: {}", shortCode);
-            throw new NoResourceFoundException(HttpMethod.GET, "Short URL not found: " + shortCode);
-        }
+        RedirectResult result = redirectService.handleRedirect(shortCode, password, request);
 
-        ShortUrl shortUrl = shortUrlOpt.get();
-        if (!shortUrlService.isUrlAccessible(shortUrl, password)) {
-            if (shortUrl.getPasswordHash() != null) {
-                if (password == null) {
-                    String unlockUrl = passwordUnlockUrlTemplate.replace("{shortCode}", shortCode);
-                    return ResponseEntity.status(HttpStatus.FOUND)
-                            .header("Location", unlockUrl)
-                            .build();
-                } else {
-                    throw new IncorrectPasswordException("Incorrect password for short URL: " + shortCode);
-                }
-            }
-            throw new ShortUrlUnavailableException("URL is no longer accessible: " + shortCode);
-        }
-
-        clickLogService.record(shortCode, request);
-
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .header("Location", shortUrl.getOriginalUrl())
-                .build();
+        return switch (result.getType()) {
+            case SUCCESS, PASSWORD_REQUIRED -> ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", result.getRedirectUrl())
+                    .build();
+            case NOT_FOUND -> throw new NoResourceFoundException(HttpMethod.GET, result.getErrorMessage());
+            case UNAVAILABLE -> throw new ShortUrlUnavailableException(result.getErrorMessage());
+            case INCORRECT_PASSWORD -> throw new IncorrectPasswordException(result.getErrorMessage());
+        };
     }
 
     @GetMapping("/{shortCode}/unlock")
