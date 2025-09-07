@@ -5,8 +5,8 @@ import intelink.dto.response.UnlockUrlResponse;
 import intelink.exceptions.IncorrectPasswordException;
 import intelink.exceptions.ShortUrlUnavailableException;
 import intelink.models.ShortUrl;
-import intelink.services.ClickLogService;
-import intelink.services.ShortUrlService;
+import intelink.services.interfaces.IClickLogService;
+import intelink.services.interfaces.IShortUrlService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +25,8 @@ import java.util.Optional;
 @Slf4j
 public class RedirectController {
 
-    private final ShortUrlService shortUrlService;
-    private final ClickLogService clickLogService;
+    private final IShortUrlService shortUrlService;
+    private final IClickLogService clickLogService;
 
     @Value("${app.url.password-unlock}")
     private String passwordUnlockUrlTemplate;
@@ -46,7 +46,7 @@ public class RedirectController {
 
         ShortUrl shortUrl = shortUrlOpt.get();
         if (!shortUrlService.isUrlAccessible(shortUrl, password)) {
-            if (shortUrl.getPassword() != null) {
+            if (shortUrl.getPasswordHash() != null) {
                 if (password == null) {
                     String unlockUrl = passwordUnlockUrlTemplate.replace("{shortCode}", shortCode);
                     return ResponseEntity.status(HttpStatus.FOUND)
@@ -78,7 +78,7 @@ public class RedirectController {
         ShortUrl shortUrl = shortUrlOpt.get();
         
         // Check if URL requires password
-        if (shortUrl.getPassword() == null) {
+        if (shortUrl.getPasswordHash() == null) {
             log.warn("URL does not require password: {}", shortCode);
             return ResponseEntity.badRequest()
                     .body(UnlockUrlResponse.failure("This URL does not require a password", shortCode));

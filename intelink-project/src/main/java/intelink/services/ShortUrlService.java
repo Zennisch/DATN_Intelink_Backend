@@ -1,13 +1,14 @@
 package intelink.services;
 
 import intelink.dto.object.Cipher;
+import intelink.dto.request.CreateShortUrlRequest;
 import intelink.dto.response.analysis.ThreatAnalysisResult;
 import intelink.dto.response.analysis.ThreatMatchInfo;
-import intelink.dto.request.CreateShortUrlRequest;
-import intelink.models.AnalysisResult;
 import intelink.models.ShortUrl;
+import intelink.models.ShortUrlAnalysisResult;
 import intelink.models.User;
-import intelink.models.enums.AnalysisStatus;
+import intelink.models.enums.ShortUrlAnalysisEngine;
+import intelink.models.enums.ShortUrlAnalysisStatus;
 import intelink.models.enums.ShortUrlStatus;
 import intelink.repositories.ShortUrlRepository;
 import intelink.services.interfaces.IShortUrlService;
@@ -54,7 +55,7 @@ public class ShortUrlService implements IShortUrlService {
         ShortUrl shortUrl = ShortUrl.builder()
                 .shortCode(shortCode)
                 .originalUrl(request.getOriginalUrl())
-                .password(encodedPassword)
+                .passwordHash(encodedPassword)
                 .description(request.getDescription())
                 .status(ShortUrlStatus.ENABLED)
                 .maxUsage(request.getMaxUsage())
@@ -67,25 +68,25 @@ public class ShortUrlService implements IShortUrlService {
 
         ThreatAnalysisResult threatAnalysisResult = googleSafeBrowsingUtil.checkUrls(List.of(shortUrl.getOriginalUrl()));
         if (!threatAnalysisResult.hasMatches() || threatAnalysisResult.matches().isEmpty()) {
-            AnalysisResult analysisResult = AnalysisResult.builder()
+            ShortUrlAnalysisResult analysisResult = ShortUrlAnalysisResult.builder()
                     .shortUrl(shortUrl)
-                    .status(AnalysisStatus.SAFE)
-                    .analysisEngine("GOOGLE_SAFE_BROWSING")
+                    .status(ShortUrlAnalysisStatus.SAFE)
+                    .engine(ShortUrlAnalysisEngine.GOOGLE_SAFE_BROWSING)
                     .threatType("NONE")
                     .platformType("ANY_PLATFORM")
                     .build();
             analysisResultService.save(analysisResult);
         } else {
             for (ThreatMatchInfo match : threatAnalysisResult.matches()) {
-                AnalysisResult analysisResult = AnalysisResult.builder()
+                ShortUrlAnalysisResult analysisResult = ShortUrlAnalysisResult.builder()
                         .shortUrl(shortUrl)
-                        .status(AnalysisStatus.fromString(match.threatType()))
-                        .analysisEngine("GOOGLE_SAFE_BROWSING")
+                        .status(ShortUrlAnalysisStatus.fromString(match.threatType()))
+                        .engine(ShortUrlAnalysisEngine.GOOGLE_SAFE_BROWSING)
                         .threatType(match.threatType())
                         .platformType(match.platformType())
                         .cacheDuration(match.cacheDuration())
                         .details("Threat detected: " + match.threatEntryType())
-                        .analyzedAt(Instant.now())
+                        .createdAt(Instant.now())
                         .build();
                 analysisResultService.save(analysisResult);
             }
@@ -172,8 +173,8 @@ public class ShortUrlService implements IShortUrlService {
             return false;
         }
 
-        if (shortUrl.getPassword() != null) {
-            return password != null && passwordEncoder.matches(password, shortUrl.getPassword());
+        if (shortUrl.getPasswordHash() != null) {
+            return password != null && passwordEncoder.matches(password, shortUrl.getPasswordHash());
         }
 
         return true;
@@ -216,17 +217,17 @@ public class ShortUrlService implements IShortUrlService {
         ShortUrl shortUrl = shortUrlOpt.get();
         
         // Verify current password if URL already has a password
-        if (shortUrl.getPassword() != null) {
-            if (currentPassword == null || !passwordEncoder.matches(currentPassword, shortUrl.getPassword())) {
+        if (shortUrl.getPasswordHash() != null) {
+            if (currentPassword == null || !passwordEncoder.matches(currentPassword, shortUrl.getPasswordHash())) {
                 throw new IllegalArgumentException("Current password is incorrect");
             }
         }
         
         // Set new password
         if (newPassword != null && !newPassword.trim().isEmpty()) {
-            shortUrl.setPassword(passwordEncoder.encode(newPassword));
+            shortUrl.setPasswordHash(passwordEncoder.encode(newPassword));
         } else {
-            shortUrl.setPassword(null); // Remove password
+            shortUrl.setPasswordHash(null); // Remove password
         }
         
         return shortUrlRepository.save(shortUrl);

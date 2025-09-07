@@ -46,11 +46,11 @@ public class ShortUrlAnalysisResult {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "threat_type", nullable = false)
-    private ShortUrlAnalysisThreatType threatType;
+    private String threatType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "platform_type", nullable = false)
-    private ShortUrlAnalysisPlatformType platformType;
+    private String platformType;
 
     @Column(name = "cache_duration", nullable = true)
     private String cacheDuration;
