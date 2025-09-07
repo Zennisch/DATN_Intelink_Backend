@@ -1,11 +1,11 @@
 package intelink.dto.object;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@Builder
-public class TokenObject {
+@AllArgsConstructor
+public class Token {
     private String token;
     private String username;
 }

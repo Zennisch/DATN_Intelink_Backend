@@ -3,7 +3,7 @@ package intelink.controllers;
 import intelink.dto.object.AuthObject;
 import intelink.dto.request.ForgotPasswordRequest;
 import intelink.dto.request.LoginRequest;
-import intelink.dto.request.RegisterRequest;
+import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.ResetPasswordRequest;
 import intelink.dto.response.*;
 import intelink.models.User;
@@ -29,7 +29,7 @@ public class AuthController {
     // ========== Register
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) throws MessagingException {
-        User user = userService.create(
+        User user = userService.register(
                 registerRequest.getUsername(),
                 registerRequest.getEmail(),
                 registerRequest.getPassword(),

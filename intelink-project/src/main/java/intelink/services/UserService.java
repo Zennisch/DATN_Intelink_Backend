@@ -2,7 +2,7 @@ package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
 import intelink.dto.object.AuthObject;
-import intelink.dto.object.TokenObject;
+import intelink.dto.object.Token;
 import intelink.dto.request.LoginRequest;
 import intelink.dto.request.ResetPasswordRequest;
 import intelink.models.User;
@@ -11,6 +11,7 @@ import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
 import intelink.models.enums.VerificationTokenType;
 import intelink.repositories.UserRepository;
+import intelink.services.interfaces.IEmailService;
 import intelink.services.interfaces.IUserService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class UserService implements IUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final VerificationTokenService verificationTokenService;
-    private final EmailService emailService;
+    private final IEmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -46,7 +47,7 @@ public class UserService implements IUserService {
     @Value("${app.url.reset-password}")
     private String resetPasswordEmailUrlTemplate;
 
-    private TokenObject validateToken(String authHeader) {
+    private Token validateToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new BadCredentialsException("Invalid token format");
         }
@@ -58,14 +59,12 @@ public class UserService implements IUserService {
             throw new BadCredentialsException("Invalid or expired token");
         }
 
-        return TokenObject.builder()
-                .token(token)
-                .username(username)
-                .build();
+        return new Token(token, username);
     }
 
     @Transactional
-    public User create(String username, String email, String password, UserRole role) throws MessagingException {
+    public User register(String username, String email, String password, UserRole role) throws MessagingException {
+        // 1. Validate input
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Username already exists");
         }
@@ -73,6 +72,7 @@ public class UserService implements IUserService {
             throw new IllegalArgumentException("Email already exists");
         }
 
+        // 2. Create user
         User user = User.builder()
                 .username(username)
                 .email(email)
@@ -83,7 +83,9 @@ public class UserService implements IUserService {
         User savedUser = userRepository.save(user);
         log.info("UserService.create: User created with ID: {}", savedUser.getId());
 
+        // 3. Generate email verification token and send email
         VerificationToken verificationToken = verificationTokenService.create(user, VerificationTokenType.EMAIL_VERIFICATION, 24);
+
         String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
         emailService.sendVerificationEmail(user.getEmail(), verificationLink);
         log.info("UserService.create: Verification email sent to {}", user.getEmail());
@@ -188,7 +190,7 @@ public class UserService implements IUserService {
 
     @Transactional
     public AuthObject refreshToken(String authHeader) {
-        TokenObject tokenObject = validateToken(authHeader);
+        Token tokenObject = validateToken(authHeader);
         String username = tokenObject.getUsername();
 
         String token = jwtTokenProvider.generateToken(username);
@@ -211,8 +213,8 @@ public class UserService implements IUserService {
 
     @Transactional
     public User profile(String authHeader) {
-        TokenObject tokenObject = validateToken(authHeader);
-        String username = tokenObject.getUsername();
+        Token token = validateToken(authHeader);
+        String username = token.getUsername();
 
         Optional<User> userOpt = findByUsername(username);
         if (userOpt.isEmpty()) {

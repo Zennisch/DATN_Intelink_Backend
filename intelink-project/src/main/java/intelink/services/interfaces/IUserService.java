@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface IUserService {
 
-    User create(String username, String email, String password, UserRole role) throws MessagingException;
+    User register(String username, String email, String password, UserRole role) throws MessagingException;
 
     void verifyEmail(String token);
 
