@@ -1,7 +1,8 @@
 package intelink.services.interfaces;
 
-import intelink.dto.object.AuthObject;
+import intelink.dto.object.Auth;
 import intelink.dto.request.auth.LoginRequest;
+import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
@@ -11,7 +12,7 @@ import java.util.Optional;
 
 public interface IUserService {
 
-    User register(String username, String email, String password, UserRole role) throws MessagingException;
+    User register(RegisterRequest registerRequest, UserRole role) throws MessagingException;
 
     void verifyEmail(String token);
 
@@ -19,9 +20,9 @@ public interface IUserService {
 
     void resetPassword(String token, ResetPasswordRequest resetPasswordRequest);
 
-    AuthObject login(LoginRequest loginRequest);
+    Auth login(LoginRequest loginRequest);
 
-    AuthObject refreshToken(String authHeader);
+    Auth refreshToken(String authHeader);
 
     User profile(String authHeader);
 

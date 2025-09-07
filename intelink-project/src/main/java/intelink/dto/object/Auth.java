@@ -1,12 +1,13 @@
 package intelink.dto.object;
 
 import intelink.models.User;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
-@Builder
-public class AuthObject {
+@AllArgsConstructor
+public class Auth {
     private User user;
     private String token;
     private String refreshToken;

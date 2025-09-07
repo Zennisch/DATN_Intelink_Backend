@@ -1,6 +1,6 @@
 package intelink.controllers;
 
-import intelink.dto.object.AuthObject;
+import intelink.dto.object.Auth;
 import intelink.dto.request.auth.ForgotPasswordRequest;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
@@ -29,12 +29,7 @@ public class AuthController {
     // ========== Register
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) throws MessagingException {
-        User user = userService.register(
-                registerRequest.getUsername(),
-                registerRequest.getEmail(),
-                registerRequest.getPassword(),
-                UserRole.USER
-        );
+        User user = userService.register(registerRequest, UserRole.USER);
 
         String msg = "Registration successful. Please check your email to verify your account.";
         return ResponseEntity.ok(new RegisterResponse(true, msg, user.getEmail(), user.getEmailVerified()));
@@ -77,23 +72,16 @@ public class AuthController {
     // ========== Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthObject obj = userService.login(loginRequest);
+        Auth obj = userService.login(loginRequest);
 
-        return ResponseEntity.ok(AuthResponse.builder()
-                .token(obj.getToken())
-                .refreshToken(obj.getRefreshToken())
-                .username(obj.getUser().getUsername())
-                .email(obj.getUser().getEmail())
-                .role(obj.getUser().getRole().toString())
-                .expiresAt(obj.getExpiresAt())
-                .build()
-        );
+        AuthResponse resp = AuthResponse.fromEntity(obj);
+        return ResponseEntity.ok(resp);
     }
 
     // ========== Refresh Token
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
-        AuthObject obj = userService.refreshToken(authHeader);
+        Auth obj = userService.refreshToken(authHeader);
 
         return ResponseEntity.ok(AuthResponse.builder()
                 .token(obj.getToken())
@@ -142,15 +130,15 @@ public class AuthController {
     public ResponseEntity<?> oAuthCallback(
             @RequestParam String token
     ) {
-        AuthObject authObject = oAuthService.callback(token);
+        Auth auth = oAuthService.callback(token);
 
         return ResponseEntity.ok(AuthResponse.builder()
-                .token(authObject.getToken())
-                .refreshToken(authObject.getRefreshToken())
-                .username(authObject.getUser().getUsername())
-                .email(authObject.getUser().getEmail())
-                .role(authObject.getUser().getRole().toString())
-                .expiresAt(authObject.getExpiresAt())
+                .token(auth.getToken())
+                .refreshToken(auth.getRefreshToken())
+                .username(auth.getUser().getUsername())
+                .email(auth.getUser().getEmail())
+                .role(auth.getUser().getRole().toString())
+                .expiresAt(auth.getExpiresAt())
                 .build()
         );
     }

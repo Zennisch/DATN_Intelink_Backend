@@ -1,9 +1,10 @@
 package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
-import intelink.dto.object.AuthObject;
+import intelink.dto.object.Auth;
 import intelink.dto.object.Token;
 import intelink.dto.request.auth.LoginRequest;
+import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.VerificationToken;
@@ -64,7 +65,12 @@ public class UserService implements IUserService {
     }
 
     @Transactional
-    public User register(String username, String email, String password, UserRole role) throws MessagingException {
+    public User register(RegisterRequest registerRequest, UserRole role) throws MessagingException {
+        // 0. Extract fields
+        String username = registerRequest.getUsername();
+        String email = registerRequest.getEmail();
+        String password = registerRequest.getPassword();
+
         // 1. Validate input
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Username already exists");
@@ -104,11 +110,11 @@ public class UserService implements IUserService {
 
         // 2. Mark token as used
         VerificationToken verificationToken = tokenOpt.get();
+        User user = verificationToken.getUser();
         verificationTokenService.markAsUsed(verificationToken);
         log.info("UserService.verifyEmail: Verification token marked as used for user ID: {}", user.getId());
 
         // 3. Mark user's email as verified
-        User user = verificationToken.getUser();
         user.setEmailVerified(true);
         userRepository.save(user);
         log.info("UserService.verifyEmail: Email verified for user ID: {}", user.getId());
@@ -153,53 +159,56 @@ public class UserService implements IUserService {
 
         // 2. Mark token as used
         VerificationToken verificationToken = tokenOpt.get();
+        User user = verificationToken.getUser();
         verificationTokenService.markAsUsed(verificationToken);
         log.info("UserService.resetPassword: Password reset token marked as used for user ID: {}", user.getId());
 
         // 4. Update user's password
-        User user = verificationToken.getUser();
         user.setPasswordHash(passwordEncoder.encode(password));
         userRepository.save(user);
         log.info("UserService.resetPassword: Password reset for user ID: {}", user.getId());
     }
 
     @Transactional
-    public AuthObject login(LoginRequest loginRequest) {
+    public Auth login(LoginRequest loginRequest) {
+        // 0. Extract fields
+        String username = loginRequest.getUsername();
+        String password = loginRequest.getPassword();
+
+        // 1. Authenticate user
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
+                        username,
+                        password
                 )
         );
 
-        Optional<User> userOpt = findByUsername(loginRequest.getUsername());
+        // 2. Check if user exists for this username
+        Optional<User> userOpt = findByUsername(username);
         if (userOpt.isEmpty()) {
             throw new BadCredentialsException("Invalid username or password");
         }
 
+        // 3. If exists, check if email is verified for LOCAL users
         User user = userOpt.get();
-
         if (user.getProvider() == UserProvider.LOCAL && !user.getEmailVerified()) {
             throw new BadCredentialsException("Please verify your email before logging in");
         }
 
+        // 4. Update last login time
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
+        // 5. Generate JWT token
         String token = jwtTokenProvider.generateToken(authentication.getName());
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-        return AuthObject.builder()
-                .user(user)
-                .token(token)
-                .refreshToken(refreshToken)
-                .expiresAt(expiresAt)
-                .build();
+        return new Auth(user, token, refreshToken, expiresAt);
     }
 
     @Transactional
-    public AuthObject refreshToken(String authHeader) {
+    public Auth refreshToken(String authHeader) {
         Token tokenObject = validateToken(authHeader);
         String username = tokenObject.getUsername();
 
@@ -213,12 +222,7 @@ public class UserService implements IUserService {
         }
         User user = userOpt.get();
 
-        return AuthObject.builder()
-                .user(user)
-                .token(token)
-                .refreshToken(refreshToken)
-                .expiresAt(expiresAt)
-                .build();
+        return new Auth(user, token, refreshToken, expiresAt);
     }
 
     @Transactional

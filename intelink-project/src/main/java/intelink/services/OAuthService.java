@@ -1,10 +1,10 @@
 package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
-import intelink.dto.object.AuthObject;
+import intelink.dto.object.Auth;
 import intelink.models.OAuthAccount;
 import intelink.models.User;
-import intelink.models.enums.OAuthProvider;
+import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
 import intelink.repositories.OAuthAccountRepository;
 import intelink.repositories.UserRepository;
@@ -35,14 +35,14 @@ public class OAuthService extends DefaultOAuth2UserService {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        OAuthProvider provider = OAuthProvider.fromString(registrationId.toUpperCase());
+        UserProvider provider = UserProvider.fromString(registrationId.toUpperCase());
 
         return processOAuth2User(oAuth2User, provider);
     }
 
-    private OAuth2User processOAuth2User(OAuth2User oAuth2User, OAuthProvider provider) {
+    private OAuth2User processOAuth2User(OAuth2User oAuth2User, UserProvider provider) {
         String providerUserId;
-        if (provider == OAuthProvider.GOOGLE) {
+        if (provider == UserProvider.GOOGLE) {
             providerUserId = oAuth2User.getAttribute("sub");
         } else {
             providerUserId = oAuth2User.getAttribute("id");
@@ -60,7 +60,7 @@ public class OAuthService extends DefaultOAuth2UserService {
             oAuthAccount.setProviderUsername(name);
 
             User user = oAuthAccount.getUser();
-            if (user.getAuthProvider() == oAuthAccount.getProvider()
+            if (user.getProvider() == oAuthAccount.getProvider()
                     && user.getEmail().equals(email)) {
                 user.setEmail(email);
                 user.setEmailVerified(true);
@@ -91,7 +91,7 @@ public class OAuthService extends DefaultOAuth2UserService {
                     .passwordHash("")
                     .role(UserRole.USER)
                     .emailVerified(true)
-                    .authProvider(provider)
+                    .provider(provider)
                     .build()
             );
         }
@@ -109,7 +109,7 @@ public class OAuthService extends DefaultOAuth2UserService {
         return oAuth2User;
     }
 
-    public AuthObject callback(String authToken) {
+    public Auth callback(String authToken) {
         String email = jwtTokenProvider.getUsernameFromToken(authToken);
         Optional<User> userOpt = userRepository.findByEmail(email);
 
@@ -123,11 +123,6 @@ public class OAuthService extends DefaultOAuth2UserService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-        return AuthObject.builder()
-                .user(user)
-                .token(token)
-                .refreshToken(refreshToken)
-                .expiresAt(expiresAt)
-                .build();
+        return new Auth(user, token, refreshToken, expiresAt);
     }
 }
