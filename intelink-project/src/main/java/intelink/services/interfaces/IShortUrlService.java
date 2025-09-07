@@ -33,6 +33,9 @@ public interface IShortUrlService {
     ShortUrl updateShortUrl(Long userId, String shortCode, String description, Long maxUsage, Integer availableDays);
     ShortUrl updatePassword(Long userId, String shortCode, String newPassword, String currentPassword);
 
+    // Statistics operations
+    void increaseTotalClicks(String shortCode);
+
     // Access and unlock operations
     Boolean isUrlAccessible(ShortUrl shortUrl, String password);
     UnlockUrlResponse getUnlockInfo(String shortCode);

@@ -34,6 +34,12 @@ public class ShortUrl {
     @JsonIgnore
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custom_domain_id", nullable = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private CustomDomain customDomain;
+
     @OneToMany(mappedBy = "shortUrl", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @JsonIgnore

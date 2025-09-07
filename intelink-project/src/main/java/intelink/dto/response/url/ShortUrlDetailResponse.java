@@ -28,7 +28,7 @@ public class ShortUrlDetailResponse {
                 .id(shortUrl.getId())
                 .shortCode(shortUrl.getShortCode())
                 .originalUrl(shortUrl.getOriginalUrl())
-                .hasPassword(shortUrl.getPassword() != null)
+                .hasPassword(shortUrl.getPasswordHash() != null)
                 .description(shortUrl.getDescription())
                 .status(shortUrl.getStatus().toString())
                 .maxUsage(shortUrl.getMaxUsage())

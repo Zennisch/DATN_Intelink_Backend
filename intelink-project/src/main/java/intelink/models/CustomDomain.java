@@ -6,7 +6,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "custom_domains")
@@ -30,6 +33,11 @@ public class CustomDomain {
     @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude
     private User user;
+
+    @OneToMany(mappedBy = "customDomain", cascade = CascadeType.ALL)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<ShortUrl> shortUrls;
 
     // Configuration group
     @Column(name = "domain", nullable = false, unique = true, length = 255)

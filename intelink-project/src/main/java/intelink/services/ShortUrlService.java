@@ -235,6 +235,24 @@ public class ShortUrlService implements IShortUrlService {
         return savedUrl;
     }
 
+    @Transactional
+    public void increaseTotalClicks(String shortCode) {
+        Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
+        if (shortUrlOpt.isPresent()) {
+            ShortUrl shortUrl = shortUrlOpt.get();
+            shortUrl.setTotalClicks(shortUrl.getTotalClicks() + 1);
+            shortUrlRepository.save(shortUrl);
+            
+            // Also increase user's total clicks
+            userService.increaseTotalClicks(shortUrl.getUser().getId());
+            
+            log.debug("ShortUrlService.increaseTotalClicks: Incremented clicks for URL {} to {}", 
+                     shortCode, shortUrl.getTotalClicks());
+        } else {
+            log.warn("ShortUrlService.increaseTotalClicks: Short URL not found: {}", shortCode);
+        }
+    }
+
     @Transactional(readOnly = true)
     public Boolean isUrlAccessible(ShortUrl shortUrl, String password) {
         // 1. Check if URL is deleted

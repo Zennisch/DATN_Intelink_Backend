@@ -53,15 +53,8 @@ public class ClickLogService implements IClickLogService {
                 .shortUrl(shortUrl.get())
                 .ipAddress(ipAddress)
                 .ipVersion(ipVersion)
-                .ipNormalized(ipNormalized)
-                .subnet(subnet)
                 .userAgent(userAgent)
                 .referrer(referrer)
-                .country(country)
-                .city(city)
-                .browser(userAgentInfo.getBrowser())
-                .os(userAgentInfo.getOs())
-                .deviceType(userAgentInfo.getDeviceType())
                 .build();
 
 
