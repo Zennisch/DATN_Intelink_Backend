@@ -1,11 +1,11 @@
 package intelink.controllers;
 
 import intelink.dto.object.AuthObject;
-import intelink.dto.request.ForgotPasswordRequest;
-import intelink.dto.request.LoginRequest;
+import intelink.dto.request.auth.ForgotPasswordRequest;
+import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
-import intelink.dto.request.ResetPasswordRequest;
-import intelink.dto.response.*;
+import intelink.dto.request.auth.ResetPasswordRequest;
+import intelink.dto.response.auth.*;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.services.OAuthService;
@@ -36,13 +36,8 @@ public class AuthController {
                 UserRole.USER
         );
 
-        return ResponseEntity.ok(RegisterResponse.builder()
-                .success(true)
-                .message("Registration successful. Please check your email to verify your account.")
-                .email(user.getEmail())
-                .emailVerified(user.getEmailVerified())
-                .build()
-        );
+        String msg = "Registration successful. Please check your email to verify your account.";
+        return ResponseEntity.ok(new RegisterResponse(true, msg, user.getEmail(), user.getEmailVerified()));
     }
 
     // ========== Verify Email
@@ -63,11 +58,8 @@ public class AuthController {
         String email = forgotPasswordRequest.getEmail();
         userService.forgotPassword(email);
 
-        return ResponseEntity.ok(ForgotPasswordResponse.builder()
-                .success(true)
-                .message("If the email exists, a password reset link has been sent")
-                .build()
-        );
+        String msg = "If the email exists, a password reset link has been sent to " + email;
+        return ResponseEntity.ok(new ForgotPasswordResponse(true, msg));
     }
 
     // ========== Reset Password
@@ -78,11 +70,8 @@ public class AuthController {
     ) {
         userService.resetPassword(token, resetPasswordRequest);
 
-        return ResponseEntity.ok(ResetPasswordResponse.builder()
-                .success(true)
-                .message("Password reset successfully")
-                .build()
-        );
+        String msg = "Password reset successfully. You can now log in with your new password.";
+        return ResponseEntity.ok(new ForgotPasswordResponse(true, msg));
     }
 
     // ========== Login

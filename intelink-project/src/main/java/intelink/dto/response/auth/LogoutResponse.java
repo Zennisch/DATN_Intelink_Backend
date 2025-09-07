@@ -1,4 +1,4 @@
-package intelink.dto.response;
+package intelink.dto.response.auth;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;

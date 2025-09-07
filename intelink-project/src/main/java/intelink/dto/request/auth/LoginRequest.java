@@ -1,4 +1,4 @@
-package intelink.dto.request;
+package intelink.dto.request.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

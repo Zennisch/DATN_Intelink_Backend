@@ -1,10 +1,10 @@
-package intelink.dto.response;
+package intelink.dto.response.auth;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@Builder
+@AllArgsConstructor
 public class ForgotPasswordResponse {
     private boolean success;
     private String message;

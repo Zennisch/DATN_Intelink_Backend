@@ -3,8 +3,8 @@ package intelink.services;
 import intelink.config.security.JwtTokenProvider;
 import intelink.dto.object.AuthObject;
 import intelink.dto.object.Token;
-import intelink.dto.request.LoginRequest;
-import intelink.dto.request.ResetPasswordRequest;
+import intelink.dto.request.auth.LoginRequest;
+import intelink.dto.request.auth.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserProvider;
@@ -116,23 +116,33 @@ public class UserService implements IUserService {
 
     @Transactional
     public void forgotPassword(String email) throws MessagingException {
+        // 1. Check if user with the email exists
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
             // Do not reveal if the email exists for security reasons
             return;
         }
 
+        // 2. If exists, generate password reset token
         User user = userOpt.get();
         VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.PASSWORD_RESET, 1);
         String resetLink = resetPasswordEmailUrlTemplate.replace("{token}", verificationToken.getToken());
+
+        // 3. Send password reset email
         emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
         log.info("UserService.forgotPassword: Password reset email sent to {}", user.getEmail());
     }
 
     @Transactional
     public void resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
+        // 1. Validate token and passwords
         if (token == null || token.isEmpty()) {
             throw new BadCredentialsException("Invalid password reset token");
+        }
+
+        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, VerificationTokenType.PASSWORD_RESET);
+        if (tokenOpt.isEmpty()) {
+            throw new BadCredentialsException("Invalid or expired password reset token");
         }
 
         String password = resetPasswordRequest.getPassword();
@@ -141,19 +151,16 @@ public class UserService implements IUserService {
             throw new BadCredentialsException("New password and confirmation do not match");
         }
 
-        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, VerificationTokenType.PASSWORD_RESET);
-        if (tokenOpt.isEmpty()) {
-            throw new BadCredentialsException("Invalid or expired password reset token");
-        }
-
+        // 2. Mark token as used
         VerificationToken verificationToken = tokenOpt.get();
+        verificationTokenService.markAsUsed(verificationToken);
+        log.info("UserService.resetPassword: Password reset token marked as used for user ID: {}", user.getId());
+
+        // 4. Update user's password
         User user = verificationToken.getUser();
         user.setPasswordHash(passwordEncoder.encode(password));
         userRepository.save(user);
         log.info("UserService.resetPassword: Password reset for user ID: {}", user.getId());
-
-        verificationTokenService.markAsUsed(verificationToken);
-        log.info("UserService.resetPassword: Password reset token marked as used for user ID: {}", user.getId());
     }
 
     @Transactional

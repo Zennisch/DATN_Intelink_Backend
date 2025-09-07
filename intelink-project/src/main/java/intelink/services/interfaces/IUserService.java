@@ -1,8 +1,8 @@
 package intelink.services.interfaces;
 
 import intelink.dto.object.AuthObject;
-import intelink.dto.request.LoginRequest;
-import intelink.dto.request.ResetPasswordRequest;
+import intelink.dto.request.auth.LoginRequest;
+import intelink.dto.request.auth.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import jakarta.mail.MessagingException;
