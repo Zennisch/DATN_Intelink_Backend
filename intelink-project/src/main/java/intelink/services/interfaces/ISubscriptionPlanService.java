@@ -14,4 +14,5 @@ public interface ISubscriptionPlanService {
     SubscriptionPlanResponse save(SubscriptionPlanResponse dto);
     Optional<SubscriptionPlanResponse> update(Long id, SubscriptionPlanResponse dto);
     boolean deleteById(Long id);
+    Optional<SubscriptionPlanResponse> toggleStatus(Long id);
 }

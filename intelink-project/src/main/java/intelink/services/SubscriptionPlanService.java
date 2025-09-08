@@ -56,6 +56,14 @@ public class SubscriptionPlanService implements ISubscriptionPlanService {
         return false;
     }
 
+    public Optional<SubscriptionPlanResponse> toggleStatus(Long id) {
+        return repository.findById(id).map(plan -> {
+            plan.setActive(!plan.getActive());
+            SubscriptionPlan updated = repository.save(plan);
+            return toDto(updated);
+        });
+    }
+
     // Chuyển đổi giữa entity và dto
     private SubscriptionPlanResponse toDto(SubscriptionPlan plan) {
         return SubscriptionPlanResponse.builder()

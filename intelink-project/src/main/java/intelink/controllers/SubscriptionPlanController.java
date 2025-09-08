@@ -3,6 +3,7 @@ package intelink.controllers;
 
 import intelink.dto.response.subscription.SubscriptionPlanResponse;
 import intelink.services.SubscriptionPlanService;
+import intelink.services.interfaces.ISubscriptionPlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +15,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/subscription-plans")
 @RequiredArgsConstructor
 public class SubscriptionPlanController {
-    private final SubscriptionPlanService service;
+    private final ISubscriptionPlanService service;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAll() {
@@ -46,5 +47,12 @@ public class SubscriptionPlanController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<SubscriptionPlanResponse> toggleStatus(@PathVariable Long id) {
+        return service.toggleStatus(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
