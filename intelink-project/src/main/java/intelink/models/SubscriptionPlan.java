@@ -75,6 +75,9 @@ public class SubscriptionPlan {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "max_usage_per_url", nullable = false)
+    private Integer max_usage_per_url;
+
     // Lifecycle hooks
     @PrePersist
     private void onCreate() {
