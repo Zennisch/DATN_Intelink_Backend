@@ -28,6 +28,7 @@ public interface IShortUrlService {
     Optional<ShortUrl> findByShortCodeAndUserId(String shortCode, Long userId);
     Page<ShortUrl> getUserShortUrls(Long userId, Pageable pageable);
     Page<ShortUrl> getUserShortUrlsWithSorting(Long userId, Pageable pageable);
+    Page<ShortUrl> searchShortUrls(Long userId, String query, String status, Pageable pageable);
 
     // Update operations
     ShortUrl updateShortUrl(Long userId, String shortCode, String description, Long maxUsage, Integer availableDays);

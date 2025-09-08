@@ -188,6 +188,21 @@ public class ShortUrlService implements IShortUrlService {
         return shortUrlRepository.findByUserId(userId, pageable);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ShortUrl> searchShortUrls(Long userId, String query, String status, Pageable pageable) {
+        ShortUrlStatus statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                statusEnum = ShortUrlStatus.fromString(status);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status parameter: {}", status);
+                throw new IllegalArgumentException("Invalid status: " + status + ". Valid values are: ENABLED, DISABLED");
+            }
+        }
+        
+        return shortUrlRepository.searchShortUrls(userId, query, statusEnum, pageable);
+    }
+
     @Transactional
     public ShortUrl updateShortUrl(Long userId, String shortCode, String description, Long maxUsage, Integer availableDays) {
         ShortUrl shortUrl = findUserShortUrl(userId, shortCode);
