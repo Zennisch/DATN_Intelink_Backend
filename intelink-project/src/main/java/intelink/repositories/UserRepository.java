@@ -38,4 +38,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void decreaseTotalShortUrls(Long userId);
 
     Optional<User> findByProviderAndProviderUserId(UserProvider provider, String providerUserId);
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.shortUrls WHERE u.username = :username")
+    Optional<User> findByUsernameFetchShortUrls(@Param("username") String username);
 }

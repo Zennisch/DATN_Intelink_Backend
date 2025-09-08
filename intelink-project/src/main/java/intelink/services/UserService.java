@@ -282,5 +282,12 @@ public class UserService implements IUserService {
         userRepository.decreaseTotalShortUrls(userId);
         log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
     }
+    @Transactional
+    public User getCurrentUser() {
+    String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    log.debug("getCurrentUser - username from context: {}", username);
+    return userRepository.findByUsernameFetchShortUrls(username)
+        .orElseThrow(() -> new RuntimeException("User not found: " + username));
+    }
 
 }
