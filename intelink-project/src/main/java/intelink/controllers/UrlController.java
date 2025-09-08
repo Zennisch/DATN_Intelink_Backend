@@ -184,7 +184,6 @@ public class UrlController {
     ) {
         User user = shortUrlService.getCurrentUser(userDetails);
         
-        // Create Pageable with sorting
         Pageable pageable;
         if ("asc".equalsIgnoreCase(sortDirection)) {
             pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sortBy).ascending());
@@ -192,7 +191,6 @@ public class UrlController {
             pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sortBy).descending());
         }
         
-        // Use the new search method that supports query and status filtering
         Page<ShortUrl> shortUrlPage = shortUrlService.searchShortUrls(user.getId(), query, status, pageable);
         
         Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl -> 

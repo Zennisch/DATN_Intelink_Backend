@@ -190,16 +190,7 @@ public class ShortUrlService implements IShortUrlService {
 
     @Transactional(readOnly = true)
     public Page<ShortUrl> searchShortUrls(Long userId, String query, String status, Pageable pageable) {
-        ShortUrlStatus statusEnum = null;
-        if (status != null && !status.trim().isEmpty()) {
-            try {
-                statusEnum = ShortUrlStatus.fromString(status);
-            } catch (IllegalArgumentException e) {
-                log.warn("Invalid status parameter: {}", status);
-                throw new IllegalArgumentException("Invalid status: " + status + ". Valid values are: ENABLED, DISABLED");
-            }
-        }
-        
+        ShortUrlStatus statusEnum = ShortUrlStatus.fromString(status);
         return shortUrlRepository.searchShortUrls(userId, query, statusEnum, pageable);
     }
 
