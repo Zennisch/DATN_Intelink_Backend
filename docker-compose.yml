@@ -29,6 +29,18 @@ services:
             - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
             - SPRING_DATASOURCE_USERNAME=intelink
             - SPRING_DATASOURCE_PASSWORD=intelink
+            # OAuth Configuration
+            - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+            - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+            # Mail Configuration
+            - MAIL_USERNAME=${MAIL_USERNAME}
+            - MAIL_PASSWORD=${MAIL_PASSWORD}
+            # API Keys
+            - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
+            - SAFE_BROWSING_API_KEY=${SAFE_BROWSING_API_KEY}
+            # Optional
+            - JWT_SECRET=${JWT_SECRET:-myVerySecretKeyThatIsAtLeast256BitsLongForHS256Algorithm}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-intelink}
         depends_on:
             - postgres
         networks:
