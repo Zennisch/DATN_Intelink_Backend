@@ -39,8 +39,8 @@ public class UserDataSeeder {
                     .emailVerified(utils.getRandom().nextBoolean())
                     .provider(utils.getRandom().nextDouble() < 0.7 ? UserProvider.LOCAL : utils.getRandomOAuthProvider())
                     .providerUserId(utils.getRandom().nextDouble() < 0.3 ? "provider_" + UUID.randomUUID().toString().substring(0, 8) : null)
-                    .lastLoginAt(utils.getRandomInstantBetween(2023, 2024))
-                    .createdAt(utils.getRandomInstantBetween(2023, 2023))
+                    .lastLoginAt(utils.getRandomInstantBetween(2024, 2025))
+                    .createdAt(utils.getRandomInstantBetween(2024, 2025))
                     .updatedAt(Instant.now())
                     .build();
 

@@ -10,7 +10,11 @@ import java.time.temporal.ChronoUnit;
 public class DateTimeUtil {
 
     public static Instant getBucketStart(Instant instant, Granularity granularity) {
-        ZonedDateTime zdt = instant.atZone(ZoneId.systemDefault());
+        return getBucketStart(instant, granularity, ZoneId.of("UTC"));
+    }
+
+    public static Instant getBucketStart(Instant instant, Granularity granularity, ZoneId zoneId) {
+        ZonedDateTime zdt = instant.atZone(zoneId);
         return switch (granularity) {
             case HOURLY -> zdt.truncatedTo(ChronoUnit.HOURS).toInstant();
             case DAILY -> zdt.toLocalDate().atStartOfDay(zdt.getZone()).toInstant();

@@ -40,7 +40,7 @@ public class ClickDataSeeder {
         int batchSize = 1000;
         for (int i = 0; i < clickLogCount; i++) {
             ShortUrl randomShortUrl = utils.getRandomElement(shortUrls);
-            Instant timestamp = utils.getRandomInstantBetween(2023, 2024);
+            Instant timestamp = utils.getRandomInstantBetween(2024, 2025);
             String country = utils.getRandomElement(utils.countries);
             String city = utils.getRandomElement(utils.cities);
             String browser = utils.getRandomElement(utils.browsers);

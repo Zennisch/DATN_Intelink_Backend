@@ -38,7 +38,7 @@ public class ApiKeyDataSeeder {
             String rawKey = "ik_" + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
             String keyHash = passwordEncoder.encode(rawKey);
             String keyPrefix = rawKey.substring(0, 8);
-            Instant createdAt = utils.getRandomInstantBetween(2023, 2024);
+            Instant createdAt = utils.getRandomInstantBetween(2024, 2025);
 
             ApiKey apiKey = ApiKey.builder()
                     .name(utils.getRandomElement(List.of(keyNames)) + " #" + (i + 1))

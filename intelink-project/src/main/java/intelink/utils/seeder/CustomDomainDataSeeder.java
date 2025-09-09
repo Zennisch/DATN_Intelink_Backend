@@ -38,7 +38,7 @@ public class CustomDomainDataSeeder {
                            utils.getRandom().nextInt(1000) + 
                            utils.getRandomElement(List.of(tlds));
             
-            Instant createdAt = utils.getRandomInstantBetween(2023, 2024);
+            Instant createdAt = utils.getRandomInstantBetween(2024, 2025);
             CustomDomainStatus status = utils.getRandomDomainStatus();
             boolean verified = status == CustomDomainStatus.VERIFIED;
 

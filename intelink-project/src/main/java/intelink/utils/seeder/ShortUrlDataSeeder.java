@@ -29,7 +29,7 @@ public class ShortUrlDataSeeder {
 
         for (int i = 1; i <= count; i++) {
             User randomUser = utils.getRandomElement(users);
-            Instant createdAt = utils.getRandomInstantBetween(2023, 2024);
+            Instant createdAt = utils.getRandomInstantBetween(2024, 2025);
 
             ShortUrl shortUrl = ShortUrl.builder()
                     .shortCode(utils.generateRandomShortCode())

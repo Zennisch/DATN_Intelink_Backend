@@ -45,7 +45,7 @@ public class AnalysisDataSeeder {
                     .platformType(platformType.name())
                     .cacheDuration(utils.getRandom().nextDouble() < 0.5 ? "3600s" : null)
                     .details(status != ShortUrlAnalysisStatus.SAFE ? "Threat detected: " + threatType.name() : null)
-                    .createdAt(utils.getRandomInstantBetween(2023, 2024))
+                    .createdAt(utils.getRandomInstantBetween(2024, 2025))
                     .shortUrl(randomShortUrl)
                     .build();
 

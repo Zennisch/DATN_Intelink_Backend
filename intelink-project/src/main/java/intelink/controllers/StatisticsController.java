@@ -61,7 +61,7 @@ public class StatisticsController {
         Map<String, Object> overview = new HashMap<>();
         overview.put("device", statisticsService.getDeviceStats(shortCode));
         overview.put("location", statisticsService.getLocationStats(shortCode));
-//        overview.put("time", statisticsService.getTimeStats(shortCode));
+        overview.put("time", statisticsService.getTimeStats(shortCode, null, null, null));
         return ResponseEntity.ok(overview);
     }
 }

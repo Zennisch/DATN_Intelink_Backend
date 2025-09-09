@@ -31,7 +31,7 @@ public class SecurityDataSeeder {
 
         for (int i = 0; i < count; i++) {
             User randomUser = utils.getRandomElement(users);
-            Instant createdAt = utils.getRandomInstantBetween(2023, 2024);
+            Instant createdAt = utils.getRandomInstantBetween(2024, 2025);
 
             VerificationToken token = VerificationToken.builder()
                     .token(UUID.randomUUID().toString())
@@ -55,7 +55,7 @@ public class SecurityDataSeeder {
         for (int i = 0; i < count; i++) {
             User randomUser = utils.getRandomElement(users);
             UserProvider provider = utils.getRandomOAuthProvider();
-            Instant createdAt = utils.getRandomInstantBetween(2023, 2024);
+            Instant createdAt = utils.getRandomInstantBetween(2024, 2025);
 
             OAuthAccount account = OAuthAccount.builder()
                     .provider(provider)

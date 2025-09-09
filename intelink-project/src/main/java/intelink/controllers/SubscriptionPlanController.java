@@ -2,13 +2,11 @@ package intelink.controllers;
 
 
 import intelink.dto.response.subscription.SubscriptionPlanResponse;
-import intelink.services.SubscriptionPlanService;
 import intelink.services.interfaces.ISubscriptionPlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
