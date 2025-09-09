@@ -14,6 +14,9 @@ RUN mvn dependency:go-offline -B
 # Copy source code
 COPY src /app/src/
 
+# Ensure mvnw has execute permissions (fix for Windows Docker)
+RUN chmod +x /app/mvnw
+
 EXPOSE 8080
 
-CMD ["./mvnw", "spring-boot:run"]
+CMD ["sh", "-c", "chmod +x ./mvnw && ./mvnw spring-boot:run"]
