@@ -1,0 +1,13 @@
+gcp_svc_key                = "./iam.json"
+gcp_project                = ""
+gcp_region                 = ""
+ssh_public_key             = ""
+
+# SSH Public Key Configuration
+# How to generate SSH key pair:
+# 1. Open terminal/command prompt
+# 2. Run: ssh-keygen -t ed25519 -C "your-email@example.com"
+# 3. Follow prompts (press Enter for default location, optionally set passphrase)
+# 4. Copy public key content: cat ~/.ssh/id_ed25519.pub (Linux/Mac) or type %USERPROFILE%\.ssh\id_ed25519.pub (Windows)
+# 5. Paste the full public key content below (starts with ssh-ed25519 or ssh-rsa)
+# Format: "username:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... your-email@example.com"

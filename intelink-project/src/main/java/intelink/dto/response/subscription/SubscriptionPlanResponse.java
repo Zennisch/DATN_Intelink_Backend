@@ -1,5 +1,6 @@
 package intelink.dto.response.subscription;
 
+import intelink.models.SubscriptionPlan;
 import intelink.models.enums.SubscriptionPlanBillingInterval;
 import intelink.models.enums.SubscriptionPlanType;
 import lombok.Builder;
@@ -24,6 +25,24 @@ public class SubscriptionPlanResponse {
     private Boolean active;
     private Instant createdAt;
     private Integer maxUsagePerUrl;
+
+    public static SubscriptionPlanResponse fromEntity(SubscriptionPlan plan) {
+        return SubscriptionPlanResponse.builder()
+                .id(plan.getId())
+                .type(plan.getType())
+                .description(plan.getDescription())
+                .price(plan.getPrice())
+                .billingInterval(plan.getBillingInterval())
+                .maxShortUrls(plan.getMaxShortUrls())
+                .shortCodeCustomizationEnabled(plan.getShortCodeCustomizationEnabled())
+                .statisticsEnabled(plan.getStatisticsEnabled())
+                .customDomainEnabled(plan.getCustomDomainEnabled())
+                .apiAccessEnabled(plan.getApiAccessEnabled())
+                .active(plan.getActive())
+                .createdAt(plan.getCreatedAt())
+                .maxUsagePerUrl(plan.getMax_usage_per_url())
+                .build();
+    }
 }
 
 

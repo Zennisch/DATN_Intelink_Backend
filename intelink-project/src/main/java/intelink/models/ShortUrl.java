@@ -66,7 +66,7 @@ public class ShortUrl {
     @Size(min = 6, max = 32)
     private String shortCode;
 
-    @Column(name = "original_url", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "original_url", nullable = false)
     private String originalUrl;
 
     @Column(name = "password", nullable = true, length = 255)

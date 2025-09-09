@@ -13,13 +13,32 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
 
+    nginx:
+        container_name: intelink-nginx
+        build:
+            context: ./_nginx
+            dockerfile: Dockerfile
+        ports:
+            - '80:80'
+            - '443:443'
+        environment:
+            - DOMAIN=${DOMAIN}
+            - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+        volumes:
+            - nginx_certs:/etc/letsencrypt
+            - nginx_www:/var/www/certbot
+        depends_on:
+            - app
+        networks:
+            - intelink-network
+
     app:
         container_name: intelink-app
         build:
             context: ./intelink-project
             dockerfile: Dockerfile
-        ports:
-            - '8080:8080'
+        expose:
+            - "8080"
         volumes:
             - ./intelink-project:/app
             - ./intelink-project/target:/app/target
@@ -29,6 +48,21 @@ services:
             - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
             - SPRING_DATASOURCE_USERNAME=intelink
             - SPRING_DATASOURCE_PASSWORD=intelink
+            # OAuth Configuration
+            - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+            - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+            # Mail Configuration
+            - MAIL_USERNAME=${MAIL_USERNAME}
+            - MAIL_PASSWORD=${MAIL_PASSWORD}
+            # API Keys
+            - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
+            - SAFE_BROWSING_API_KEY=${SAFE_BROWSING_API_KEY}
+            # Optional
+            - JWT_SECRET=${JWT_SECRET:-myVerySecretKeyThatIsAtLeast256BitsLongForHS256Algorithm}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-intelink}
+            # SSL/Nginx Configuration  
+            - DOMAIN=${DOMAIN}
+            - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
         depends_on:
             - postgres
         networks:
@@ -40,4 +74,8 @@ networks:
 
 volumes:
     postgres_data:
+        driver: local
+    nginx_certs:
+        driver: local
+    nginx_www:
         driver: local

@@ -1,56 +1,61 @@
 package intelink.controllers;
 
-
+import intelink.dto.request.subscription.CreateSubscriptionPlanRequest;
+import intelink.dto.request.subscription.UpdateSubscriptionPlanRequest;
+import intelink.dto.response.subscription.DeleteSubscriptionPlanResponse;
+import intelink.dto.response.subscription.GetAllSubscriptionPlansResponse;
 import intelink.dto.response.subscription.SubscriptionPlanResponse;
+import intelink.models.SubscriptionPlan;
 import intelink.services.interfaces.ISubscriptionPlanService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/subscription-plans")
+@RequestMapping("/api/v1/plan")
 @RequiredArgsConstructor
 public class SubscriptionPlanController {
-    private final ISubscriptionPlanService service;
+    private final ISubscriptionPlanService subscriptionPlanService;
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<?> getAll() {
+        List<SubscriptionPlan> plans = subscriptionPlanService.findAll();
+        return ResponseEntity.ok(GetAllSubscriptionPlansResponse.fromEntities(plans));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SubscriptionPlanResponse> getById(@PathVariable Long id) {
-        return service.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        SubscriptionPlan plan = subscriptionPlanService.findById(id);
+        return ResponseEntity.ok(SubscriptionPlanResponse.fromEntity(plan));
     }
 
     @PostMapping
-    public ResponseEntity<SubscriptionPlanResponse> create(@RequestBody SubscriptionPlanResponse dto) {
-        return ResponseEntity.ok(service.save(dto));
+    public ResponseEntity<?> create(@Valid @RequestBody CreateSubscriptionPlanRequest request) {
+        SubscriptionPlan plan = subscriptionPlanService.save(request);
+        return ResponseEntity.ok(SubscriptionPlanResponse.fromEntity(plan));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SubscriptionPlanResponse> update(@PathVariable Long id, @RequestBody SubscriptionPlanResponse dto) {
-        return service.update(id, dto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody UpdateSubscriptionPlanRequest request) {
+        SubscriptionPlan plan = subscriptionPlanService.update(id, request);
+        return ResponseEntity.ok(SubscriptionPlanResponse.fromEntity(plan));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (service.deleteById(id)) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        subscriptionPlanService.deleteById(id);
+        return ResponseEntity.ok(DeleteSubscriptionPlanResponse.builder()
+                .success(true)
+                .message("Subscription plan deleted successfully")
+                .build());
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<SubscriptionPlanResponse> toggleStatus(@PathVariable Long id) {
-        return service.toggleStatus(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> toggleStatus(@PathVariable Long id) {
+        SubscriptionPlan plan = subscriptionPlanService.toggleStatus(id);
+        return ResponseEntity.ok(SubscriptionPlanResponse.fromEntity(plan));
     }
 }

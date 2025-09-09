@@ -1,18 +1,16 @@
 package intelink.services;
 
-
-import intelink.dto.response.subscription.SubscriptionPlanResponse;
+import intelink.dto.request.subscription.CreateSubscriptionPlanRequest;
+import intelink.dto.request.subscription.UpdateSubscriptionPlanRequest;
 import intelink.models.SubscriptionPlan;
+import intelink.models.enums.SubscriptionPlanBillingInterval;
+import intelink.models.enums.SubscriptionPlanType;
 import intelink.repositories.SubscriptionPlanRepository;
 import intelink.services.interfaces.ISubscriptionPlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,86 +18,65 @@ public class SubscriptionPlanService implements ISubscriptionPlanService {
     private final SubscriptionPlanRepository repository;
 
     @Override
-    public Map<String, Object> findAll() {
-        List<SubscriptionPlanResponse> plans = repository.findAll().stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
-        Map<String, Object> result = new HashMap<>();
-        result.put("data", plans);
-        return result;
+    public List<SubscriptionPlan> findAll() {
+        return repository.findAll();
     }
 
-    public Optional<SubscriptionPlanResponse> findById(Long id) {
-        return repository.findById(id).map(this::toDto);
+    public SubscriptionPlan findById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Subscription plan not found with ID: " + id));
     }
 
-    public SubscriptionPlanResponse save(SubscriptionPlanResponse dto) {
-        SubscriptionPlan plan = toEntity(dto);
-        SubscriptionPlan saved = repository.save(plan);
-        return toDto(saved);
+    public SubscriptionPlan save(CreateSubscriptionPlanRequest request) {
+        SubscriptionPlan plan = SubscriptionPlan.builder()
+                .type(SubscriptionPlanType.fromString(request.getType()))
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .billingInterval(SubscriptionPlanBillingInterval.fromString(request.getBillingInterval()))
+                .maxShortUrls(request.getMaxShortUrls())
+                .shortCodeCustomizationEnabled(request.getShortCodeCustomizationEnabled())
+                .statisticsEnabled(request.getStatisticsEnabled())
+                .customDomainEnabled(request.getCustomDomainEnabled())
+                .apiAccessEnabled(request.getApiAccessEnabled())
+                .active(request.getActive())
+                .max_usage_per_url(request.getMaxUsagePerUrl())
+                .build();
+        return repository.save(plan);
     }
 
-    public Optional<SubscriptionPlanResponse> update(Long id, SubscriptionPlanResponse dto) {
-        return repository.findById(id).map(existing -> {
-            SubscriptionPlan plan = toEntity(dto);
-            plan.setId(id);
-            SubscriptionPlan updated = repository.save(plan);
-            return toDto(updated);
-        });
-    }
-
-    public boolean deleteById(Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-            return true;
+    public SubscriptionPlan update(Long id, UpdateSubscriptionPlanRequest request) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Subscription plan not found with ID: " + id);
         }
-        return false;
-    }
-
-    public Optional<SubscriptionPlanResponse> toggleStatus(Long id) {
-        return repository.findById(id).map(plan -> {
-            plan.setActive(!plan.getActive());
-            SubscriptionPlan updated = repository.save(plan);
-            return toDto(updated);
-        });
-    }
-
-    // Chuyển đổi giữa entity và dto
-    private SubscriptionPlanResponse toDto(SubscriptionPlan plan) {
-        return SubscriptionPlanResponse.builder()
-                .id(plan.getId())
-                .type(plan.getType())
-                .description(plan.getDescription())
-                .price(plan.getPrice())
-                .billingInterval(plan.getBillingInterval())
-                .maxShortUrls(plan.getMaxShortUrls())
-                .shortCodeCustomizationEnabled(plan.getShortCodeCustomizationEnabled())
-                .statisticsEnabled(plan.getStatisticsEnabled())
-                .customDomainEnabled(plan.getCustomDomainEnabled())
-                .apiAccessEnabled(plan.getApiAccessEnabled())
-                .active(plan.getActive())
-                .createdAt(plan.getCreatedAt())
-                .maxUsagePerUrl(plan.getMax_usage_per_url())
+        
+        SubscriptionPlan plan = SubscriptionPlan.builder()
+                .id(id)
+                .type(SubscriptionPlanType.fromString(request.getType()))
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .billingInterval(SubscriptionPlanBillingInterval.fromString(request.getBillingInterval()))
+                .maxShortUrls(request.getMaxShortUrls())
+                .shortCodeCustomizationEnabled(request.getShortCodeCustomizationEnabled())
+                .statisticsEnabled(request.getStatisticsEnabled())
+                .customDomainEnabled(request.getCustomDomainEnabled())
+                .apiAccessEnabled(request.getApiAccessEnabled())
+                .active(request.getActive())
+                .max_usage_per_url(request.getMaxUsagePerUrl())
                 .build();
+        return repository.save(plan);
     }
 
-    private SubscriptionPlan toEntity(SubscriptionPlanResponse dto) {
-        return SubscriptionPlan.builder()
-                .id(dto.getId())
-                .type(dto.getType())
-                .description(dto.getDescription())
-                .price(dto.getPrice())
-                .billingInterval(dto.getBillingInterval())
-                .maxShortUrls(dto.getMaxShortUrls())
-                .shortCodeCustomizationEnabled(dto.getShortCodeCustomizationEnabled())
-                .statisticsEnabled(dto.getStatisticsEnabled())
-                .customDomainEnabled(dto.getCustomDomainEnabled())
-                .apiAccessEnabled(dto.getApiAccessEnabled())
-                .active(dto.getActive())
-                .createdAt(dto.getCreatedAt())
-                .max_usage_per_url(dto.getMaxUsagePerUrl())
-                .build();
+    public void deleteById(Long id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Subscription plan not found with ID: " + id);
+        }
+        repository.deleteById(id);
     }
 
-
+    public SubscriptionPlan toggleStatus(Long id) {
+        SubscriptionPlan plan = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Subscription plan not found with ID: " + id));
+        plan.setActive(!plan.getActive());
+        return repository.save(plan);
+    }
 }

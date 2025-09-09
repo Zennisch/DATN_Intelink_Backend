@@ -1,15 +1,16 @@
 package intelink.services.interfaces;
 
-import intelink.dto.response.subscription.SubscriptionPlanResponse;
+import intelink.dto.request.subscription.CreateSubscriptionPlanRequest;
+import intelink.dto.request.subscription.UpdateSubscriptionPlanRequest;
+import intelink.models.SubscriptionPlan;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.List;
 
 public interface ISubscriptionPlanService {
-    Map<String, Object> findAll();
-    Optional<SubscriptionPlanResponse> findById(Long id);
-    SubscriptionPlanResponse save(SubscriptionPlanResponse dto);
-    Optional<SubscriptionPlanResponse> update(Long id, SubscriptionPlanResponse dto);
-    boolean deleteById(Long id);
-    Optional<SubscriptionPlanResponse> toggleStatus(Long id);
+    List<SubscriptionPlan> findAll();
+    SubscriptionPlan findById(Long id);
+    SubscriptionPlan save(CreateSubscriptionPlanRequest request);
+    SubscriptionPlan update(Long id, UpdateSubscriptionPlanRequest request);
+    void deleteById(Long id);
+    SubscriptionPlan toggleStatus(Long id);
 }
