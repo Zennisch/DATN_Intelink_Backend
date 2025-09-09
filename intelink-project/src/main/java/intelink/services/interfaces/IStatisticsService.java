@@ -1,11 +1,8 @@
 package intelink.services.interfaces;
 
-import intelink.dto.response.StatisticsResponse;
-import intelink.dto.response.TimeStatsResponse;
-import intelink.models.enums.DimensionType;
+import intelink.dto.response.stat.StatisticsResponse;
+import intelink.dto.response.stat.TimeStatsResponse;
 
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Map;
 
 public interface IStatisticsService {

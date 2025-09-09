@@ -1,8 +1,8 @@
 package intelink.services;
 
-import intelink.dto.helper.DimensionInfo;
-import intelink.dto.helper.IpProcessResult;
-import intelink.dto.helper.UserAgentInfo;
+import intelink.dto.object.DimensionInfo;
+import intelink.dto.object.IpProcessResult;
+import intelink.dto.object.UserAgentInfo;
 import intelink.models.ClickLog;
 import intelink.models.ShortUrl;
 import intelink.models.enums.IpVersion;
@@ -33,8 +33,6 @@ public class ClickLogService implements IClickLogService {
         IpProcessResult ipProcessResult = IpUtil.process(request);
         IpVersion ipVersion = ipProcessResult.getIpVersion();
         String ipAddress = ipProcessResult.getIpAddress();
-        String ipNormalized = ipProcessResult.getIpNormalized();
-        String subnet = ipProcessResult.getSubnet();
         String userAgent = request.getHeader("User-Agent");
         String referrer = request.getHeader("Referer");
 
@@ -53,25 +51,18 @@ public class ClickLogService implements IClickLogService {
                 .shortUrl(shortUrl.get())
                 .ipAddress(ipAddress)
                 .ipVersion(ipVersion)
-                .ipNormalized(ipNormalized)
-                .subnet(subnet)
                 .userAgent(userAgent)
                 .referrer(referrer)
-                .country(country)
-                .city(city)
-                .browser(userAgentInfo.getBrowser())
-                .os(userAgentInfo.getOs())
-                .deviceType(userAgentInfo.getDeviceType())
                 .build();
 
 
-        shortUrlService.incrementTotalClicks(shortCode);
+        shortUrlService.increaseTotalClicks(shortCode);
 
         DimensionInfo dimensionInfo = new DimensionInfo(
                 country, city, userAgentInfo.getBrowser(), userAgentInfo.getOs(), userAgentInfo.getDeviceType()
         );
-        analyticService.recordDimensionStats(shortCode, dimensionInfo);
 
+        analyticService.recordDimensionStats(shortCode, dimensionInfo);
         analyticService.recordClickStats(shortCode);
 
         clickLogRepository.save(clickLog);

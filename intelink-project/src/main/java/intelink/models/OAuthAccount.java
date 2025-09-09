@@ -1,6 +1,7 @@
 package intelink.models;
 
-import intelink.models.enums.OAuthProvider;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import intelink.models.enums.UserProvider;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,10 +9,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "oauth_accounts", indexes = {
-        @Index(name = "idx_oauth_accounts_provider_id", columnList = "provider,provider_user_id", unique = true),
-        @Index(name = "idx_oauth_accounts_user", columnList = "user_id")
-})
+@Table(name = "oauth_accounts")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,15 +19,23 @@ import java.util.UUID;
 @Builder
 public class OAuthAccount {
 
+    // Key group
     @Id
     @Column(name = "id", nullable = false, unique = true)
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @JsonIgnore
+    private User user;
+
+    // Information group
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", nullable = false)
-    private OAuthProvider provider;
+    private UserProvider provider;
 
     @Column(name = "provider_user_id", nullable = false)
     private String providerUserId;
@@ -49,16 +55,12 @@ public class OAuthAccount {
     @Column(name = "token_expires_at", nullable = true)
     private Instant tokenExpiresAt;
 
+    // Audit group
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
-    private User user;
 
     @PrePersist
     private void onCreate() {

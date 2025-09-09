@@ -1,6 +1,6 @@
 package intelink.utils;
 
-import intelink.dto.helper.UserAgentInfo;
+import intelink.dto.object.UserAgentInfo;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.regex.Matcher;

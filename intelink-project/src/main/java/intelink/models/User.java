@@ -1,18 +1,19 @@
 package intelink.models;
 
-import intelink.models.enums.OAuthProvider;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
+import intelink.models.enums.UserStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
-@Table(name = "users", indexes = {
-        @Index(name = "idx_users_username", columnList = "username", unique = true),
-        @Index(name = "idx_users_email", columnList = "email", unique = true),
-        @Index(name = "idx_users_role", columnList = "role")
-})
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,63 +23,116 @@ import java.time.Instant;
 @Builder
 public class User {
 
+    // Key group
     @Id
     @Column(name = "id", nullable = false, unique = true)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<Subscription> subscriptions;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<ShortUrl> shortUrls;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<OAuthAccount> oauthAccounts;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<VerificationToken> verificationTokens;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<CustomDomain> customDomains;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<ApiKey> apiKeys;
+
+    // Auth group
+    @Size(min = 3, max = 16)
     @Column(name = "username", nullable = false, unique = true, length = 16)
     private String username;
 
+    @Email
     @Column(name = "email", nullable = false, unique = true, length = 128)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", nullable = true, length = 255)
+    @ToString.Exclude
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 8)
-    private UserRole role;
-
-    @Builder.Default
-    @Column(name = "total_clicks", nullable = false)
-    private Long totalClicks = 0L;
-
-    @Builder.Default
-    @Column(name = "total_short_urls", nullable = false)
-    private Integer totalShortUrls = 0;
-
-    @Builder.Default
     @Column(name = "email_verified", nullable = false)
-    private Boolean emailVerified = false;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "auth_provider", nullable = false)
     @Builder.Default
-    private OAuthProvider authProvider = OAuthProvider.LOCAL;
-
-    @Column(name = "provider_user_id", nullable = true)
-    private String providerUserId;
+    private Boolean emailVerified = false;
 
     @Column(name = "last_login_at", nullable = true)
     private Instant lastLoginAt;
 
-    @Column(name = "created_at", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 8)
+    @Builder.Default
+    private UserRole role = UserRole.USER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", nullable = false, length = 16)
+    @Builder.Default
+    private UserProvider provider = UserProvider.LOCAL;
+
+    @Column(name = "provider_user_id", nullable = true, length = 128)
+    private String providerUserId;
+
+    // Information group
+    @Column(name = "display_name", nullable = true, length = 64)
+    private String displayName;
+
+    @Column(name = "bio", nullable = true, length = 512)
+    private String bio;
+
+    @Column(name = "profile_picture_url", nullable = true, length = 512)
+    private String profilePictureUrl;
+
+    // Statistics group
+    @Column(name = "total_short_urls", nullable = false)
+    @Builder.Default
+    private Integer totalShortUrls = 0;
+
+    @Column(name = "total_clicks", nullable = false)
+    @Builder.Default
+    private Long totalClicks = 0L;
+
+    // Audit group
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    // Lifecycle hooks
     @PrePersist
-    private void onCreate() {
+    protected void onCreate() {
         this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
     }
 
     @PreUpdate
-    private void onUpdate() {
+    protected void onUpdate() {
         this.updatedAt = Instant.now();
     }
-
 }
