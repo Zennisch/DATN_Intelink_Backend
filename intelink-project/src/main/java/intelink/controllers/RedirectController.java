@@ -51,7 +51,6 @@ public class RedirectController {
         UnlockUrlResponse response = shortUrlService.getUnlockInfo(shortCode);
         return ResponseEntity.ok(response);
     }
-
     @PostMapping("/{shortCode}/unlock")
     public ResponseEntity<?> unlockUrl(
             @PathVariable String shortCode,
@@ -59,8 +58,13 @@ public class RedirectController {
             HttpServletRequest httpRequest
     ) {
         UnlockUrlResponse response = shortUrlService.unlockUrl(shortCode, request.getPassword(), httpRequest);
+        if (!response.getSuccess()) {
+            log.warn("ShortUrlService.unlockUrl: Failed to unlock URL: {}. Reason: {}", shortCode, response.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
         clickLogService.record(shortCode, httpRequest);
         log.info("ShortUrlService.unlockUrl: URL unlocked successfully: {}", shortCode);
+        // Trả về JSON thay vì redirect
         return ResponseEntity.ok(response);
     }
 }
