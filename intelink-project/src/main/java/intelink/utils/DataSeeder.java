@@ -20,6 +20,7 @@ public class DataSeeder implements CommandLineRunner {
     // Repositories
     private final UserRepository userRepository;
     private final ShortUrlRepository shortUrlRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final OAuthAccountRepository oAuthAccountRepository;
     private final ShortUrlAnalysisResultRepository shortUrlAnalysisResultRepository;
@@ -30,6 +31,7 @@ public class DataSeeder implements CommandLineRunner {
     // Seeders
     private final UserDataSeeder userDataSeeder;
     private final ShortUrlDataSeeder shortUrlDataSeeder;
+    private final SubscriptionPlanDataSeeder subscriptionPlanDataSeeder;
     private final SecurityDataSeeder securityDataSeeder;
     private final AnalysisDataSeeder analysisDataSeeder;
     private final ClickDataSeeder clickDataSeeder;
@@ -100,6 +102,14 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Created custom domains");
         } else {
             log.info("Custom domains already exist, skipping");
+        }
+
+        // 8. Seed Subscription Plans
+        if (subscriptionPlanRepository.count() == 0) {
+            subscriptionPlanDataSeeder.createDefaultPlans();
+            log.info("Created default subscription plans");
+        } else {
+            log.info("Subscription plans already exist, skipping");
         }
 
         log.info("Data seeding completed successfully!");
