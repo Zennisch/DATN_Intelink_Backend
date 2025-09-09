@@ -36,10 +36,10 @@ public class DataSeeder implements CommandLineRunner {
 
         log.info("Starting data seeding...");
 
-        List<User> users = userDataSeeder.createUsers(100);
+        List<User> users = userDataSeeder.createUsers(10);
         log.info("Created {} users", users.size());
 
-        List<ShortUrl> shortUrls = shortUrlDataSeeder.createShortUrls(users, 500);
+        List<ShortUrl> shortUrls = shortUrlDataSeeder.createShortUrls(users, 20);
         log.info("Created {} short URLs", shortUrls.size());
 
         securityDataSeeder.createVerificationTokens(users, 50);

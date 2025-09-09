@@ -10,6 +10,7 @@ import intelink.models.enums.Granularity;
 import intelink.repositories.ClickStatRepository;
 import intelink.repositories.DimensionStatRepository;
 import intelink.services.interfaces.IStatisticsService;
+import intelink.utils.DateTimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -133,33 +134,34 @@ public TimeStatsResponse getTimeStats(String shortCode, String customFrom, Strin
             .orElseThrow(() -> new IllegalArgumentException("StatisticsService.getTimeStats: Short code not found: " + shortCode));
 
     Granularity granularity = granularityStr != null ? Granularity.fromString(granularityStr) : Granularity.HOURLY;
-    ZoneId zoneId = ZoneId.systemDefault();
     Instant now = Instant.now();
 
     Instant from, to;
     int bucketCount;
 
-    // Xử lý mặc định nếu không truyền customFrom/customTo
+    // Xử lý mặc định nếu không truyền customFrom/customTo - sử dụng UTC
     switch (granularity) {
         case HOURLY -> {
-            to = now.truncatedTo(ChronoUnit.HOURS);
+            to = DateTimeUtil.getBucketStart(now, granularity);
             from = to.minus(23, ChronoUnit.HOURS);
             bucketCount = 24;
         }
         case DAILY -> {
-            to = now.truncatedTo(ChronoUnit.DAYS);
+            to = DateTimeUtil.getBucketStart(now, granularity);
             from = to.minus(29, ChronoUnit.DAYS);
             bucketCount = 30;
         }
         case MONTHLY -> {
-            ZonedDateTime zdt = now.atZone(zoneId).withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
-            to = zdt.toInstant();
+            to = DateTimeUtil.getBucketStart(now, granularity);
+            // Lùi 11 tháng từ tháng hiện tại để có 12 bucket
+            ZonedDateTime zdt = to.atZone(ZoneId.of("UTC"));
             from = zdt.minusMonths(11).toInstant();
             bucketCount = 12;
         }
         case YEARLY -> {
-            ZonedDateTime zdt = now.atZone(zoneId).withDayOfYear(1).truncatedTo(ChronoUnit.DAYS);
-            to = zdt.toInstant();
+            to = DateTimeUtil.getBucketStart(now, granularity);
+            // Lùi 9 năm từ năm hiện tại để có 10 bucket
+            ZonedDateTime zdt = to.atZone(ZoneId.of("UTC"));
             from = zdt.minusYears(9).toInstant();
             bucketCount = 10;
         }
@@ -171,41 +173,13 @@ if (customFrom != null && customTo != null) {
     from = Instant.parse(customFrom);
     to = Instant.parse(customTo);
 
-    switch (granularity) {
-        case MONTHLY -> {
-            ZonedDateTime zdtFrom = from.atZone(zoneId).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            ZonedDateTime zdtTo = to.atZone(zoneId).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            bucketCount = (int) ChronoUnit.MONTHS.between(zdtFrom, zdtTo) + 1;
-            from = zdtFrom.toInstant();
-            to = zdtTo.toInstant();
-        }
-        case YEARLY -> {
-            ZonedDateTime zdtFrom = from.atZone(zoneId).withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            ZonedDateTime zdtTo = to.atZone(zoneId).withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            bucketCount = (int) ChronoUnit.YEARS.between(zdtFrom, zdtTo) + 1;
-            from = zdtFrom.toInstant();
-            to = zdtTo.toInstant();
-        }
-        case DAILY -> {
-            // Đặt về 17:00:00 UTC để khớp với dữ liệu DB
-            ZonedDateTime zdtFrom = from.atZone(zoneId).withHour(17).withMinute(0).withSecond(0).withNano(0);
-            ZonedDateTime zdtTo = to.atZone(zoneId).withHour(17).withMinute(0).withSecond(0).withNano(0);
-            bucketCount = (int) ChronoUnit.DAYS.between(zdtFrom, zdtTo) + 1;
-            from = zdtFrom.toInstant();
-            to = zdtTo.toInstant();
-        }
-        case HOURLY -> {
-            ZonedDateTime zdtFrom = from.atZone(zoneId).truncatedTo(ChronoUnit.HOURS);
-            ZonedDateTime zdtTo = to.atZone(zoneId).truncatedTo(ChronoUnit.HOURS);
-            bucketCount = (int) ChronoUnit.HOURS.between(zdtFrom, zdtTo) + 1;
-            from = zdtFrom.toInstant();
-            to = zdtTo.toInstant();
-        }
-        default -> {
-            ChronoUnit unit = getChronoUnit(granularity);
-            bucketCount = (int) unit.between(from, to) + 1;
-        }
-    }
+    // Normalize từ và đến về bucket đầu tiên của granularity
+    from = DateTimeUtil.getBucketStart(from, granularity);
+    to = DateTimeUtil.getBucketStart(to, granularity);
+
+    // Tính số bucket giữa from và to
+    ChronoUnit unit = getChronoUnit(granularity);
+    bucketCount = (int) unit.between(from, to) + 1;
 }
 
 // Truy vấn dữ liệu
@@ -223,53 +197,26 @@ Map<Instant, Long> bucketClicks = stats.stream()
 
 // Sinh danh sách bucket đủ số lượng
 List<TimeStatsResponse.Bucket> buckets = new ArrayList<>();
-Instant bucket = from;
-if (granularity == Granularity.HOURLY) {
-    ZonedDateTime zdt = from.atZone(zoneId).truncatedTo(ChronoUnit.HOURS);
-    bucket = zdt.toInstant();
-}
-if (granularity == Granularity.DAILY) {
-    ZonedDateTime zdt = from.atZone(zoneId).truncatedTo(ChronoUnit.DAYS);
-    bucket = zdt.toInstant();
-}
-if (granularity == Granularity.MONTHLY) {
-    ZonedDateTime zdt = from.atZone(zoneId).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-    bucket = zdt.toInstant();
-}
-if (granularity == Granularity.YEARLY) {
-    ZonedDateTime zdt = from.atZone(zoneId).withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-    bucket = zdt.toInstant();
-}
+Instant bucket = DateTimeUtil.getBucketStart(from, granularity);
 
 for (int i = 0; i < bucketCount; i++) {
     long clicks = bucketClicks.getOrDefault(bucket, 0L);
     buckets.add(new TimeStatsResponse.Bucket(bucket.toString(), clicks));
+    
+    // Tăng bucket lên theo granularity - sử dụng calendar arithmetic
     switch (granularity) {
         case HOURLY -> bucket = bucket.plus(1, ChronoUnit.HOURS);
         case DAILY -> bucket = bucket.plus(1, ChronoUnit.DAYS);
         case MONTHLY -> {
-            ZonedDateTime zdt = bucket.atZone(zoneId).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            // Tăng 1 tháng chính xác theo calendar
+            ZonedDateTime zdt = bucket.atZone(ZoneId.of("UTC"));
+            zdt = zdt.plusMonths(1);
             bucket = zdt.toInstant();
         }
         case YEARLY -> {
-            ZonedDateTime zdt = bucket.atZone(zoneId).plusYears(1).withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            bucket = zdt.toInstant();
-        }
-    }
-}
-
-for (int i = 0; i < bucketCount; i++) {
-    long clicks = bucketClicks.getOrDefault(bucket, 0L);
-    buckets.add(new TimeStatsResponse.Bucket(bucket.toString(), clicks));
-    switch (granularity) {
-        case HOURLY -> bucket = bucket.plus(1, ChronoUnit.HOURS);
-        case DAILY -> bucket = bucket.plus(1, ChronoUnit.DAYS);
-        case MONTHLY -> {
-            ZonedDateTime zdt = bucket.atZone(zoneId).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            bucket = zdt.toInstant();
-        }
-        case YEARLY -> {
-            ZonedDateTime zdt = bucket.atZone(zoneId).plusYears(1).withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            // Tăng 1 năm chính xác theo calendar
+            ZonedDateTime zdt = bucket.atZone(ZoneId.of("UTC"));
+            zdt = zdt.plusYears(1);
             bucket = zdt.toInstant();
         }
     }
