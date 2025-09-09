@@ -79,12 +79,15 @@ public class ClickDataSeeder {
 
             if ((i + 1) % batchSize == 0 || i == clickLogCount - 1) {
                 clickLogRepository.saveAll(clickLogs);
-                clickStatRepository.saveAll(clickStatsMap.values());
-                dimensionStatRepository.saveAll(dimensionStatsMap.values());
+                
+                if (i == clickLogCount - 1) {
+                    clickStatRepository.saveAll(clickStatsMap.values());
+                    dimensionStatRepository.saveAll(dimensionStatsMap.values());
+                    clickStatsMap.clear();
+                    dimensionStatsMap.clear();
+                }
 
                 clickLogs.clear();
-                clickStatsMap.clear();
-                dimensionStatsMap.clear();
 
                 log.info("Saved batch {} of {}", (i / batchSize) + 1, (clickLogCount + batchSize - 1) / batchSize);
             }
