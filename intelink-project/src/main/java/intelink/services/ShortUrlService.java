@@ -98,9 +98,6 @@ public class ShortUrlService implements IShortUrlService {
         return savedUrl;
     }
 
-    /**
-     * Perform threat analysis on the URL
-     */
     private void performThreatAnalysis(ShortUrl shortUrl) {
         try {
             ThreatAnalysisResult threatAnalysisResult = googleSafeBrowsingUtil.checkUrls(List.of(shortUrl.getOriginalUrl()));
@@ -186,6 +183,17 @@ public class ShortUrlService implements IShortUrlService {
     @Transactional(readOnly = true)
     public Page<ShortUrl> getUserShortUrlsWithSorting(Long userId, Pageable pageable) {
         return shortUrlRepository.findByUserId(userId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ShortUrl> searchShortUrls(Long userId, String query, String status, Pageable pageable) {
+        ShortUrlStatus statusEnum;
+        if (status == null || status.trim().isEmpty()) {
+            statusEnum = null;
+        } else {
+            statusEnum = ShortUrlStatus.fromString(status);
+        }
+        return shortUrlRepository.searchShortUrls(userId, query, statusEnum, pageable);
     }
 
     @Transactional
