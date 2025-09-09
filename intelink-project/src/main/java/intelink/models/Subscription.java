@@ -58,7 +58,7 @@ public class Subscription {
     @Column(name = "starts_at", nullable = false)
     private Instant startsAt;
 
-    @Column(name = "expires_at", nullable = false)
+    @Column(name = "expires_at", nullable = true)
     private Instant expiresAt;
 
     // Lifecycle hooks

@@ -7,9 +7,11 @@ import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
 import intelink.dto.response.auth.*;
+import intelink.models.Subscription;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.services.OAuthService;
+import intelink.services.interfaces.ISubscriptionService;
 import intelink.services.interfaces.IUserService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IUserService userService;
+    private final ISubscriptionService subscriptionService;
     private final OAuthService oAuthService;
 
     // ========== Register
@@ -92,7 +95,16 @@ public class AuthController {
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
         User user = userService.profile(authHeader);
-        SubscriptionInfo subscriptionInfo = null; // Will implement subscription logic later
+        
+        // Get current subscription info
+        SubscriptionInfo subscriptionInfo = null;
+        try {
+            Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
+            subscriptionInfo = SubscriptionInfo.fromEntities(subscription, subscription.getSubscriptionPlan());
+        } catch (RuntimeException e) {
+            // User has no active subscription - subscriptionInfo remains null
+            log.debug("No active subscription found for user {}: {}", user.getId(), e.getMessage());
+        }
 
         return ResponseEntity.ok(UserProfileResponse.fromEntities(user, subscriptionInfo));
     }
