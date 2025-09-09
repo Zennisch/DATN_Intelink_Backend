@@ -13,13 +13,32 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
 
+    nginx:
+        container_name: intelink-nginx
+        build:
+            context: ./_nginx
+            dockerfile: Dockerfile
+        ports:
+            - '80:80'
+            - '443:443'
+        environment:
+            - DOMAIN=${DOMAIN}
+            - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+        volumes:
+            - nginx_certs:/etc/letsencrypt
+            - nginx_www:/var/www/certbot
+        depends_on:
+            - app
+        networks:
+            - intelink-network
+
     app:
         container_name: intelink-app
         build:
             context: ./intelink-project
             dockerfile: Dockerfile
-        ports:
-            - '8080:8080'
+        expose:
+            - "8080"
         volumes:
             - ./intelink-project:/app
             - ./intelink-project/target:/app/target
@@ -41,6 +60,9 @@ services:
             # Optional
             - JWT_SECRET=${JWT_SECRET:-myVerySecretKeyThatIsAtLeast256BitsLongForHS256Algorithm}
             - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-intelink}
+            # SSL/Nginx Configuration  
+            - DOMAIN=${DOMAIN}
+            - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
         depends_on:
             - postgres
         networks:
@@ -52,4 +74,8 @@ networks:
 
 volumes:
     postgres_data:
+        driver: local
+    nginx_certs:
+        driver: local
+    nginx_www:
         driver: local
