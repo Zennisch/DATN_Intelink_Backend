@@ -23,7 +23,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
-    private final JwtTokenProvider tokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -35,28 +35,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
             String jwt = bearerToken.substring(7);
-            String username = tokenProvider.getUsernameFromToken(jwt);
+            String username = jwtTokenProvider.getUsernameFromToken(jwt);
 
-            if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+            if (SecurityContextHolder.getContext().getAuthentication() != null) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            if (!tokenProvider.validateToken(jwt, username)) {
+            if (!jwtTokenProvider.validateToken(jwt, username)) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
             log.debug("Set authentication for user: {}", username);
         } catch (Exception e) {
-            log.error("Cannot set user authentication: {}", e.getMessage());
             SecurityContextHolder.clearContext();
+            log.error("Cannot set user authentication: {}", e.getMessage());
         }
         filterChain.doFilter(request, response);
     }
