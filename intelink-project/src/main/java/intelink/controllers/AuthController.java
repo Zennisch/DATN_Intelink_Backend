@@ -6,7 +6,10 @@ import intelink.dto.request.auth.ForgotPasswordRequest;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
-import intelink.dto.response.auth.*;
+import intelink.dto.response.auth.AuthInfoResponse;
+import intelink.dto.response.auth.AuthTokenResponse;
+import intelink.dto.response.auth.RegisterResponse;
+import intelink.dto.response.auth.UserProfileResponse;
 import intelink.models.Subscription;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
@@ -86,20 +89,22 @@ public class AuthController {
         return ResponseEntity.ok(resp);
     }
 
+    // ========== OAuth Login
+    @GetMapping("/oauth/callback")
+    public ResponseEntity<?> oAuthCallback(
+            @RequestParam String token
+    ) {
+        Auth obj = oAuthService.callback(token);
+        AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
+        return ResponseEntity.ok(resp);
+    }
+
     // ========== Get User Profile
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
         User user = userService.profile(authHeader);
-        
-        // Get current subscription info
-        SubscriptionInfo subscriptionInfo = null;
-        try {
-            Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
-            subscriptionInfo = SubscriptionInfo.fromEntities(subscription, subscription.getSubscriptionPlan());
-        } catch (RuntimeException e) {
-            // User has no active subscription - subscriptionInfo remains null
-            log.debug("No active subscription found for user {}: {}", user.getId(), e.getMessage());
-        }
+        Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
+        SubscriptionInfo subscriptionInfo = SubscriptionInfo.fromEntities(subscription, subscription.getSubscriptionPlan());
 
         return ResponseEntity.ok(UserProfileResponse.fromEntities(user, subscriptionInfo));
     }
@@ -109,16 +114,6 @@ public class AuthController {
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
         userService.logout(authHeader);
         return ResponseEntity.ok(new AuthInfoResponse(true, "Logged out successfully"));
-    }
-
-    // ========== OAuth Login
-    @GetMapping("/oauth/callback")
-    public ResponseEntity<?> oAuthCallback(
-            @RequestParam String token
-    ) {
-        Auth obj = oAuthService.callback(token);
-        AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
-        return ResponseEntity.ok(resp);
     }
 
 }
