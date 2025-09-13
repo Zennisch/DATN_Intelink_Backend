@@ -36,4 +36,6 @@ public interface IUserService {
 
     void decreaseTotalShortUrls(Long userId);
 
+    User getCurrentUser();
+
 }

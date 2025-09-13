@@ -18,8 +18,5 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     
     @Query("SELECT ps FROM Subscription ps WHERE ps.user = ?1 AND ps.active = true AND (ps.expiresAt IS NULL OR ps.expiresAt > ?2)")
     Optional<Subscription> findActiveSubscriptionByUser(User user, Instant now);
-    
-    @Query("SELECT ps FROM Subscription ps WHERE ps.active = true AND ps.expiresAt < ?1")
-    List<Subscription> findExpiredActiveSubscriptions(Instant now);
-    
+
 }

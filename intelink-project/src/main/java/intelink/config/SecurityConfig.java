@@ -101,7 +101,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                         .requestMatchers("/api/v1/url/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/v1/analytic/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/v1/statistics/**").hasAnyRole("USER", "ADMIN")
 
                         .anyRequest().authenticated());
 
