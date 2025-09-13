@@ -1,2 +1,7 @@
 .env
 .idea/
+**/terraform.tfvars
+**/iam.json
+**/.terraform*
+**/terraform.tfstate
+**/terraform.tfstate.backup
