@@ -1,7 +1,7 @@
 package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
-import intelink.dto.object.Auth;
+import intelink.dto.object.AuthToken;
 import intelink.dto.object.Token;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
@@ -170,7 +170,7 @@ public class UserService implements IUserService {
     }
 
     @Transactional
-    public Auth login(LoginRequest loginRequest) {
+    public AuthToken login(LoginRequest loginRequest) {
         // 0. Extract fields
         String username = loginRequest.getUsername();
         String password = loginRequest.getPassword();
@@ -204,11 +204,11 @@ public class UserService implements IUserService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-        return new Auth(user, token, refreshToken, expiresAt);
+        return new AuthToken(user, token, refreshToken, expiresAt);
     }
 
     @Transactional
-    public Auth refreshToken(String authHeader) {
+    public AuthToken refreshToken(String authHeader) {
         // 1. Validate token
         Token tokenObject = validateToken(authHeader);
         String username = tokenObject.getUsername();
@@ -225,7 +225,7 @@ public class UserService implements IUserService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(username);
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-        return new Auth(user, token, refreshToken, expiresAt);
+        return new AuthToken(user, token, refreshToken, expiresAt);
     }
 
     @Transactional

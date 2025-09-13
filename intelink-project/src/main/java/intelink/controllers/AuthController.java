@@ -1,6 +1,6 @@
 package intelink.controllers;
 
-import intelink.dto.object.Auth;
+import intelink.dto.object.AuthToken;
 import intelink.dto.object.SubscriptionInfo;
 import intelink.dto.request.auth.ForgotPasswordRequest;
 import intelink.dto.request.auth.LoginRequest;
@@ -76,7 +76,7 @@ public class AuthController {
     // ========== Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        Auth obj = userService.login(loginRequest);
+        AuthToken obj = userService.login(loginRequest);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
@@ -84,7 +84,7 @@ public class AuthController {
     // ========== Refresh Token
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
-        Auth obj = userService.refreshToken(authHeader);
+        AuthToken obj = userService.refreshToken(authHeader);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
@@ -94,7 +94,7 @@ public class AuthController {
     public ResponseEntity<?> oAuthCallback(
             @RequestParam String token
     ) {
-        Auth obj = oAuthService.callback(token);
+        AuthToken obj = oAuthService.callback(token);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
