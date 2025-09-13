@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AuthResponse {
+public class AuthTokenResponse {
 
     private String token;
     private String refreshToken;
@@ -17,8 +17,8 @@ public class AuthResponse {
     private String role;
     private Long expiresAt;
 
-    public static AuthResponse fromEntity(Auth obj) {
-        return AuthResponse.builder()
+    public static AuthTokenResponse fromEntity(Auth obj) {
+        return AuthTokenResponse.builder()
                 .token(obj.getToken())
                 .refreshToken(obj.getRefreshToken())
                 .username(obj.getUser().getUsername())

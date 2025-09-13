@@ -1,11 +1,11 @@
 package intelink.dto.response.auth;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@Builder
-public class VerifyEmailResponse {
+@AllArgsConstructor
+public class AuthInfoResponse {
     private boolean success;
     private String message;
 }

@@ -44,11 +44,8 @@ public class AuthController {
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
         userService.verifyEmail(token);
 
-        return ResponseEntity.ok(VerifyEmailResponse.builder()
-                .success(true)
-                .message("Email verified successfully")
-                .build()
-        );
+        String msg = "Email verified successfully";
+        return ResponseEntity.ok(new AuthInfoResponse(true, msg));
     }
 
     // ========== Forgot Password
@@ -58,7 +55,7 @@ public class AuthController {
         userService.forgotPassword(email);
 
         String msg = "If the email exists, a password reset link has been sent to " + email;
-        return ResponseEntity.ok(new ForgotPasswordResponse(true, msg));
+        return ResponseEntity.ok(new AuthInfoResponse(true, msg));
     }
 
     // ========== Reset Password
@@ -70,15 +67,14 @@ public class AuthController {
         userService.resetPassword(token, resetPasswordRequest);
 
         String msg = "Password reset successfully. You can now log in with your new password.";
-        return ResponseEntity.ok(new ForgotPasswordResponse(true, msg));
+        return ResponseEntity.ok(new AuthInfoResponse(true, msg));
     }
 
     // ========== Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
         Auth obj = userService.login(loginRequest);
-
-        AuthResponse resp = AuthResponse.fromEntity(obj);
+        AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
 
@@ -86,8 +82,7 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
         Auth obj = userService.refreshToken(authHeader);
-
-        AuthResponse resp = AuthResponse.fromEntity(obj);
+        AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
 
@@ -113,12 +108,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
         userService.logout(authHeader);
-
-        return ResponseEntity.ok(LogoutResponse.builder()
-                .success(true)
-                .message("Logged out successfully")
-                .build()
-        );
+        return ResponseEntity.ok(new AuthInfoResponse(true, "Logged out successfully"));
     }
 
     // ========== OAuth Login
@@ -126,17 +116,9 @@ public class AuthController {
     public ResponseEntity<?> oAuthCallback(
             @RequestParam String token
     ) {
-        Auth auth = oAuthService.callback(token);
-
-        return ResponseEntity.ok(AuthResponse.builder()
-                .token(auth.getToken())
-                .refreshToken(auth.getRefreshToken())
-                .username(auth.getUser().getUsername())
-                .email(auth.getUser().getEmail())
-                .role(auth.getUser().getRole().toString())
-                .expiresAt(auth.getExpiresAt())
-                .build()
-        );
+        Auth obj = oAuthService.callback(token);
+        AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
+        return ResponseEntity.ok(resp);
     }
 
 }
