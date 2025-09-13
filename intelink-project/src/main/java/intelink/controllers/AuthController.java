@@ -13,7 +13,6 @@ import intelink.dto.response.auth.UserProfileResponse;
 import intelink.models.Subscription;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
-import intelink.services.OAuthService;
 import intelink.services.interfaces.IOAuthService;
 import intelink.services.interfaces.ISubscriptionService;
 import intelink.services.interfaces.IUserService;
