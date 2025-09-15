@@ -1,19 +1,15 @@
 package intelink.controllers;
 
 import intelink.dto.request.payment.VnpayPaymentRequest;
+import intelink.models.Payment;
 import intelink.models.Subscription;
+import intelink.models.enums.PaymentStatus;
 import intelink.repositories.SubscriptionRepository;
 import intelink.services.PaymentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/payment")
@@ -24,35 +20,38 @@ public class PaymentController {
 
     @PostMapping("/vnpay")
     public Map<String, Object> createVnpayPayment(@RequestBody VnpayPaymentRequest request) {
-        try {
-            UUID subscriptionId = request.getSubscriptionId();
-            Optional<Subscription> subscriptionOpt = subscriptionRepository.findById(subscriptionId);
-            if (subscriptionOpt.isEmpty()) {
-                Map<String, Object> result = new java.util.HashMap<>();
-                result.put("code", "01");
-                result.put("message", "Subscription not found");
-                result.put("data", null);
-                return result;
-            }
-            Subscription subscription = subscriptionOpt.get();
+        return paymentService.handleVnpayPaymentRequest(request);
+    }
 
-            String paymentUrl = paymentService.createVnpayPayment(
-                    subscription,
-                    request.getAmount(),
-                    request.getCurrency(),
-                    request.getBillingInfo()
-            );
-            Map<String, Object> result = new java.util.HashMap<>();
-            result.put("code", "00");
-            result.put("message", "success");
-            result.put("data", paymentUrl);
-            return result;
-        } catch (Exception e) {
-            Map<String, Object> result = new java.util.HashMap<>();
-            result.put("code", "99");
-            result.put("message", "error: " + e.getMessage());
-            result.put("data", null);
-            return result;
-        }
+    @GetMapping
+    public Map<String, Object> getAllPayments() {
+        List<Payment> payments = paymentService.getAllPayments();
+        Map<String, Object> result = new HashMap<>();
+        result.put("data", payments);
+        result.put("count", payments.size());
+        result.put("code", "00");
+        result.put("message", "success");
+        return result;
+    }
+
+    @GetMapping("/{id}")
+    public Payment getPaymentById(@PathVariable UUID id) {
+        return paymentService.findPaymentById(id).orElse(null);
+    }
+
+    @PutMapping("/{id}")
+    public Payment updatePayment(@PathVariable UUID id, @RequestBody Payment payment) {
+        payment.setId(id);
+        return paymentService.updatePayment(payment).orElse(null);
+    }
+
+    @DeleteMapping("/{id}")
+    public boolean deletePayment(@PathVariable UUID id) {
+        return paymentService.deletePayment(id);
+    }
+
+    @PatchMapping("/{id}/status")
+    public Payment updatePaymentStatus(@PathVariable UUID id, @RequestParam PaymentStatus status) {
+        return paymentService.updatePaymentStatus(id, status).orElse(null);
     }
 }

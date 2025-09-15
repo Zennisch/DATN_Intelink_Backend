@@ -1,11 +1,13 @@
 package intelink.services;
 
 import intelink.config.ConfigPayment;
+import intelink.dto.request.payment.VnpayPaymentRequest;
 import intelink.models.Payment;
 import intelink.models.Subscription;
 import intelink.models.enums.PaymentProvider;
 import intelink.models.enums.PaymentStatus;
 import intelink.repositories.PaymentRepository;
+import intelink.repositories.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,37 @@ public class PaymentService {
 
     private final ConfigPayment configPayment;
     private final PaymentRepository paymentRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    public Map<String, Object> handleVnpayPaymentRequest(VnpayPaymentRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            UUID subscriptionId = request.getSubscriptionId();
+            Optional<Subscription> subscriptionOpt = subscriptionRepository.findById(subscriptionId);
+            if (subscriptionOpt.isEmpty()) {
+                result.put("code", "01");
+                result.put("message", "Subscription not found");
+                result.put("data", null);
+                return result;
+            }
+            Subscription subscription = subscriptionOpt.get();
+
+            String paymentUrl = createVnpayPayment(
+                    subscription,
+                    request.getAmount(),
+                    request.getCurrency(),
+                    request.getBillingInfo()
+            );
+            result.put("code", "00");
+            result.put("message", "success");
+            result.put("data", paymentUrl);
+            return result;
+        } catch (Exception e) {
+            result.put("code", "99");
+            result.put("message", "error: " + e.getMessage());
+            result.put("data", null);
+            return result;
+        }
+    }
 
     public String createVnpayPayment(Subscription subscription, BigDecimal amount, String currency, Map<String, String> billingInfo) throws Exception {
         Payment payment = Payment.builder()
@@ -98,5 +131,45 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         return configPayment.vnp_PayUrl + "?" + query.toString();
+    }
+
+    // Lấy tất cả payment
+    public List<Payment> getAllPayments() {
+        return paymentRepository.findAll();
+    }
+
+    // Tìm payment theo id
+    public Optional<Payment> findPaymentById(UUID id) {
+        return paymentRepository.findById(id);
+    }
+
+    // Xóa payment theo id
+    public boolean deletePayment(UUID id) {
+        if (paymentRepository.existsById(id)) {
+            paymentRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    // Cập nhật payment (truyền vào đối tượng Payment đã có id)
+    public Optional<Payment> updatePayment(Payment payment) {
+        if (payment.getId() != null && paymentRepository.existsById(payment.getId())) {
+            Payment updated = paymentRepository.save(payment);
+            return Optional.of(updated);
+        }
+        return Optional.empty();
+    }
+
+    // Cập nhật status của payment
+    public Optional<Payment> updatePaymentStatus(UUID id, PaymentStatus status) {
+        Optional<Payment> paymentOpt = paymentRepository.findById(id);
+        if (paymentOpt.isPresent()) {
+            Payment payment = paymentOpt.get();
+            payment.setStatus(status);
+            paymentRepository.save(payment);
+            return Optional.of(payment);
+        }
+        return Optional.empty();
     }
 }
