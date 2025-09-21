@@ -5,7 +5,6 @@ import intelink.dto.response.stat.TimeStatsResponse;
 import intelink.dto.response.stat.TopPeakTimesResponse;
 import intelink.services.interfaces.IStatisticsService;
 import lombok.RequiredArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -51,7 +50,7 @@ public class StatisticsController {
             @PathVariable String shortCode,
             @RequestParam String type) {
         log.info("StatisticsController.getDimensionStats: Getting {} dimension stats for short code: {}", type, shortCode);
-        StatisticsResponse stats = statisticsService.getDimensionStats(shortCode,type);
+        StatisticsResponse stats = statisticsService.getDimensionStats(shortCode, type);
         return ResponseEntity.ok(stats);
 
     }

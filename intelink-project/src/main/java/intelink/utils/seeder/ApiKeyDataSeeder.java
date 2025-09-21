@@ -29,8 +29,8 @@ public class ApiKeyDataSeeder {
         List<ApiKey> apiKeys = new ArrayList<>();
 
         String[] keyNames = {
-            "Production API", "Development API", "Testing API", "Mobile App API", 
-            "Web App API", "Analytics API", "Webhook API", "Integration API"
+                "Production API", "Development API", "Testing API", "Mobile App API",
+                "Web App API", "Analytics API", "Webhook API", "Integration API"
         };
 
         for (int i = 0; i < count; i++) {
@@ -46,10 +46,10 @@ public class ApiKeyDataSeeder {
                     .keyPrefix(keyPrefix)
                     .rateLimitPerHour(ThreadLocalRandom.current().nextInt(100, 5000))
                     .active(utils.getRandom().nextDouble() < 0.9)
-                    .lastUsedAt(utils.getRandom().nextDouble() < 0.7 ? 
-                        utils.getRandomInstantBetween(2024, 2024) : null)
-                    .expiresAt(utils.getRandom().nextDouble() < 0.3 ? 
-                        createdAt.plus(ThreadLocalRandom.current().nextLong(90, 365), ChronoUnit.DAYS) : null)
+                    .lastUsedAt(utils.getRandom().nextDouble() < 0.7 ?
+                            utils.getRandomInstantBetween(2024, 2024) : null)
+                    .expiresAt(utils.getRandom().nextDouble() < 0.3 ?
+                            createdAt.plus(ThreadLocalRandom.current().nextLong(90, 365), ChronoUnit.DAYS) : null)
                     .createdAt(createdAt)
                     .updatedAt(utils.getRandomInstantAfter(createdAt))
                     .user(randomUser)

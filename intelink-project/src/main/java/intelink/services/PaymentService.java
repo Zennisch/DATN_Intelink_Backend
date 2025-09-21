@@ -10,7 +10,6 @@ import intelink.repositories.PaymentRepository;
 import intelink.repositories.SubscriptionRepository;
 import intelink.services.interfaces.IPaymentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,6 +26,7 @@ public class PaymentService implements IPaymentService {
     private final ConfigPayment configPayment;
     private final PaymentRepository paymentRepository;
     private final SubscriptionRepository subscriptionRepository;
+
     public Map<String, Object> handleVnpayPaymentRequest(VnpayPaymentRequest request) {
         Map<String, Object> result = new HashMap<>();
         try {
@@ -131,7 +131,7 @@ public class PaymentService implements IPaymentService {
         payment.setMetadata(query.toString());
         paymentRepository.save(payment);
 
-        return configPayment.vnp_PayUrl + "?" + query.toString();
+        return configPayment.vnp_PayUrl + "?" + query;
     }
 
     // Lấy tất cả payment

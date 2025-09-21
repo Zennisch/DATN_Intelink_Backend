@@ -262,7 +262,6 @@ public class StatisticsService implements IStatisticsService {
     }
 
 
-
     private DimensionType mapStringToDimensionType(String type) {
         return switch (type.toLowerCase()) {
             // Device related

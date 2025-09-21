@@ -59,7 +59,7 @@ public class SubscriptionController {
     ) {
         User user = getCurrentUser(userDetails);
         subscriptionService.cancelSubscription(user, id);
-        
+
         return ResponseEntity.ok(CancelSubscriptionResponse.builder()
                 .success(true)
                 .message("Subscription cancelled successfully")

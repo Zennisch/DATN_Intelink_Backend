@@ -1,8 +1,8 @@
 package intelink.services.interfaces;
 
-import java.util.List;
-
 import intelink.models.ShortUrlAnalysisResult;
+
+import java.util.List;
 
 public interface IAnalysisResultService {
 

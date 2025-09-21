@@ -77,7 +77,8 @@ public class PackageLimitInterceptor implements HandlerInterceptor {
             case PRO -> {
                 return applyProLimit(user, request, response);
             }
-            case ENTERPRISE -> {}
+            case ENTERPRISE -> {
+            }
         }
         return true;
     }

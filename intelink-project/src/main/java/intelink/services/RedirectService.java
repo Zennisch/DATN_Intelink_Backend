@@ -40,6 +40,10 @@ public class RedirectService implements IRedirectService {
     @Value("${app.url.password-unlock}")
     private String passwordUnlockUrlTemplate;
 
+    private static <K, V> Map.Entry<K, V> entry(K k, V v) {
+        return new AbstractMap.SimpleEntry<>(k, v);
+    }
+
     @Transactional
     public RedirectResult handleRedirect(String shortCode, String password, HttpServletRequest request) {
         // 1. Find short URL by code
@@ -72,10 +76,6 @@ public class RedirectService implements IRedirectService {
         clickLogService.record(shortCode, request);
         log.info("RedirectService.handleRedirect: Successful redirect for: {}", shortCode);
         return RedirectResult.success(shortUrl.getOriginalUrl());
-    }
-
-    private static <K, V> Map.Entry<K, V> entry(K k, V v) {
-        return new AbstractMap.SimpleEntry<>(k, v);
     }
 
     @Transactional(readOnly = true)

@@ -16,25 +16,25 @@ public class UserProfileResponse {
     private String email;
     private String role;
     private String status;
-    
+
     // Profile info
     private String displayName;
     private String bio;
     private String profilePictureUrl;
-    
+
     // Auth info
     private Boolean emailVerified;
     private String authProvider;
     private String providerUserId;
     private Instant lastLoginAt;
-    
+
     // Statistics
     private Long totalClicks;
     private Integer totalShortUrls;
-    
+
     // Current subscription info
     private SubscriptionInfo currentSubscription;
-    
+
     // Audit
     private Instant createdAt;
     private Instant updatedAt;

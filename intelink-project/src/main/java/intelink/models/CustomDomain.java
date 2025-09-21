@@ -1,5 +1,6 @@
 package intelink.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.enums.CustomDomainStatus;
 import intelink.models.enums.CustomDomainVerificationMethod;
 import jakarta.persistence.*;
@@ -8,8 +9,6 @@ import lombok.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "custom_domains")

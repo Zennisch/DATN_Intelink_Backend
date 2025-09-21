@@ -2,21 +2,21 @@ package intelink.controllers;
 
 import intelink.dto.request.payment.VnpayPaymentRequest;
 import intelink.models.Payment;
-import intelink.models.Subscription;
 import intelink.models.enums.PaymentStatus;
-import intelink.repositories.SubscriptionRepository;
 import intelink.services.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/payment")
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;
-    private final SubscriptionRepository subscriptionRepository;
 
     @PostMapping("/vnpay")
     public Map<String, Object> createVnpayPayment(@RequestBody VnpayPaymentRequest request) {

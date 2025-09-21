@@ -9,7 +9,10 @@ import java.util.UUID;
 
 public interface ISubscriptionService {
     List<Subscription> findByUser(User user);
+
     Subscription findCurrentActiveSubscription(User user);
+
     Subscription createSubscription(User user, CreateSubscriptionRequest request);
+
     void cancelSubscription(User user, UUID subscriptionId);
 }

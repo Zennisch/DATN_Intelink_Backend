@@ -1,8 +1,8 @@
 package intelink.controllers;
 
 import intelink.dto.request.url.UnlockUrlRequest;
-import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.dto.response.redirect.RedirectResult;
+import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.exceptions.IncorrectPasswordException;
 import intelink.exceptions.ShortUrlUnavailableException;
 import intelink.services.interfaces.IClickLogService;
@@ -51,6 +51,7 @@ public class RedirectController {
         UnlockUrlResponse response = shortUrlService.getUnlockInfo(shortCode);
         return ResponseEntity.ok(response);
     }
+
     @PostMapping("/{shortCode}/unlock")
     public ResponseEntity<?> unlockUrl(
             @PathVariable String shortCode,

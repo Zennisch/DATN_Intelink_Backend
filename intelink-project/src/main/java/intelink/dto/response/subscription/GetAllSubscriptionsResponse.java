@@ -15,12 +15,12 @@ import java.util.List;
 public class GetAllSubscriptionsResponse {
     private List<SubscriptionResponse> subscriptions;
     private int total;
-    
+
     public static GetAllSubscriptionsResponse fromEntities(List<Subscription> subscriptions) {
         List<SubscriptionResponse> responses = subscriptions.stream()
                 .map(SubscriptionResponse::fromEntity)
                 .toList();
-                
+
         return GetAllSubscriptionsResponse.builder()
                 .subscriptions(responses)
                 .total(responses.size())

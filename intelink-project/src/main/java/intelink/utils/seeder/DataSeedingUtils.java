@@ -16,8 +16,6 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 public class DataSeedingUtils {
 
-    private final Random random = new Random();
-
     public final List<String> countries = Arrays.asList("US", "UK", "DE", "FR", "JP", "CN", "IN", "BR", "CA", "AU", "VN", "TH", "SG", "MY", "PH");
     public final List<String> cities = Arrays.asList("New York", "London", "Berlin", "Paris", "Tokyo", "Shanghai", "Mumbai", "São Paulo", "Toronto", "Sydney", "Ho Chi Minh City", "Bangkok", "Singapore", "Kuala Lumpur", "Manila");
     public final List<String> browsers = Arrays.asList("Chrome", "Firefox", "Safari", "Edge", "Opera", "IE");
@@ -30,6 +28,7 @@ public class DataSeedingUtils {
             "Mozilla/5.0 (Android 14; Mobile; rv:120.0) Gecko/120.0 Firefox/120.0"
     );
     public final List<String> domains = Arrays.asList("google.com", "github.com", "stackoverflow.com", "youtube.com", "facebook.com", "twitter.com", "linkedin.com", "reddit.com", "medium.com", "dev.to");
+    private final Random random = new Random();
 
     public Instant getRandomInstantBetween(int startYear, int endYear) {
         LocalDateTime start = LocalDateTime.of(startYear, 1, 1, 0, 0);
@@ -86,11 +85,11 @@ public class DataSeedingUtils {
 
     public ShortUrlAnalysisThreatType getRandomThreatType() {
         ShortUrlAnalysisThreatType[] threats = {
-            ShortUrlAnalysisThreatType.MALWARE, 
-            ShortUrlAnalysisThreatType.PHISHING, 
-            ShortUrlAnalysisThreatType.SPAM,
-            ShortUrlAnalysisThreatType.SCAM,
-            ShortUrlAnalysisThreatType.OTHER
+                ShortUrlAnalysisThreatType.MALWARE,
+                ShortUrlAnalysisThreatType.PHISHING,
+                ShortUrlAnalysisThreatType.SPAM,
+                ShortUrlAnalysisThreatType.SCAM,
+                ShortUrlAnalysisThreatType.OTHER
         };
         return threats[random.nextInt(threats.length)];
     }
