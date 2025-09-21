@@ -22,7 +22,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Modifying
     @Query("UPDATE User u SET u.totalClicks = u.totalClicks + 1 WHERE u.id = :userId")
-    void increaseTotalClicks(@Param("userId") Long userId);
+    void increaseTotalClicks(Long userId);
 
     @Modifying
     @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls + 1 WHERE u.id = :userId")
