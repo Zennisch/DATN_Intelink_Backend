@@ -32,7 +32,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/v1/url")
-public class UrlController {
+public class ShortUrlController {
 
     private final IShortUrlService shortUrlService;
     private final IUserService userService;
