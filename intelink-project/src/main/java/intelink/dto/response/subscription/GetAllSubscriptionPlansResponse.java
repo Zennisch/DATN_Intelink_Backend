@@ -20,7 +20,7 @@ public class GetAllSubscriptionPlansResponse {
         List<SubscriptionPlanResponse> responses = plans.stream()
                 .map(SubscriptionPlanResponse::fromEntity)
                 .toList();
-        
+
         return GetAllSubscriptionPlansResponse.builder()
                 .plans(responses)
                 .total(responses.size())

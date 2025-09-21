@@ -32,7 +32,7 @@ public class ClickDataSeeder {
 
     public void createClickLogsAndStats(List<ShortUrl> shortUrls, int clickLogCount) {
         log.info("Creating {} click logs and statistics...", clickLogCount);
-        
+
         List<ClickLog> clickLogs = new ArrayList<>();
         Map<String, ClickStat> clickStatsMap = new HashMap<>();
         Map<String, DimensionStat> dimensionStatsMap = new HashMap<>();
@@ -79,7 +79,7 @@ public class ClickDataSeeder {
 
             if ((i + 1) % batchSize == 0 || i == clickLogCount - 1) {
                 clickLogRepository.saveAll(clickLogs);
-                
+
                 if (i == clickLogCount - 1) {
                     clickStatRepository.saveAll(clickStatsMap.values());
                     dimensionStatRepository.saveAll(dimensionStatsMap.values());

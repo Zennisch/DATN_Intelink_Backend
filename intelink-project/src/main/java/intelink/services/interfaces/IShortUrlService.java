@@ -19,18 +19,25 @@ public interface IShortUrlService {
 
     // Status management operations
     void enableShortUrl(Long userId, String shortCode);
+
     void disableShortUrl(Long userId, String shortCode);
+
     void deleteShortUrl(Long userId, String shortCode);
 
     // Read operations
     Optional<ShortUrl> findByShortCode(String shortCode);
+
     Optional<ShortUrl> findByUserIdAndShortCode(Long userId, String shortCode);
+
     Boolean isShortCodeExists(String shortCode);
+
     Page<ShortUrl> getUserShortUrls(Long userId, Pageable pageable);
+
     Page<ShortUrl> searchShortUrls(Long userId, String query, String status, Pageable pageable);
 
     // Update operations
     ShortUrl updateShortUrl(Long userId, String shortCode, String description, Long maxUsage, Integer availableDays);
+
     ShortUrl updatePassword(Long userId, String shortCode, String newPassword, String currentPassword);
 
     // Statistics operations
@@ -38,7 +45,9 @@ public interface IShortUrlService {
 
     // Access and unlock operations
     Boolean isUrlAccessible(ShortUrl shortUrl, String password);
+
     UnlockUrlResponse getUnlockInfo(String shortCode);
+
     UnlockUrlResponse unlockUrl(String shortCode, String password, HttpServletRequest request);
 
 }

@@ -3,10 +3,10 @@ package intelink.controllers;
 import intelink.dto.request.url.CreateShortUrlRequest;
 import intelink.dto.request.url.UpdatePasswordRequest;
 import intelink.dto.request.url.UpdateShortUrlRequest;
+import intelink.dto.response.PagedResponse;
 import intelink.dto.response.url.CreateShortUrlResponse;
 import intelink.dto.response.url.ShortUrlDetailResponse;
 import intelink.dto.response.url.ShortUrlListResponse;
-import intelink.dto.response.PagedResponse;
 import intelink.dto.response.url.UpdateShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
@@ -61,11 +61,11 @@ public class ShortUrlController {
         User user = userService.getCurrentUser(userDetails);
         Pageable pageable = PageRequest.of(page, size);
         Page<ShortUrl> shortUrlPage = shortUrlService.getUserShortUrls(user.getId(), pageable);
-        
-        Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl -> 
-            ShortUrlListResponse.fromEntity(shortUrl, accessUrl)
+
+        Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl ->
+                ShortUrlListResponse.fromEntity(shortUrl, accessUrl)
         );
-        
+
         PagedResponse<ShortUrlListResponse> response = PagedResponse.from(responsePage);
         return ResponseEntity.ok(response);
     }
@@ -77,7 +77,7 @@ public class ShortUrlController {
     ) {
         User user = userService.getCurrentUser(userDetails);
         Optional<ShortUrl> shortUrlOpt = shortUrlService.findByUserIdAndShortCode(user.getId(), shortCode);
-        
+
         if (shortUrlOpt.isEmpty()) {
             throw new IllegalArgumentException("Short URL not found");
         }
@@ -95,11 +95,11 @@ public class ShortUrlController {
     ) {
         User user = userService.getCurrentUser(userDetails);
         ShortUrl updatedUrl = shortUrlService.updateShortUrl(
-            user.getId(),
-            shortCode,
-            request.getDescription(),
-            request.getMaxUsage(),
-            request.getAvailableDays()
+                user.getId(),
+                shortCode,
+                request.getDescription(),
+                request.getMaxUsage(),
+                request.getAvailableDays()
         );
         UpdateShortUrlResponse response = UpdateShortUrlResponse.success(updatedUrl.getShortCode());
         return ResponseEntity.ok(response);
@@ -112,12 +112,12 @@ public class ShortUrlController {
     ) {
         User user = userService.getCurrentUser(userDetails);
         shortUrlService.deleteShortUrl(user.getId(), shortCode);
-        
+
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-            .message("Short URL deleted successfully")
-            .shortCode(shortCode)
-            .success(true)
-            .build();
+                .message("Short URL deleted successfully")
+                .shortCode(shortCode)
+                .success(true)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -128,12 +128,12 @@ public class ShortUrlController {
     ) {
         User user = userService.getCurrentUser(userDetails);
         shortUrlService.enableShortUrl(user.getId(), shortCode);
-        
+
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-            .message("Short URL enabled successfully")
-            .shortCode(shortCode)
-            .success(true)
-            .build();
+                .message("Short URL enabled successfully")
+                .shortCode(shortCode)
+                .success(true)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -144,12 +144,12 @@ public class ShortUrlController {
     ) {
         User user = userService.getCurrentUser(userDetails);
         shortUrlService.disableShortUrl(user.getId(), shortCode);
-        
+
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-            .message("Short URL disabled successfully")
-            .shortCode(shortCode)
-            .success(true)
-            .build();
+                .message("Short URL disabled successfully")
+                .shortCode(shortCode)
+                .success(true)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -161,17 +161,17 @@ public class ShortUrlController {
     ) {
         User user = userService.getCurrentUser(userDetails);
         ShortUrl updatedUrl = shortUrlService.updatePassword(
-            user.getId(),
-            shortCode,
-            request.getNewPassword(),
-            request.getCurrentPassword()
+                user.getId(),
+                shortCode,
+                request.getNewPassword(),
+                request.getCurrentPassword()
         );
-        
+
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-            .message("Password updated successfully")
-            .shortCode(updatedUrl.getShortCode())
-            .success(true)
-            .build();
+                .message("Password updated successfully")
+                .shortCode(updatedUrl.getShortCode())
+                .success(true)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -186,20 +186,20 @@ public class ShortUrlController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = userService.getCurrentUser(userDetails);
-        
+
         Pageable pageable;
         if ("asc".equalsIgnoreCase(sortDirection)) {
             pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sortBy).ascending());
         } else {
             pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sortBy).descending());
         }
-        
+
         Page<ShortUrl> shortUrlPage = shortUrlService.searchShortUrls(user.getId(), query, status, pageable);
-        
-        Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl -> 
-            ShortUrlListResponse.fromEntity(shortUrl, accessUrl)
+
+        Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl ->
+                ShortUrlListResponse.fromEntity(shortUrl, accessUrl)
         );
-        
+
         PagedResponse<ShortUrlListResponse> response = PagedResponse.from(responsePage);
         return ResponseEntity.ok(response);
     }

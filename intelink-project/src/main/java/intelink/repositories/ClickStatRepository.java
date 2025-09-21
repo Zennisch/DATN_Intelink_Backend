@@ -25,6 +25,6 @@ public interface ClickStatRepository extends JpaRepository<ClickStat, Long> {
             @Param("startTime") Instant startTime);
 
     List<ClickStat> findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanEqualOrderByBucketAsc(
-    ShortUrl shortUrl, Granularity granularity, Instant from, Instant to
-);
+            ShortUrl shortUrl, Granularity granularity, Instant from, Instant to
+    );
 }

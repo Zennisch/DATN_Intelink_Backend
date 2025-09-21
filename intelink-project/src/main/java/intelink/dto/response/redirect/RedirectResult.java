@@ -14,22 +14,14 @@ public class RedirectResult {
     private String redirectUrl;
     private String errorMessage;
     private String shortCode;
-    
-    public enum RedirectType {
-        SUCCESS,           // Redirect to original URL
-        PASSWORD_REQUIRED, // Redirect to password unlock page
-        NOT_FOUND,         // Short URL not found
-        UNAVAILABLE,       // URL is expired/disabled/max usage reached
-        INCORRECT_PASSWORD // Wrong password provided
-    }
-    
+
     public static RedirectResult success(String redirectUrl) {
         return RedirectResult.builder()
                 .type(RedirectType.SUCCESS)
                 .redirectUrl(redirectUrl)
                 .build();
     }
-    
+
     public static RedirectResult passwordRequired(String unlockUrl, String shortCode) {
         return RedirectResult.builder()
                 .type(RedirectType.PASSWORD_REQUIRED)
@@ -37,7 +29,7 @@ public class RedirectResult {
                 .shortCode(shortCode)
                 .build();
     }
-    
+
     public static RedirectResult notFound(String shortCode) {
         return RedirectResult.builder()
                 .type(RedirectType.NOT_FOUND)
@@ -45,7 +37,7 @@ public class RedirectResult {
                 .errorMessage("Short URL not found: " + shortCode)
                 .build();
     }
-    
+
     public static RedirectResult unavailable(String shortCode) {
         return RedirectResult.builder()
                 .type(RedirectType.UNAVAILABLE)
@@ -53,12 +45,20 @@ public class RedirectResult {
                 .errorMessage("URL is no longer accessible: " + shortCode)
                 .build();
     }
-    
+
     public static RedirectResult incorrectPassword(String shortCode) {
         return RedirectResult.builder()
                 .type(RedirectType.INCORRECT_PASSWORD)
                 .shortCode(shortCode)
                 .errorMessage("Incorrect password for short URL: " + shortCode)
                 .build();
+    }
+
+    public enum RedirectType {
+        SUCCESS,           // Redirect to original URL
+        PASSWORD_REQUIRED, // Redirect to password unlock page
+        NOT_FOUND,         // Short URL not found
+        UNAVAILABLE,       // URL is expired/disabled/max usage reached
+        INCORRECT_PASSWORD // Wrong password provided
     }
 }

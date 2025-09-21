@@ -26,18 +26,18 @@ public class CustomDomainDataSeeder {
         List<CustomDomain> domains = new ArrayList<>();
 
         String[] baseDomains = {
-            "techcorp", "innovate", "digitalart", "webcraft", "linkpro", 
-            "smarturl", "quicklink", "brandify", "netforce", "pixelco"
+                "techcorp", "innovate", "digitalart", "webcraft", "linkpro",
+                "smarturl", "quicklink", "brandify", "netforce", "pixelco"
         };
-        
+
         String[] tlds = {".com", ".net", ".org", ".io", ".tech", ".app"};
 
         for (int i = 0; i < count; i++) {
             User randomUser = utils.getRandomElement(users);
-            String domain = utils.getRandomElement(List.of(baseDomains)) + 
-                           utils.getRandom().nextInt(1000) + 
-                           utils.getRandomElement(List.of(tlds));
-            
+            String domain = utils.getRandomElement(List.of(baseDomains)) +
+                    utils.getRandom().nextInt(1000) +
+                    utils.getRandomElement(List.of(tlds));
+
             Instant createdAt = utils.getRandomInstantBetween(2024, 2025);
             CustomDomainStatus status = utils.getRandomDomainStatus();
             boolean verified = status == CustomDomainStatus.VERIFIED;

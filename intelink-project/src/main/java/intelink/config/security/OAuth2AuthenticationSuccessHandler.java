@@ -15,9 +15,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final JwtTokenProvider jwtTokenProvider;
     private static final String REDIRECT_URL = "%s/auth/oauth2/callback?token=%s";
-
+    private final JwtTokenProvider jwtTokenProvider;
     @Value("${app.host.frontend}")
     private String frontendUrl;
 
