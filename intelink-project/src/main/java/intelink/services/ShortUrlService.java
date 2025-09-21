@@ -108,8 +108,9 @@ public class ShortUrlService implements IShortUrlService {
 
         // 3. Encode password if provided
         String encodedPassword = null;
-        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-            encodedPassword = passwordEncoder.encode(request.getPassword());
+        String urlPassword = request.getPassword();
+        if (StringUtils.hasText(urlPassword)) {
+            encodedPassword = passwordEncoder.encode(urlPassword);
         }
 
         // 4. Create and save short URL
@@ -176,7 +177,7 @@ public class ShortUrlService implements IShortUrlService {
     @Transactional(readOnly = true)
     public Page<ShortUrl> searchShortUrls(Long userId, String query, String status, Pageable pageable) {
         ShortUrlStatus statusEnum;
-        if (status == null || status.trim().isEmpty()) {
+        if (!StringUtils.hasText(status)) {
             statusEnum = null;
         } else {
             statusEnum = ShortUrlStatus.fromString(status);
@@ -218,7 +219,7 @@ public class ShortUrlService implements IShortUrlService {
         }
 
         // Set new password
-        if (newPassword != null && !newPassword.trim().isEmpty()) {
+        if (StringUtils.hasText(newPassword)) {
             shortUrl.setPasswordHash(passwordEncoder.encode(newPassword));
         } else {
             shortUrl.setPasswordHash(null);
