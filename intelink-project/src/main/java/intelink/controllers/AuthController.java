@@ -35,8 +35,8 @@ public class AuthController {
 
     // ========== Register
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) throws MessagingException {
-        User user = userService.register(registerRequest, UserRole.USER);
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) throws MessagingException {
+        User user = userService.register(request, UserRole.USER);
         String msg = "Registration successful. Please check your email to verify your account.";
         RegisterResponse resp = new RegisterResponse(true, msg, user.getEmail(), user.getEmailVerified());
         return ResponseEntity.ok(resp);
@@ -53,8 +53,8 @@ public class AuthController {
 
     // ========== Forgot Password
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) throws MessagingException {
-        String email = forgotPasswordRequest.getEmail();
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) throws MessagingException {
+        String email = request.getEmail();
         userService.forgotPassword(email);
         String msg = "If the email exists, a password reset link has been sent to " + email;
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
@@ -65,9 +65,9 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(
             @RequestParam("token") String token,
-            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
+            @Valid @RequestBody ResetPasswordRequest request
     ) {
-        userService.resetPassword(token, resetPasswordRequest);
+        userService.resetPassword(token, request);
         String msg = "Password reset successfully. You can now log in with your new password.";
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
@@ -75,16 +75,16 @@ public class AuthController {
 
     // ========== Login
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthToken obj = userService.login(loginRequest);
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        AuthToken obj = userService.login(request);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
 
     // ========== Refresh Token
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authHeader) {
-        AuthToken obj = userService.refreshToken(authHeader);
+    public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authorizationHeader) {
+        AuthToken obj = userService.refreshToken(authorizationHeader);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
@@ -99,8 +99,8 @@ public class AuthController {
 
     // ========== Get User Profile
     @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
-        User user = userService.profile(authHeader);
+    public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authorizationHeader) {
+        User user = userService.profile(authorizationHeader);
         Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
         SubscriptionInfo subscriptionInfo = SubscriptionInfo.fromEntities(subscription, subscription.getSubscriptionPlan());
         UserProfileResponse resp = UserProfileResponse.fromEntities(user, subscriptionInfo);
@@ -109,8 +109,8 @@ public class AuthController {
 
     // ========== Logout
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
-        userService.logout(authHeader);
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader) {
+        userService.logout(authorizationHeader);
         String msg = "Logged out successfully";
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
