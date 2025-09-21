@@ -41,10 +41,11 @@ public class UrlController {
     @PostMapping
     public ResponseEntity<?> createShortUrl(
             @Valid @RequestBody CreateShortUrlRequest request,
+            @RequestParam(required = false) String customCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) throws IllegalBlockSizeException, BadPaddingException {
         User user = shortUrlService.getCurrentUser(userDetails);
-        ShortUrl shortUrl = shortUrlService.create(user, request);
+        ShortUrl shortUrl = shortUrlService.create(user, customCode, request);
         CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, accessUrl);
         return ResponseEntity.ok(response);
     }
