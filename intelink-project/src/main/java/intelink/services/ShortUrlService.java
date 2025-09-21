@@ -2,9 +2,9 @@ package intelink.services;
 
 import intelink.dto.object.Cipher;
 import intelink.dto.request.url.CreateShortUrlRequest;
-import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.dto.response.analysis.ThreatAnalysisResult;
 import intelink.dto.response.analysis.ThreatMatchInfo;
+import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAnalysisResult;
 import intelink.models.User;
@@ -12,6 +12,7 @@ import intelink.models.enums.ShortUrlAnalysisEngine;
 import intelink.models.enums.ShortUrlAnalysisStatus;
 import intelink.models.enums.ShortUrlStatus;
 import intelink.repositories.ShortUrlRepository;
+import intelink.services.interfaces.IAnalysisResultService;
 import intelink.services.interfaces.IShortUrlService;
 import intelink.services.interfaces.IUserService;
 import intelink.utils.FPEUtil;
@@ -38,20 +39,12 @@ import java.util.Optional;
 public class ShortUrlService implements IShortUrlService {
 
     private final ShortUrlRepository shortUrlRepository;
+    private final IAnalysisResultService analysisResultService;
     private final IUserService userService;
     private final PasswordEncoder passwordEncoder;
     private final GoogleSafeBrowsingUtil googleSafeBrowsingUtil;
-    private final AnalysisResultService analysisResultService;
 
     private final Integer SHORT_CODE_LENGTH = 10;
-
-    public User getCurrentUser(UserDetails userDetails) {
-        Optional<User> userOpt = userService.findByUsername(userDetails.getUsername());
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
-        }
-        return userOpt.get();
-    }
 
     private ShortUrl findUserShortUrl(Long userId, String shortCode) {
         Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
@@ -77,16 +70,7 @@ public class ShortUrlService implements IShortUrlService {
         }
 
         // 4. Create and save short URL
-        ShortUrl shortUrl = ShortUrl.builder()
-                .shortCode(shortCode)
-                .originalUrl(request.getOriginalUrl())
-                .passwordHash(encodedPassword)
-                .description(request.getDescription())
-                .status(ShortUrlStatus.ENABLED)
-                .maxUsage(request.getMaxUsage())
-                .expiresAt(expiresAt)
-                .user(user)
-                .build();
+        ShortUrl shortUrl = ShortUrl.builder().shortCode(shortCode).originalUrl(request.getOriginalUrl()).passwordHash(encodedPassword).description(request.getDescription()).status(ShortUrlStatus.ENABLED).maxUsage(request.getMaxUsage()).expiresAt(expiresAt).user(user).build();
 
         ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
         userService.increaseTotalShortUrls(user.getId());
@@ -101,31 +85,16 @@ public class ShortUrlService implements IShortUrlService {
     private void performThreatAnalysis(ShortUrl shortUrl) {
         try {
             ThreatAnalysisResult threatAnalysisResult = googleSafeBrowsingUtil.checkUrls(List.of(shortUrl.getOriginalUrl()));
-            
+
             if (!threatAnalysisResult.hasMatches() || threatAnalysisResult.matches().isEmpty()) {
                 // URL is safe
-                ShortUrlAnalysisResult analysisResult = ShortUrlAnalysisResult.builder()
-                        .shortUrl(shortUrl)
-                        .status(ShortUrlAnalysisStatus.SAFE)
-                        .engine(ShortUrlAnalysisEngine.GOOGLE_SAFE_BROWSING)
-                        .threatType("NONE")
-                        .platformType("ANY_PLATFORM")
-                        .build();
+                ShortUrlAnalysisResult analysisResult = ShortUrlAnalysisResult.builder().shortUrl(shortUrl).status(ShortUrlAnalysisStatus.SAFE).engine(ShortUrlAnalysisEngine.GOOGLE_SAFE_BROWSING).threatType("NONE").platformType("ANY_PLATFORM").build();
                 analysisResultService.save(analysisResult);
                 log.info("ShortUrlService.performThreatAnalysis: URL {} is safe", shortUrl.getShortCode());
             } else {
                 // URL has threats - create analysis records and delete URL
                 for (ThreatMatchInfo match : threatAnalysisResult.matches()) {
-                    ShortUrlAnalysisResult analysisResult = ShortUrlAnalysisResult.builder()
-                            .shortUrl(shortUrl)
-                            .status(ShortUrlAnalysisStatus.fromString(match.threatType()))
-                            .engine(ShortUrlAnalysisEngine.GOOGLE_SAFE_BROWSING)
-                            .threatType(match.threatType())
-                            .platformType(match.platformType())
-                            .cacheDuration(match.cacheDuration())
-                            .details("Threat detected: " + match.threatEntryType())
-                            .createdAt(Instant.now())
-                            .build();
+                    ShortUrlAnalysisResult analysisResult = ShortUrlAnalysisResult.builder().shortUrl(shortUrl).status(ShortUrlAnalysisStatus.fromString(match.threatType())).engine(ShortUrlAnalysisEngine.GOOGLE_SAFE_BROWSING).threatType(match.threatType()).platformType(match.platformType()).cacheDuration(match.cacheDuration()).details("Threat detected: " + match.threatEntryType()).createdAt(Instant.now()).build();
                     analysisResultService.save(analysisResult);
                 }
                 deleteShortUrl(shortUrl.getUser().getId(), shortUrl.getShortCode());
@@ -199,20 +168,20 @@ public class ShortUrlService implements IShortUrlService {
     @Transactional
     public ShortUrl updateShortUrl(Long userId, String shortCode, String description, Long maxUsage, Integer availableDays) {
         ShortUrl shortUrl = findUserShortUrl(userId, shortCode);
-        
+
         if (description != null) {
             shortUrl.setDescription(description);
         }
-        
+
         if (maxUsage != null) {
             shortUrl.setMaxUsage(maxUsage);
         }
-        
+
         if (availableDays != null) {
             Instant newExpiresAt = Instant.now().plusSeconds(availableDays * 24 * 60 * 60);
             shortUrl.setExpiresAt(newExpiresAt);
         }
-        
+
         ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
         log.info("ShortUrlService.updateShortUrl: URL {} updated", shortCode);
         return savedUrl;
@@ -221,21 +190,21 @@ public class ShortUrlService implements IShortUrlService {
     @Transactional
     public ShortUrl updatePassword(Long userId, String shortCode, String newPassword, String currentPassword) {
         ShortUrl shortUrl = findUserShortUrl(userId, shortCode);
-        
+
         // Verify current password if URL already has a password
         if (shortUrl.getPasswordHash() != null) {
             if (currentPassword == null || !passwordEncoder.matches(currentPassword, shortUrl.getPasswordHash())) {
                 throw new IllegalArgumentException("Current password is incorrect");
             }
         }
-        
+
         // Set new password
         if (newPassword != null && !newPassword.trim().isEmpty()) {
             shortUrl.setPasswordHash(passwordEncoder.encode(newPassword));
         } else {
             shortUrl.setPasswordHash(null); // Remove password
         }
-        
+
         ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
         log.info("ShortUrlService.updatePassword: Password updated for URL {}", shortCode);
         return savedUrl;
@@ -248,12 +217,11 @@ public class ShortUrlService implements IShortUrlService {
             ShortUrl shortUrl = shortUrlOpt.get();
             shortUrl.setTotalClicks(shortUrl.getTotalClicks() + 1);
             shortUrlRepository.save(shortUrl);
-            
+
             // Also increase user's total clicks
             userService.increaseTotalClicks(shortUrl.getUser().getId());
-            
-            log.debug("ShortUrlService.increaseTotalClicks: Incremented clicks for URL {} to {}", 
-                     shortCode, shortUrl.getTotalClicks());
+
+            log.debug("ShortUrlService.increaseTotalClicks: Incremented clicks for URL {} to {}", shortCode, shortUrl.getTotalClicks());
         } else {
             log.warn("ShortUrlService.increaseTotalClicks: Short URL not found: {}", shortCode);
         }
@@ -298,25 +266,21 @@ public class ShortUrlService implements IShortUrlService {
     @Transactional(readOnly = true)
     public UnlockUrlResponse getUnlockInfo(String shortCode) {
         Optional<ShortUrl> shortUrlOpt = findByShortCode(shortCode);
-        
+
         if (shortUrlOpt.isEmpty()) {
             log.warn("ShortUrlService.getUnlockInfo: Short URL not found: {}", shortCode);
             throw new IllegalArgumentException("Short URL not found");
         }
 
         ShortUrl shortUrl = shortUrlOpt.get();
-        
+
         // Check if URL requires password
         if (shortUrl.getPasswordHash() == null) {
             log.warn("ShortUrlService.getUnlockInfo: URL does not require password: {}", shortCode);
             throw new IllegalArgumentException("This URL does not require a password");
         }
 
-        return UnlockUrlResponse.builder()
-                .success(true)
-                .message("Password required for this URL")
-                .shortCode(shortCode)
-                .build();
+        return UnlockUrlResponse.builder().success(true).message("Password required for this URL").shortCode(shortCode).build();
     }
 
     @Transactional
@@ -331,12 +295,12 @@ public class ShortUrlService implements IShortUrlService {
         // 2. Check if URL is accessible
         ShortUrl shortUrl = shortUrlOpt.get();
         boolean isAccessible = isUrlAccessible(shortUrl, password);
-        
+
         if (!isAccessible) {
             log.warn("ShortUrlService.unlockUrl: Failed to unlock URL - incorrect password or URL unavailable: {}", shortCode);
             throw new IllegalArgumentException("Incorrect password or URL is unavailable");
         }
-        
+
         return UnlockUrlResponse.success(shortUrl.getOriginalUrl(), shortCode);
     }
 }

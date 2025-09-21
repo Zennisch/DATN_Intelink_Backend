@@ -11,6 +11,7 @@ import intelink.dto.response.url.UpdateShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
 import intelink.services.interfaces.IShortUrlService;
+import intelink.services.interfaces.IUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ import java.util.Optional;
 public class UrlController {
 
     private final IShortUrlService shortUrlService;
+    private final IUserService userService;
 
     @Value("${app.url.access}")
     private String accessUrl;
@@ -44,7 +46,7 @@ public class UrlController {
             @RequestParam(required = false) String customCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) throws IllegalBlockSizeException, BadPaddingException {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         ShortUrl shortUrl = shortUrlService.create(user, customCode, request);
         CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, accessUrl);
         return ResponseEntity.ok(response);
@@ -56,7 +58,7 @@ public class UrlController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         Pageable pageable = PageRequest.of(page, size);
         Page<ShortUrl> shortUrlPage = shortUrlService.getUserShortUrls(user.getId(), pageable);
         
@@ -73,7 +75,7 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCodeAndUserId(shortCode, user.getId());
         
         if (shortUrlOpt.isEmpty()) {
@@ -91,7 +93,7 @@ public class UrlController {
             @Valid @RequestBody UpdateShortUrlRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         ShortUrl updatedUrl = shortUrlService.updateShortUrl(
             user.getId(),
             shortCode,
@@ -108,7 +110,7 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         shortUrlService.deleteShortUrl(user.getId(), shortCode);
         
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
@@ -124,7 +126,7 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         shortUrlService.enableShortUrl(user.getId(), shortCode);
         
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
@@ -140,7 +142,7 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         shortUrlService.disableShortUrl(user.getId(), shortCode);
         
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
@@ -157,7 +159,7 @@ public class UrlController {
             @Valid @RequestBody UpdatePasswordRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         ShortUrl updatedUrl = shortUrlService.updatePassword(
             user.getId(),
             shortCode,
@@ -183,7 +185,7 @@ public class UrlController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         
         Pageable pageable;
         if ("asc".equalsIgnoreCase(sortDirection)) {

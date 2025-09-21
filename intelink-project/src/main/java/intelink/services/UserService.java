@@ -24,6 +24,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,7 @@ public class UserService implements IUserService {
     private final IEmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final IUserService userService;
 
     @Value("${app.url.verify-email}")
     private String verificationEmailUrlTemplate;
@@ -289,6 +291,15 @@ public class UserService implements IUserService {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         log.debug("UserService.getCurrentUser: Username from context: {}", username);
         Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new UsernameNotFoundException(username);
+        }
+        return userOpt.get();
+    }
+
+    public User getCurrentUser(UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        Optional<User> userOpt = userService.findByUsername(username);
         if (userOpt.isEmpty()) {
             throw new UsernameNotFoundException(username);
         }

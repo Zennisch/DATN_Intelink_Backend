@@ -7,6 +7,7 @@ import intelink.dto.request.auth.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import jakarta.mail.MessagingException;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
 
@@ -37,5 +38,7 @@ public interface IUserService {
     void decreaseTotalShortUrls(Long userId);
 
     User getCurrentUser();
+
+    User getCurrentUser(UserDetails userDetails);
 
 }

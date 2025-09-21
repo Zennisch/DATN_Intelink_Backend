@@ -27,7 +27,6 @@ public interface IShortUrlService {
     Optional<ShortUrl> findByShortCode(String shortCode);
     Optional<ShortUrl> findByShortCodeAndUserId(String shortCode, Long userId);
     Page<ShortUrl> getUserShortUrls(Long userId, Pageable pageable);
-    Page<ShortUrl> getUserShortUrlsWithSorting(Long userId, Pageable pageable);
     Page<ShortUrl> searchShortUrls(Long userId, String query, String status, Pageable pageable);
 
     // Update operations
@@ -41,7 +40,5 @@ public interface IShortUrlService {
     Boolean isUrlAccessible(ShortUrl shortUrl, String password);
     UnlockUrlResponse getUnlockInfo(String shortCode);
     UnlockUrlResponse unlockUrl(String shortCode, String password, HttpServletRequest request);
-    
-    // Helper method
-    User getCurrentUser(UserDetails userDetails);
+
 }
