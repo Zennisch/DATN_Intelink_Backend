@@ -103,6 +103,15 @@ public class User {
     @Column(name = "profile_picture_url", nullable = true, length = 512)
     private String profilePictureUrl;
 
+    // Payment group
+    @Column(name = "credit_balance", nullable = false)
+    @Builder.Default
+    private Integer creditBalance = 0;
+
+    @Column(name = "currency", nullable = false, length = 3)
+    @Builder.Default
+    private String currency = "USD";
+
     // Statistics group
     @Column(name = "total_short_urls", nullable = false)
     @Builder.Default
