@@ -2,6 +2,7 @@ package intelink.controllers;
 
 import intelink.dto.response.stat.StatisticsResponse;
 import intelink.dto.response.stat.TimeStatsResponse;
+import intelink.dto.response.stat.TopPeakTimesResponse;
 import intelink.services.interfaces.IStatisticsService;
 import lombok.RequiredArgsConstructor;
 
@@ -63,5 +64,25 @@ public class StatisticsController {
         overview.put("location", statisticsService.getLocationStats(shortCode));
         overview.put("time", statisticsService.getTimeStats(shortCode, null, null, null));
         return ResponseEntity.ok(overview);
+    }
+
+    @GetMapping("/{shortCode}/peak-time")
+    public ResponseEntity<Map<String, Object>> getPeakTimeStats(
+            @PathVariable String shortCode,
+            @RequestParam(required = false) String customFrom,
+            @RequestParam(required = false) String customTo,
+            @RequestParam(required = false, defaultValue = "HOURLY") String granularity) {
+        log.info("StatisticsController.getPeakTimeStats: Fetching peak time stats for shortCode: {}, from: {}, to: {}, granularity: {}",
+                shortCode, customFrom, customTo, granularity);
+        Map<String, Object> result = statisticsService.getPeakTimeStats(shortCode, customFrom, customTo, granularity);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{shortCode}/top-peak-times")
+    public ResponseEntity<TopPeakTimesResponse> getTopPeakTimes(
+            @PathVariable String shortCode,
+            @RequestParam(defaultValue = "HOURLY") String granularity) {
+        TopPeakTimesResponse result = statisticsService.getTopPeakTimes(shortCode, granularity);
+        return ResponseEntity.ok(result);
     }
 }
