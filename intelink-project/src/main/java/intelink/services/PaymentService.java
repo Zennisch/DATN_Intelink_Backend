@@ -8,6 +8,7 @@ import intelink.models.enums.PaymentProvider;
 import intelink.models.enums.PaymentStatus;
 import intelink.repositories.PaymentRepository;
 import intelink.repositories.SubscriptionRepository;
+import intelink.services.interfaces.IPaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentService {
+public class PaymentService implements IPaymentService {
 
     private final ConfigPayment configPayment;
     private final PaymentRepository paymentRepository;
