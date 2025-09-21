@@ -8,6 +8,8 @@ import intelink.models.ShortUrl;
 import intelink.models.enums.IpVersion;
 import intelink.repositories.ClickLogRepository;
 import intelink.services.interfaces.IClickLogService;
+import intelink.services.interfaces.IRedirectService;
+import intelink.services.interfaces.IShortUrlService;
 import intelink.utils.GeoLiteUtil;
 import intelink.utils.IpUtil;
 import intelink.utils.UserAgentUtil;
@@ -25,8 +27,8 @@ import java.util.Optional;
 public class ClickLogService implements IClickLogService {
 
     private final ClickLogRepository clickLogRepository;
-    private final ShortUrlService shortUrlService;
-    private final AnalyticService analyticService;
+    private final IShortUrlService shortUrlService;
+    private final IRedirectService redirectService;
 
     @Transactional
     public ClickLog record(String shortCode, HttpServletRequest request) {
@@ -62,8 +64,8 @@ public class ClickLogService implements IClickLogService {
                 country, city, userAgentInfo.getBrowser(), userAgentInfo.getOs(), userAgentInfo.getDeviceType()
         );
 
-        analyticService.recordDimensionStats(shortCode, dimensionInfo);
-        analyticService.recordClickStats(shortCode);
+        redirectService.recordDimensionStats(shortCode, dimensionInfo);
+        redirectService.recordClickStats(shortCode);
 
         clickLogRepository.save(clickLog);
         return clickLog;
