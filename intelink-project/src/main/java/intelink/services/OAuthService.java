@@ -131,9 +131,9 @@ public class OAuthService extends DefaultOAuth2UserService implements IOAuthServ
         return oAuth2User;
     }
 
-    public AuthToken callback(String authToken) {
+    public AuthToken callback(String jwtToken) {
         // 1. Validate token
-        String email = jwtTokenProvider.getUsernameFromToken(authToken);
+        String email = jwtTokenProvider.getUsernameFromToken(jwtToken);
 
         // 2. If valid, find user exists by email
         Optional<User> userOpt = userRepository.findByEmail(email);
