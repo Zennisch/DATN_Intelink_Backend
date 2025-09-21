@@ -219,19 +219,19 @@ public class UserService implements IUserService {
     @Transactional
     public void increaseTotalClicks(Long userId) {
         userRepository.increaseTotalClicks(userId);
-        log.debug("UserService.incrementTotalClicks: Total clicks for user ID {} incremented", userId);
+        log.debug("UserService.increaseTotalClicks: Total clicks for user ID {} increased", userId);
     }
 
     @Transactional
     public void increaseTotalShortUrls(Long userId) {
         userRepository.increaseTotalShortUrls(userId);
-        log.debug("UserService.incrementTotalShortUrls: Total short URLs for user ID {} incremented", userId);
+        log.debug("UserService.increaseTotalShortUrls: Total short URLs for user ID {} increased", userId);
     }
 
     @Transactional
     public void decreaseTotalShortUrls(Long userId) {
         userRepository.decreaseTotalShortUrls(userId);
-        log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
+        log.debug("UserService.decreaseTotalShortUrls: Total short URLs for user ID {} decreased", userId);
     }
 
     @Transactional

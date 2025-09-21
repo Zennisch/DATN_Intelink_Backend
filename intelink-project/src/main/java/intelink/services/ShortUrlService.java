@@ -22,10 +22,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -46,43 +46,36 @@ public class ShortUrlService implements IShortUrlService {
 
     private final Integer SHORT_CODE_LENGTH = 10;
 
-    private ShortUrl findUserShortUrl(Long userId, String shortCode) {
-        Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
-        if (shortUrlOpt.isEmpty() || !shortUrlOpt.get().getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("Short URL not found or does not belong to the user");
+    protected String validateCustomCode(String customCode) {
+        if (!StringUtils.hasText(customCode)) {
+            throw new IllegalArgumentException("Custom code cannot be empty");
         }
-        return shortUrlOpt.get();
+        if (customCode.length() < 4 || customCode.length() > 20) {
+            throw new IllegalArgumentException("Custom code must be between 4 and 20 characters");
+        }
+        if (!customCode.matches("^[a-zA-Z0-9_-]+$")) {
+            throw new IllegalArgumentException("Custom code can only contain letters, numbers, hyphens, and underscores");
+        }
+        return customCode;
     }
 
     @Transactional
-    public ShortUrl create(User user, String customCode, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
-        // 1. Generate short code
-        Cipher cipher = FPEUtil.generate(user.getId(), SHORT_CODE_LENGTH);
-        String shortCode = cipher.getText();
+    protected String generateShortCode(Long userId) throws IllegalBlockSizeException, BadPaddingException {
+        final int maxAttempts = 5;
 
-        // 2. Calculate expiry date
-        Instant expiresAt = Instant.now().plusSeconds(request.getAvailableDays() * 24 * 60 * 60);
-
-        // 3. Encode password if provided
-        String encodedPassword = null;
-        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-            encodedPassword = passwordEncoder.encode(request.getPassword());
+        for (int attempts = 0; attempts < maxAttempts; attempts++) {
+            Cipher cipher = FPEUtil.generate(userId, SHORT_CODE_LENGTH);
+            String candidate = cipher.getText();
+            if (!isShortCodeExists(candidate)) {
+                return candidate;
+            }
         }
 
-        // 4. Create and save short URL
-        ShortUrl shortUrl = ShortUrl.builder().shortCode(shortCode).originalUrl(request.getOriginalUrl()).passwordHash(encodedPassword).description(request.getDescription()).status(ShortUrlStatus.ENABLED).maxUsage(request.getMaxUsage()).expiresAt(expiresAt).user(user).build();
-
-        ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
-        userService.increaseTotalShortUrls(user.getId());
-        log.info("ShortUrlService.create: Short URL created with code: {}", shortCode);
-
-        // 5. Perform threat analysis
-        performThreatAnalysis(savedUrl);
-
-        return savedUrl;
+        throw new IllegalStateException("Failed to generate a unique short code after " + maxAttempts + " attempts");
     }
 
-    private void performThreatAnalysis(ShortUrl shortUrl) {
+    @Transactional
+    protected void performThreatAnalysis(ShortUrl shortUrl) {
         try {
             ThreatAnalysisResult threatAnalysisResult = googleSafeBrowsingUtil.checkUrls(List.of(shortUrl.getOriginalUrl()));
 
@@ -106,8 +99,36 @@ public class ShortUrlService implements IShortUrlService {
     }
 
     @Transactional
+    public ShortUrl create(User user, String customCode, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
+        // 1. Determine short code
+        String shortCode = StringUtils.hasText(customCode) ? validateCustomCode(customCode) : generateShortCode(user.getId());
+
+        // 2. Calculate expiry date
+        Instant expiresAt = Instant.now().plusSeconds(request.getAvailableDays() * 24 * 60 * 60);
+
+        // 3. Encode password if provided
+        String encodedPassword = null;
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            encodedPassword = passwordEncoder.encode(request.getPassword());
+        }
+
+        // 4. Create and save short URL
+        ShortUrl shortUrl = ShortUrl.builder().shortCode(shortCode).originalUrl(request.getOriginalUrl()).passwordHash(encodedPassword).description(request.getDescription()).status(ShortUrlStatus.ENABLED).maxUsage(request.getMaxUsage()).expiresAt(expiresAt).user(user).build();
+
+        ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
+        userService.increaseTotalShortUrls(user.getId());
+        log.info("ShortUrlService.create: Short URL created with code: {}", shortCode);
+
+        // 5. Perform threat analysis
+        performThreatAnalysis(savedUrl);
+
+        return savedUrl;
+    }
+
+    @Transactional
     public void enableShortUrl(Long userId, String shortCode) {
-        ShortUrl shortUrl = findUserShortUrl(userId, shortCode);
+        ShortUrl shortUrl = findByUserIdAndShortCode(userId, shortCode).orElseThrow(() -> new IllegalArgumentException("Short URL not found or does not belong to the user"));
+
         shortUrl.setStatus(ShortUrlStatus.ENABLED);
         shortUrlRepository.save(shortUrl);
         log.info("ShortUrlService.enableShortUrl: URL {} enabled", shortCode);
@@ -115,7 +136,8 @@ public class ShortUrlService implements IShortUrlService {
 
     @Transactional
     public void disableShortUrl(Long userId, String shortCode) {
-        ShortUrl shortUrl = findUserShortUrl(userId, shortCode);
+        ShortUrl shortUrl = findByUserIdAndShortCode(userId, shortCode).orElseThrow(() -> new IllegalArgumentException("Short URL not found or does not belong to the user"));
+
         shortUrl.setStatus(ShortUrlStatus.DISABLED);
         shortUrlRepository.save(shortUrl);
         log.info("ShortUrlService.disableShortUrl: URL {} disabled", shortCode);
@@ -123,7 +145,8 @@ public class ShortUrlService implements IShortUrlService {
 
     @Transactional
     public void deleteShortUrl(Long userId, String shortCode) {
-        ShortUrl shortUrl = findUserShortUrl(userId, shortCode);
+        ShortUrl shortUrl = findByUserIdAndShortCode(userId, shortCode).orElseThrow(() -> new IllegalArgumentException("Short URL not found or does not belong to the user"));
+
         shortUrl.setDeletedAt(Instant.now());
         shortUrlRepository.save(shortUrl);
         userService.decreaseTotalShortUrls(userId);
@@ -136,22 +159,18 @@ public class ShortUrlService implements IShortUrlService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<ShortUrl> findByShortCodeAndUserId(String shortCode, Long userId) {
-        Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
-        if (shortUrlOpt.isPresent() && shortUrlOpt.get().getUser().getId().equals(userId)) {
-            return shortUrlOpt;
-        }
-        return Optional.empty();
+    public Optional<ShortUrl> findByUserIdAndShortCode(Long userId, String shortCode) {
+        return shortUrlRepository.findByUserIdAndShortCode(userId, shortCode);
+    }
+
+    @Transactional(readOnly = true)
+    public Boolean isShortCodeExists(String shortCode) {
+        return shortUrlRepository.findByShortCode(shortCode).isPresent();
     }
 
     @Transactional(readOnly = true)
     public Page<ShortUrl> getUserShortUrls(Long userId, Pageable pageable) {
         return shortUrlRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<ShortUrl> getUserShortUrlsWithSorting(Long userId, Pageable pageable) {
-        return shortUrlRepository.findByUserId(userId, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -167,7 +186,7 @@ public class ShortUrlService implements IShortUrlService {
 
     @Transactional
     public ShortUrl updateShortUrl(Long userId, String shortCode, String description, Long maxUsage, Integer availableDays) {
-        ShortUrl shortUrl = findUserShortUrl(userId, shortCode);
+        ShortUrl shortUrl = findByUserIdAndShortCode(userId, shortCode).orElseThrow(() -> new IllegalArgumentException("Short URL not found or does not belong to the user"));
 
         if (description != null) {
             shortUrl.setDescription(description);
@@ -189,7 +208,7 @@ public class ShortUrlService implements IShortUrlService {
 
     @Transactional
     public ShortUrl updatePassword(Long userId, String shortCode, String newPassword, String currentPassword) {
-        ShortUrl shortUrl = findUserShortUrl(userId, shortCode);
+        ShortUrl shortUrl = findByUserIdAndShortCode(userId, shortCode).orElseThrow(() -> new IllegalArgumentException("Short URL not found or does not belong to the user"));
 
         // Verify current password if URL already has a password
         if (shortUrl.getPasswordHash() != null) {
@@ -202,7 +221,7 @@ public class ShortUrlService implements IShortUrlService {
         if (newPassword != null && !newPassword.trim().isEmpty()) {
             shortUrl.setPasswordHash(passwordEncoder.encode(newPassword));
         } else {
-            shortUrl.setPasswordHash(null); // Remove password
+            shortUrl.setPasswordHash(null);
         }
 
         ShortUrl savedUrl = shortUrlRepository.save(shortUrl);
@@ -215,13 +234,10 @@ public class ShortUrlService implements IShortUrlService {
         Optional<ShortUrl> shortUrlOpt = shortUrlRepository.findByShortCode(shortCode);
         if (shortUrlOpt.isPresent()) {
             ShortUrl shortUrl = shortUrlOpt.get();
-            shortUrl.setTotalClicks(shortUrl.getTotalClicks() + 1);
-            shortUrlRepository.save(shortUrl);
-
-            // Also increase user's total clicks
+            shortUrlRepository.increaseTotalClicks(shortCode);
             userService.increaseTotalClicks(shortUrl.getUser().getId());
 
-            log.debug("ShortUrlService.increaseTotalClicks: Incremented clicks for URL {} to {}", shortCode, shortUrl.getTotalClicks());
+            log.debug("ShortUrlService.increaseTotalClicks: Increase clicks for URL {} to {}", shortCode, shortUrl.getTotalClicks());
         } else {
             log.warn("ShortUrlService.increaseTotalClicks: Short URL not found: {}", shortCode);
         }

@@ -18,11 +18,9 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
 
     @Modifying
     @Query("UPDATE ShortUrl s SET s.totalClicks = s.totalClicks + 1 WHERE s.shortCode = :shortCode")
-    void incrementTotalClicks(@Param("shortCode") String shortCode);
+    void increaseTotalClicks(@Param("shortCode") String shortCode);
 
     Page<ShortUrl> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
-    
-    Page<ShortUrl> findByUserId(Long userId, Pageable pageable);
 
     @Query("SELECT s FROM ShortUrl s WHERE s.user.id = :userId " +
            "AND s.deletedAt IS NULL " +
@@ -35,4 +33,6 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
                                    @Param("query") String query, 
                                    @Param("status") ShortUrlStatus status, 
                                    Pageable pageable);
+
+    Optional<ShortUrl> findByUserIdAndShortCode(Long userId, String shortCode);
 }

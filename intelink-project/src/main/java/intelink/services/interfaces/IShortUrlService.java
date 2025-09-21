@@ -7,7 +7,6 @@ import intelink.models.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -25,7 +24,8 @@ public interface IShortUrlService {
 
     // Read operations
     Optional<ShortUrl> findByShortCode(String shortCode);
-    Optional<ShortUrl> findByShortCodeAndUserId(String shortCode, Long userId);
+    Optional<ShortUrl> findByUserIdAndShortCode(Long userId, String shortCode);
+    Boolean isShortCodeExists(String shortCode);
     Page<ShortUrl> getUserShortUrls(Long userId, Pageable pageable);
     Page<ShortUrl> searchShortUrls(Long userId, String query, String status, Pageable pageable);
 

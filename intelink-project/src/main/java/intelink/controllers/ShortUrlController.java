@@ -76,7 +76,7 @@ public class ShortUrlController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = userService.getCurrentUser(userDetails);
-        Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCodeAndUserId(shortCode, user.getId());
+        Optional<ShortUrl> shortUrlOpt = shortUrlService.findByUserIdAndShortCode(user.getId(), shortCode);
         
         if (shortUrlOpt.isEmpty()) {
             throw new IllegalArgumentException("Short URL not found");
