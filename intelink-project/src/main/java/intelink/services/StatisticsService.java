@@ -2,6 +2,7 @@ package intelink.services;
 
 import intelink.dto.response.stat.StatisticsResponse;
 import intelink.dto.response.stat.TimeStatsResponse;
+import intelink.dto.response.stat.TopPeakTimesResponse;
 import intelink.models.ClickStat;
 import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;
@@ -260,6 +261,8 @@ public class StatisticsService implements IStatisticsService {
                 .build();
     }
 
+
+
     private DimensionType mapStringToDimensionType(String type) {
         return switch (type.toLowerCase()) {
             // Device related
@@ -297,5 +300,53 @@ public class StatisticsService implements IStatisticsService {
         };
     }
 
+    /**
+     * Trả về bucket (thời gian) có số lượt click nhiều nhất theo granularity.
+     */
+    @Override
+    public Map<String, Object> getPeakTimeStats(String shortCode, String customFrom, String customTo, String granularityStr) {
+        TimeStatsResponse stats = getTimeStats(shortCode, customFrom, customTo, granularityStr);
+        if (stats.getBuckets() == null || stats.getBuckets().isEmpty()) {
+            return Map.of(
+                    "peakTime", null,
+                    "clicks", 0,
+                    "granularity", stats.getGranularity()
+            );
+        }
+        // Tìm bucket có số click lớn nhất
+        TimeStatsResponse.Bucket peak = stats.getBuckets().stream()
+                .max((b1, b2) -> Long.compare(b1.getClicks(), b2.getClicks()))
+                .orElse(null);
+
+        return Map.of(
+                "peakTime", peak != null ? peak.getTime() : null,
+                "clicks", peak != null ? peak.getClicks() : 0,
+                "granularity", stats.getGranularity()
+        );
+    }
+
+    @Override
+    public TopPeakTimesResponse getTopPeakTimes(String shortCode, String granularityStr) {
+        ShortUrl shortUrl = shortUrlService.findByShortCode(shortCode)
+                .orElseThrow(() -> new IllegalArgumentException("Short code not found: " + shortCode));
+        Granularity granularity = granularityStr != null ? Granularity.fromString(granularityStr) : Granularity.HOURLY;
+
+        List<ClickStat> stats = clickStatRepository.findByShortUrlAndGranularityOrderByBucketAsc(shortUrl, granularity);
+
+        List<TopPeakTimesResponse.PeakTime> topList = stats.stream()
+                .sorted((a, b) -> Long.compare(b.getTotalClicks(), a.getTotalClicks()))
+                .limit(10)
+                .map(stat -> new TopPeakTimesResponse.PeakTime(
+                        stat.getBucket().toString(),
+                        stat.getTotalClicks()
+                ))
+                .toList();
+
+        return new TopPeakTimesResponse(
+                granularity.name(),
+                topList.size(),
+                topList
+        );
+    }
 
 }
