@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface IShortUrlService {
 
     // Create operations
-    ShortUrl create(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException;
+    ShortUrl create(User user, String customCode, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException;
 
     // Status management operations
     void enableShortUrl(Long userId, String shortCode);

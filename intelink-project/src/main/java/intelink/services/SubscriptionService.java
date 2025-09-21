@@ -78,7 +78,7 @@ public class SubscriptionService implements ISubscriptionService {
 
         Subscription savedSubscription = subscriptionRepository.save(subscription);
         log.info("Created new subscription {} for user {} with plan {}", savedSubscription.getId(), user.getId(), plan.getType());
-        
+
         return savedSubscription;
     }
 
@@ -103,7 +103,7 @@ public class SubscriptionService implements ISubscriptionService {
         subscription.setStatus(SubscriptionStatus.CANCELED);
         subscription.setActive(false);
         subscriptionRepository.save(subscription);
-        
+
         log.info("Cancelled subscription {} for user {}", subscriptionId, user.getId());
     }
 }

@@ -62,7 +62,7 @@ public class ShortUrlService implements IShortUrlService {
     }
 
     @Transactional
-    public ShortUrl create(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
+    public ShortUrl create(User user, String customCode, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
         // 1. Generate short code
         Cipher cipher = FPEUtil.generate(user.getId(), SHORT_CODE_LENGTH);
         String shortCode = cipher.getText();

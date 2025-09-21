@@ -23,4 +23,3 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     List<Subscription> findExpiredActiveSubscriptions(Instant now);
 
     Optional<Subscription> findById(UUID subscriptionId);
-}

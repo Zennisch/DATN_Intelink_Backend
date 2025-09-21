@@ -1,6 +1,6 @@
 package intelink.services.interfaces;
 
-import intelink.dto.object.Auth;
+import intelink.dto.object.AuthToken;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
@@ -20,9 +20,9 @@ public interface IUserService {
 
     void resetPassword(String token, ResetPasswordRequest resetPasswordRequest);
 
-    Auth login(LoginRequest loginRequest);
+    AuthToken login(LoginRequest loginRequest);
 
-    Auth refreshToken(String authHeader);
+    AuthToken refreshToken(String authHeader);
 
     User profile(String authHeader);
 
@@ -35,5 +35,7 @@ public interface IUserService {
     void increaseTotalShortUrls(Long userId);
 
     void decreaseTotalShortUrls(Long userId);
+
+    User getCurrentUser();
 
 }

@@ -1,7 +1,7 @@
 package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
-import intelink.dto.object.Auth;
+import intelink.dto.object.AuthToken;
 import intelink.dto.object.Token;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
@@ -24,6 +24,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -170,7 +171,7 @@ public class UserService implements IUserService {
     }
 
     @Transactional
-    public Auth login(LoginRequest loginRequest) {
+    public AuthToken login(LoginRequest loginRequest) {
         // 0. Extract fields
         String username = loginRequest.getUsername();
         String password = loginRequest.getPassword();
@@ -204,11 +205,11 @@ public class UserService implements IUserService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-        return new Auth(user, token, refreshToken, expiresAt);
+        return new AuthToken(user, token, refreshToken, expiresAt);
     }
 
     @Transactional
-    public Auth refreshToken(String authHeader) {
+    public AuthToken refreshToken(String authHeader) {
         // 1. Validate token
         Token tokenObject = validateToken(authHeader);
         String username = tokenObject.getUsername();
@@ -225,7 +226,7 @@ public class UserService implements IUserService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(username);
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-        return new Auth(user, token, refreshToken, expiresAt);
+        return new AuthToken(user, token, refreshToken, expiresAt);
     }
 
     @Transactional
@@ -282,12 +283,16 @@ public class UserService implements IUserService {
         userRepository.decreaseTotalShortUrls(userId);
         log.debug("UserService.decrementTotalShortUrls: Total short URLs for user ID {} decremented", userId);
     }
+
     @Transactional
     public User getCurrentUser() {
-    String username = SecurityContextHolder.getContext().getAuthentication().getName();
-    log.debug("getCurrentUser - username from context: {}", username);
-    return userRepository.findByUsernameFetchShortUrls(username)
-        .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.debug("UserService.getCurrentUser: Username from context: {}", username);
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new UsernameNotFoundException(username);
+        }
+        return userOpt.get();
     }
 
 }
