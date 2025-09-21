@@ -2,7 +2,6 @@ package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
 import intelink.dto.object.AuthToken;
-import intelink.dto.object.Token;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
@@ -44,28 +43,12 @@ public class UserService implements IUserService {
     private final IEmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final IUserService userService;
 
     @Value("${app.url.verify-email}")
     private String verificationEmailUrlTemplate;
 
     @Value("${app.url.reset-password}")
     private String resetPasswordEmailUrlTemplate;
-
-    private Token validateToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new BadCredentialsException("Invalid token format");
-        }
-
-        String token = authHeader.substring(7);
-        String username = jwtTokenProvider.getUsernameFromToken(token);
-
-        if (!jwtTokenProvider.validateToken(token, username)) {
-            throw new BadCredentialsException("Invalid or expired token");
-        }
-
-        return new Token(token, username);
-    }
 
     @Transactional
     public User register(RegisterRequest registerRequest, UserRole role) throws MessagingException {
@@ -211,19 +194,8 @@ public class UserService implements IUserService {
     }
 
     @Transactional
-    public AuthToken refreshToken(String authHeader) {
-        // 1. Validate token
-        Token tokenObject = validateToken(authHeader);
-        String username = tokenObject.getUsername();
-
-        // 2. If valid, check if user exists
-        Optional<User> userOpt = findByUsername(username);
-        if (userOpt.isEmpty()) {
-            throw new BadCredentialsException("User not found");
-        }
-
-        // 3. If exists, generate new JWT token
-        User user = userOpt.get();
+    public AuthToken refreshToken(User user) {
+        String username = user.getUsername();
         String token = jwtTokenProvider.generateToken(username);
         String refreshToken = jwtTokenProvider.generateRefreshToken(username);
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
@@ -232,35 +204,11 @@ public class UserService implements IUserService {
     }
 
     @Transactional
-    public User profile(String authHeader) {
-        // 1. Validate token
-        Token token = validateToken(authHeader);
-        String username = token.getUsername();
-
-        // 2. If valid, check if user exists
-        Optional<User> userOpt = findByUsername(username);
-        if (userOpt.isEmpty()) {
-            throw new BadCredentialsException("User not found");
-        }
-
-        // 3. If exists, return user profile
-        User user = userOpt.get();
-        log.info("UserService.profile: Retrieved profile for user: {}", username);
-        return user;
-    }
-
-    @Transactional
-    public void logout(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new BadCredentialsException("Invalid token format");
-        }
-
-        String token = authHeader.substring(7);
-        String username = jwtTokenProvider.getUsernameFromToken(token);
-
-        if (jwtTokenProvider.validateToken(token, username)) {
-            SecurityContextHolder.clearContext();
-        }
+    public void logout(User user) {
+        // For JWT, logout is typically handled on the client side by deleting the token.
+        // Optionally, you can implement token blacklisting here if needed.
+        SecurityContextHolder.clearContext();
+        log.info("UserService.logout: User ID {} logged out", user.getId());
     }
 
     @Transactional
@@ -290,16 +238,17 @@ public class UserService implements IUserService {
     public User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         log.debug("UserService.getCurrentUser: Username from context: {}", username);
-        Optional<User> userOpt = userRepository.findByUsername(username);
+        Optional<User> userOpt = findByUsername(username);
         if (userOpt.isEmpty()) {
             throw new UsernameNotFoundException(username);
         }
         return userOpt.get();
     }
 
+    @Transactional
     public User getCurrentUser(UserDetails userDetails) {
         String username = userDetails.getUsername();
-        Optional<User> userOpt = userService.findByUsername(username);
+        Optional<User> userOpt = findByUsername(username);
         if (userOpt.isEmpty()) {
             throw new UsernameNotFoundException(username);
         }

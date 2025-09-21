@@ -23,11 +23,9 @@ public interface IUserService {
 
     AuthToken login(LoginRequest loginRequest);
 
-    AuthToken refreshToken(String authHeader);
+    AuthToken refreshToken(User user);
 
-    User profile(String authHeader);
-
-    void logout(String authHeader);
+    void logout(User user);
 
     Optional<User> findByUsername(String username);
 

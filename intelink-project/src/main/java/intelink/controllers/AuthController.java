@@ -21,6 +21,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -83,8 +85,9 @@ public class AuthController {
 
     // ========== Refresh Token
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestHeader("Authorization") String authorizationHeader) {
-        AuthToken obj = userService.refreshToken(authorizationHeader);
+    public ResponseEntity<?> refresh(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
+        AuthToken obj = userService.refreshToken(user);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
@@ -99,8 +102,8 @@ public class AuthController {
 
     // ========== Get User Profile
     @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authorizationHeader) {
-        User user = userService.profile(authorizationHeader);
+    public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.findByUsername(userDetails.getUsername()).orElseThrow();
         Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
         SubscriptionInfo subscriptionInfo = SubscriptionInfo.fromEntities(subscription, subscription.getSubscriptionPlan());
         UserProfileResponse resp = UserProfileResponse.fromEntities(user, subscriptionInfo);
@@ -109,8 +112,9 @@ public class AuthController {
 
     // ========== Logout
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader) {
-        userService.logout(authorizationHeader);
+    public ResponseEntity<?> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
+        userService.logout(user);
         String msg = "Logged out successfully";
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
