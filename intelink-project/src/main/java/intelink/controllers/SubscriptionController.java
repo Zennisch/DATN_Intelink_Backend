@@ -45,7 +45,7 @@ public class SubscriptionController {
     public ResponseEntity<?> registerSubscription(
             @Valid @RequestBody RegisterSubscriptionRequest request,
             @AuthenticationPrincipal UserDetails userDetails
-    ) {
+    ) throws Exception {
         User user = userService.getCurrentUser(userDetails);
         Subscription subscription = subscriptionService.registerSubscription(user, request);
         return ResponseEntity.ok(SubscriptionResponse.fromEntities(subscription, subscription.getSubscriptionPlan()));

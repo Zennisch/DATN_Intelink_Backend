@@ -11,4 +11,8 @@ import lombok.NoArgsConstructor;
 public class RegisterSubscriptionRequest {
     @NotNull(message = "Subscription plan ID is required")
     private Long subscriptionPlanId;
+
+    private Boolean autoRenew = false;
+
+    private Boolean applyImmediately = false;
 }

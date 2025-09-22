@@ -15,7 +15,7 @@ public interface ISubscriptionService {
 
     Subscription findCurrentActiveSubscription(User user);
 
-    Subscription registerSubscription(User user, RegisterSubscriptionRequest request);
+    Subscription registerSubscription(User user, RegisterSubscriptionRequest request) throws Exception;
 
     void cancelSubscription(User user, UUID subscriptionId);
 }

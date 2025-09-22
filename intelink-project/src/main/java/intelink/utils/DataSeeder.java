@@ -81,12 +81,12 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         // 5. Seed Click Logs and Stats
-        if (clickLogRepository.count() == 0) {
-            clickDataSeeder.createClickLogsAndStats(shortUrls, 50000);
-            log.info("Created click logs and statistics");
-        } else {
-            log.info("Click logs already exist, skipping");
-        }
+//        if (clickLogRepository.count() == 0) {
+//            clickDataSeeder.createClickLogsAndStats(shortUrls, 50000);
+//            log.info("Created click logs and statistics");
+//        } else {
+//            log.info("Click logs already exist, skipping");
+//        }
 
         // 6. Seed API Keys
         if (apiKeyRepository.count() == 0) {
