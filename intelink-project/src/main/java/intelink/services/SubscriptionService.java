@@ -34,7 +34,7 @@ public class SubscriptionService implements ISubscriptionService {
     @Override
     public Subscription findCurrentActiveSubscription(User user) {
         return subscriptionRepository.findActiveSubscriptionByUser(user, Instant.now())
-                .orElseThrow(() -> new RuntimeException("No active subscription found for user"));
+                .orElse(null);
     }
 
     @Override

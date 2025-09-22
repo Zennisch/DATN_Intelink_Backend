@@ -29,7 +29,9 @@ public class SubscriptionInfo {
     private Boolean customDomainEnabled;
     private Boolean apiAccessEnabled;
 
-    public static SubscriptionInfo fromEntities(Subscription subscription, SubscriptionPlan plan) {
+    public static SubscriptionInfo fromEntities(Subscription subscription) {
+        if (subscription == null) return null;
+        SubscriptionPlan plan = subscription.getSubscriptionPlan();
         return SubscriptionInfo.builder()
                 .subscriptionId(subscription.getId())
                 .planType(plan.getType())
