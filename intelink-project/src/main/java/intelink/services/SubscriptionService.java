@@ -1,6 +1,8 @@
 package intelink.services;
 
 import intelink.dto.request.subscription.RegisterSubscriptionRequest;
+import intelink.dto.response.subscription.GetAllSubscriptionsResponse;
+import intelink.dto.response.subscription.SubscriptionResponse;
 import intelink.models.Subscription;
 import intelink.models.SubscriptionPlan;
 import intelink.models.User;
@@ -27,11 +29,23 @@ public class SubscriptionService implements ISubscriptionService {
     private final SubscriptionPlanRepository subscriptionPlanRepository;
 
     @Override
-    public List<Subscription> findByUser(User user) {
-        return subscriptionRepository.findByUser(user);
+    @Transactional
+    public GetAllSubscriptionsResponse findByUser(User user) {
+        List<Subscription> subscriptions = subscriptionRepository.findByUser(user);
+        return GetAllSubscriptionsResponse.fromEntities(subscriptions);
     }
 
     @Override
+    @Transactional
+    public SubscriptionResponse getCurrentActiveSubscriptionForUser(User user) {
+        Subscription subscription = findCurrentActiveSubscription(user);
+        return subscription != null
+                ? SubscriptionResponse.fromEntities(subscription, subscription.getSubscriptionPlan())
+                : null;
+    }
+
+    @Override
+    @Transactional
     public Subscription findCurrentActiveSubscription(User user) {
         return subscriptionRepository.findActiveSubscriptionByUser(user, Instant.now())
                 .orElse(null);

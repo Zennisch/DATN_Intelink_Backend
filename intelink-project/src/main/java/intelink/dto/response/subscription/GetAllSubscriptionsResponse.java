@@ -10,15 +10,13 @@ import java.util.List;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class GetAllSubscriptionsResponse {
     private List<SubscriptionResponse> subscriptions;
     private int total;
 
     public static GetAllSubscriptionsResponse fromEntities(List<Subscription> subscriptions) {
         List<SubscriptionResponse> responses = subscriptions.stream()
-                .map(SubscriptionResponse::fromEntity)
+                .map(subscription -> SubscriptionResponse.fromEntities(subscription, subscription.getSubscriptionPlan()))
                 .toList();
 
         return GetAllSubscriptionsResponse.builder()

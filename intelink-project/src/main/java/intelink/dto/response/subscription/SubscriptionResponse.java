@@ -37,9 +37,8 @@ public class SubscriptionResponse {
     private Boolean customDomainEnabled;
     private Boolean apiAccessEnabled;
 
-    public static SubscriptionResponse fromEntity(Subscription subscription) {
+    public static SubscriptionResponse fromEntities(Subscription subscription, SubscriptionPlan plan) {
         if (subscription == null) return null;
-        SubscriptionPlan plan = subscription.getSubscriptionPlan();
         return SubscriptionResponse.builder()
                 .id(subscription.getId())
                 .status(subscription.getStatus())

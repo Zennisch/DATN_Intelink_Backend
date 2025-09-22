@@ -1,6 +1,6 @@
 package intelink.controllers;
 
-import intelink.dto.request.subscription.CreateSubscriptionRequest;
+import intelink.dto.request.subscription.RegisterSubscriptionRequest;
 import intelink.dto.response.subscription.CancelSubscriptionResponse;
 import intelink.dto.response.subscription.GetAllSubscriptionsResponse;
 import intelink.dto.response.subscription.SubscriptionResponse;
@@ -31,25 +31,25 @@ public class SubscriptionController {
     @GetMapping
     public ResponseEntity<?> getAll(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getCurrentUser(userDetails);
-        List<Subscription> subscriptions = subscriptionService.findByUser(user);
-        return ResponseEntity.ok(GetAllSubscriptionsResponse.fromEntities(subscriptions));
+        GetAllSubscriptionsResponse response = subscriptionService.findByUser(user);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/current")
     public ResponseEntity<?> getCurrentSubscription(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.getCurrentUser(userDetails);
-        Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
-        return ResponseEntity.ok(SubscriptionResponse.fromEntity(subscription));
+        SubscriptionResponse response = subscriptionService.getCurrentActiveSubscriptionForUser(user);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
     public ResponseEntity<?> registerSubscription(
-            @Valid @RequestBody CreateSubscriptionRequest request,
+            @Valid @RequestBody RegisterSubscriptionRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = userService.getCurrentUser(userDetails);
         Subscription subscription = subscriptionService.registerSubscription(user, request);
-        return ResponseEntity.ok(SubscriptionResponse.fromEntity(subscription));
+        return ResponseEntity.ok(SubscriptionResponse.fromEntities(subscription, subscription.getSubscriptionPlan()));
     }
 
     @PostMapping("/{id}/cancel")
