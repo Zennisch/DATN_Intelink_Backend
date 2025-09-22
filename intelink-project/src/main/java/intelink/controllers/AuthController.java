@@ -105,7 +105,7 @@ public class AuthController {
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findByUsername(userDetails.getUsername()).orElseThrow();
         Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
-        SubscriptionInfo subscriptionInfo = SubscriptionInfo.fromEntities(subscription);
+        SubscriptionInfo subscriptionInfo = SubscriptionInfo.fromEntity(subscription);
         UserProfileResponse resp = UserProfileResponse.fromEntities(user, subscriptionInfo);
         return ResponseEntity.ok(resp);
     }
