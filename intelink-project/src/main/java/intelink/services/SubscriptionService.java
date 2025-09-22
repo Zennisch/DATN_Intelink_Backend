@@ -1,6 +1,6 @@
 package intelink.services;
 
-import intelink.dto.request.subscription.CreateSubscriptionRequest;
+import intelink.dto.request.subscription.RegisterSubscriptionRequest;
 import intelink.models.Subscription;
 import intelink.models.SubscriptionPlan;
 import intelink.models.User;
@@ -39,7 +39,7 @@ public class SubscriptionService implements ISubscriptionService {
 
     @Override
     @Transactional
-    public Subscription registerSubscription(User user, CreateSubscriptionRequest request) {
+    public Subscription registerSubscription(User user, RegisterSubscriptionRequest request) {
         // Find subscription plan
         SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubscriptionPlanId())
                 .orElseThrow(() -> new RuntimeException("Subscription plan not found with ID: " + request.getSubscriptionPlanId()));

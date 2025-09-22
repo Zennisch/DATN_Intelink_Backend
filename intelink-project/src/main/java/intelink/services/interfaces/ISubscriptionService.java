@@ -1,7 +1,8 @@
 package intelink.services.interfaces;
 
-import intelink.dto.request.subscription.CreateSubscriptionRequest;
+import intelink.dto.request.subscription.RegisterSubscriptionRequest;
 import intelink.models.Subscription;
+import intelink.models.SubscriptionPlan;
 import intelink.models.User;
 
 import java.util.List;
@@ -12,7 +13,7 @@ public interface ISubscriptionService {
 
     Subscription findCurrentActiveSubscription(User user);
 
-    Subscription registerSubscription(User user, CreateSubscriptionRequest request);
+    Subscription registerSubscription(User user, RegisterSubscriptionRequest request);
 
     void cancelSubscription(User user, UUID subscriptionId);
 }
