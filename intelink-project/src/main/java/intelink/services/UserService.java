@@ -2,9 +2,13 @@ package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
 import intelink.dto.object.AuthToken;
+import intelink.dto.object.SubscriptionInfo;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
+import intelink.dto.response.auth.UserProfileResponse;
+import intelink.models.Subscription;
+import intelink.models.SubscriptionPlan;
 import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserProvider;
@@ -12,6 +16,7 @@ import intelink.models.enums.UserRole;
 import intelink.models.enums.VerificationTokenType;
 import intelink.repositories.UserRepository;
 import intelink.services.interfaces.IEmailService;
+import intelink.services.interfaces.ISubscriptionService;
 import intelink.services.interfaces.IUserService;
 import intelink.services.interfaces.IVerificationTokenService;
 import jakarta.mail.MessagingException;
@@ -38,11 +43,12 @@ import java.util.Optional;
 public class UserService implements IUserService {
 
     private final UserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
     private final IVerificationTokenService verificationTokenService;
     private final IEmailService emailService;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final ISubscriptionService subscriptionService;
 
     @Value("${app.url.verify-email}")
     private String verificationEmailUrlTemplate;
@@ -66,12 +72,7 @@ public class UserService implements IUserService {
         }
 
         // 2. Create user
-        User user = User.builder()
-                .username(username)
-                .email(email)
-                .passwordHash(passwordEncoder.encode(password))
-                .role(role)
-                .build();
+        User user = User.builder().username(username).email(email).passwordHash(passwordEncoder.encode(password)).role(role).build();
 
         User savedUser = userRepository.save(user);
         log.info("UserService.create: User created with ID: {}", savedUser.getId());
@@ -162,12 +163,7 @@ public class UserService implements IUserService {
         String password = loginRequest.getPassword();
 
         // 1. Authenticate user
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        username,
-                        password
-                )
-        );
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
 
         // 2. Check if user exists for this username
         Optional<User> userOpt = findByUsername(username);
@@ -201,6 +197,14 @@ public class UserService implements IUserService {
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
         return new AuthToken(user, token, refreshToken, expiresAt);
+    }
+
+    @Override
+    @Transactional
+    public UserProfileResponse getProfile(User user) {
+        Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
+        SubscriptionInfo subscriptionInfo = SubscriptionInfo.fromEntity(subscription);
+        return UserProfileResponse.fromEntities(user, subscriptionInfo);
     }
 
     @Transactional

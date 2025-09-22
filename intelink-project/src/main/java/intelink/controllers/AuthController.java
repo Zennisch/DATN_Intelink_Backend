@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IUserService userService;
-    private final ISubscriptionService subscriptionService;
     private final IOAuthService oAuthService;
 
     // ========== Register
@@ -104,9 +103,7 @@ public class AuthController {
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findByUsername(userDetails.getUsername()).orElseThrow();
-        Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
-        SubscriptionInfo subscriptionInfo = SubscriptionInfo.fromEntity(subscription);
-        UserProfileResponse resp = UserProfileResponse.fromEntities(user, subscriptionInfo);
+        UserProfileResponse resp = userService.getProfile(user);
         return ResponseEntity.ok(resp);
     }
 

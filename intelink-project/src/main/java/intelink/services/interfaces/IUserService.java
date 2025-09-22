@@ -4,6 +4,7 @@ import intelink.dto.object.AuthToken;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
+import intelink.dto.response.auth.UserProfileResponse;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import jakarta.mail.MessagingException;
@@ -24,6 +25,8 @@ public interface IUserService {
     AuthToken login(LoginRequest loginRequest);
 
     AuthToken refreshToken(User user);
+
+    UserProfileResponse getProfile(User user);
 
     void logout(User user);
 
