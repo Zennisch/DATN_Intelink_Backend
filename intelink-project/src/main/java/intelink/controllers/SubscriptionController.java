@@ -30,25 +30,25 @@ public class SubscriptionController {
 
     @GetMapping
     public ResponseEntity<?> getAll(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         List<Subscription> subscriptions = subscriptionService.findByUser(user);
         return ResponseEntity.ok(GetAllSubscriptionsResponse.fromEntities(subscriptions));
     }
 
     @GetMapping("/current")
     public ResponseEntity<?> getCurrentSubscription(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         Subscription subscription = subscriptionService.findCurrentActiveSubscription(user);
         return ResponseEntity.ok(SubscriptionResponse.fromEntity(subscription));
     }
 
     @PostMapping
-    public ResponseEntity<?> createSubscription(
+    public ResponseEntity<?> registerSubscription(
             @Valid @RequestBody CreateSubscriptionRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = getCurrentUser(userDetails);
-        Subscription subscription = subscriptionService.createSubscription(user, request);
+        User user = userService.getCurrentUser(userDetails);
+        Subscription subscription = subscriptionService.registerSubscription(user, request);
         return ResponseEntity.ok(SubscriptionResponse.fromEntity(subscription));
     }
 
@@ -57,7 +57,7 @@ public class SubscriptionController {
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         subscriptionService.cancelSubscription(user, id);
 
         return ResponseEntity.ok(CancelSubscriptionResponse.builder()
@@ -65,10 +65,5 @@ public class SubscriptionController {
                 .message("Subscription cancelled successfully")
                 .subscriptionId(id)
                 .build());
-    }
-
-    private User getCurrentUser(UserDetails userDetails) {
-        return userService.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found: " + userDetails.getUsername()));
     }
 }

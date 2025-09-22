@@ -28,6 +28,10 @@ public class UserProfileResponse {
     private String providerUserId;
     private Instant lastLoginAt;
 
+    // Payment
+    private Double creditBalance;
+    private String currency;
+
     // Statistics
     private Long totalClicks;
     private Integer totalShortUrls;
@@ -53,6 +57,8 @@ public class UserProfileResponse {
                 .authProvider(user.getProvider().toString())
                 .providerUserId(user.getProviderUserId())
                 .lastLoginAt(user.getLastLoginAt())
+                .creditBalance(user.getCreditBalance())
+                .currency(user.getCurrency())
                 .totalClicks(user.getTotalClicks())
                 .totalShortUrls(user.getTotalShortUrls())
                 .currentSubscription(subscriptionInfo)

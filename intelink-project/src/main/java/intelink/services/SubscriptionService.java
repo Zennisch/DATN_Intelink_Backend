@@ -39,7 +39,7 @@ public class SubscriptionService implements ISubscriptionService {
 
     @Override
     @Transactional
-    public Subscription createSubscription(User user, CreateSubscriptionRequest request) {
+    public Subscription registerSubscription(User user, CreateSubscriptionRequest request) {
         // Find subscription plan
         SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubscriptionPlanId())
                 .orElseThrow(() -> new RuntimeException("Subscription plan not found with ID: " + request.getSubscriptionPlanId()));

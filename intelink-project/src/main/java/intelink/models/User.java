@@ -106,7 +106,7 @@ public class User {
     // Payment group
     @Column(name = "credit_balance", nullable = false)
     @Builder.Default
-    private Integer creditBalance = 0;
+    private Double creditBalance = 0.0;
 
     @Column(name = "currency", nullable = false, length = 3)
     @Builder.Default

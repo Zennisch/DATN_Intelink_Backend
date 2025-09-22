@@ -12,7 +12,7 @@ public interface ISubscriptionService {
 
     Subscription findCurrentActiveSubscription(User user);
 
-    Subscription createSubscription(User user, CreateSubscriptionRequest request);
+    Subscription registerSubscription(User user, CreateSubscriptionRequest request);
 
     void cancelSubscription(User user, UUID subscriptionId);
 }
