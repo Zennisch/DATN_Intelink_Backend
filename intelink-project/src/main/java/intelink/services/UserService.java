@@ -8,7 +8,6 @@ import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
 import intelink.dto.response.auth.UserProfileResponse;
 import intelink.models.Subscription;
-import intelink.models.SubscriptionPlan;
 import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserProvider;

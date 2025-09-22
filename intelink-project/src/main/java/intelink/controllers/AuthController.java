@@ -1,7 +1,6 @@
 package intelink.controllers;
 
 import intelink.dto.object.AuthToken;
-import intelink.dto.object.SubscriptionInfo;
 import intelink.dto.request.auth.ForgotPasswordRequest;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
@@ -10,11 +9,9 @@ import intelink.dto.response.auth.AuthInfoResponse;
 import intelink.dto.response.auth.AuthTokenResponse;
 import intelink.dto.response.auth.RegisterResponse;
 import intelink.dto.response.auth.UserProfileResponse;
-import intelink.models.Subscription;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.services.interfaces.IOAuthService;
-import intelink.services.interfaces.ISubscriptionService;
 import intelink.services.interfaces.IUserService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;

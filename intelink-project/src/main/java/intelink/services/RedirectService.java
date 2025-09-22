@@ -1,18 +1,10 @@
 package intelink.services;
 
-import intelink.dto.object.DimensionInfo;
 import intelink.dto.response.redirect.RedirectResult;
-import intelink.models.ClickStat;
-import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;
-import intelink.models.enums.DimensionType;
-import intelink.models.enums.Granularity;
-import intelink.repositories.ClickStatRepository;
-import intelink.repositories.DimensionStatRepository;
 import intelink.services.interfaces.IClickLogService;
 import intelink.services.interfaces.IRedirectService;
 import intelink.services.interfaces.IShortUrlService;
-import intelink.utils.DateTimeUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor

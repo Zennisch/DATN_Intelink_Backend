@@ -14,7 +14,6 @@ import intelink.repositories.ClickLogRepository;
 import intelink.repositories.ClickStatRepository;
 import intelink.repositories.DimensionStatRepository;
 import intelink.services.interfaces.IClickLogService;
-import intelink.services.interfaces.IRedirectService;
 import intelink.services.interfaces.IShortUrlService;
 import intelink.utils.DateTimeUtil;
 import intelink.utils.GeoLiteUtil;
@@ -42,6 +41,10 @@ public class ClickLogService implements IClickLogService {
     private final IShortUrlService shortUrlService;
     private final DimensionStatRepository dimensionStatRepository;
     private final ClickStatRepository clickStatRepository;
+
+    private static <K, V> Map.Entry<K, V> entry(K k, V v) {
+        return new AbstractMap.SimpleEntry<>(k, v);
+    }
 
     @Transactional
     public ClickLog record(String shortCode, HttpServletRequest request) {
@@ -82,10 +85,6 @@ public class ClickLogService implements IClickLogService {
 
         clickLogRepository.save(clickLog);
         return clickLog;
-    }
-
-    private static <K, V> Map.Entry<K, V> entry(K k, V v) {
-        return new AbstractMap.SimpleEntry<>(k, v);
     }
 
     @Transactional(readOnly = true)
