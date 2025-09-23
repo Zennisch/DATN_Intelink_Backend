@@ -31,6 +31,10 @@ public class PaymentService implements IPaymentService {
     private final PaymentRepository paymentRepository;
     private final SubscriptionRepository subscriptionRepository;
 
+    public Payment save(Payment payment) {
+        return paymentRepository.save(payment);
+    }
+
     public Map<String, Object> handleVnpayPaymentRequest(VnpayPaymentRequest request) {
         Map<String, Object> result = new HashMap<>();
         try {

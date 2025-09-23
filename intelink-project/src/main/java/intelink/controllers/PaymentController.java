@@ -3,14 +3,19 @@ package intelink.controllers;
 import intelink.dto.request.payment.VnpayPaymentRequest;
 import intelink.models.Payment;
 import intelink.models.Subscription;
+import intelink.models.User;
 import intelink.models.enums.PaymentStatus;
 import intelink.models.enums.SubscriptionStatus;
 import intelink.repositories.SubscriptionRepository;
 import intelink.services.PaymentService;
+import intelink.services.SubscriptionService;
+import intelink.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -26,6 +31,8 @@ import java.util.UUID;
 public class PaymentController {
     private final PaymentService paymentService;
     private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionService subscriptionService;
+    private final UserService userService;
 
     @PostMapping("/vnpay")
     public Map<String, Object> createVnpayPayment(@RequestBody VnpayPaymentRequest request) {
@@ -65,8 +72,9 @@ public class PaymentController {
     }
 
     @PostMapping("/vnpay/callback")
-    public ResponseEntity<?> handleVnpayCallback(@RequestBody Map<String, String> params) {
-        // Xác thực chữ ký, kiểm tra trạng thái giao dịch
+    public ResponseEntity<?> handleVnpayCallback(@RequestBody Map<String, String> params,
+                                                 @AuthenticationPrincipal UserDetails userDetails
+    ) {        // Xác thực chữ ký, kiểm tra trạng thái giao dịch
         boolean isValid = paymentService.verifyVnpayCallback(params);
         // if (!isValid) {
         //     return ResponseEntity.badRequest().body("Invalid payment callback");
@@ -77,6 +85,19 @@ public class PaymentController {
         if (payment == null) {
             return ResponseEntity.badRequest().body("Payment not found");
         }
+
+        User user = userService.getCurrentUser(userDetails);
+        Subscription current = subscriptionService.findCurrentActiveSubscription(user);
+
+        if (current != null) {
+            log.info("Current active subscription found: {}", current);
+            current.setActive(false);
+            current.setStatus(SubscriptionStatus.EXPIRED);
+            subscriptionRepository.save(current);
+        } else {
+            log.info("No current active subscription found for user: {}", user.getId());
+        }
+
 
         // Cập nhật trạng thái payment
         payment.setStatus(PaymentStatus.COMPLETED);

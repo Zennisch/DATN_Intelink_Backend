@@ -135,6 +135,8 @@ public class SubscriptionService implements ISubscriptionService {
 
         // Tạo payment cho subscription mới
         if (!plan.getType().name().equals("FREE") && applyImmediately && amountToPay.compareTo(BigDecimal.ZERO) > 0) {
+            log.info("Creating payment for subscription {} for user {}. Amount to pay: {}",
+                    savedSubscription.getId(), user.getId(), amountToPay);
             paymentService.createVnpayPayment(savedSubscription, amountToPay, user.getCurrency(), new HashMap<>());
         }
 

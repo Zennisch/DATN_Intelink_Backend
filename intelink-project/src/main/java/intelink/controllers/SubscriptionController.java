@@ -5,8 +5,12 @@ import intelink.dto.response.subscription.CancelSubscriptionResponse;
 import intelink.dto.response.subscription.GetAllSubscriptionsResponse;
 import intelink.dto.response.subscription.SubscriptionCostResponse;
 import intelink.dto.response.subscription.SubscriptionResponse;
+import intelink.models.Payment;
 import intelink.models.Subscription;
 import intelink.models.User;
+import intelink.models.enums.PaymentStatus;
+import intelink.models.enums.SubscriptionStatus;
+import intelink.repositories.SubscriptionRepository;
 import intelink.services.PaymentService;
 import intelink.services.interfaces.ISubscriptionService;
 import intelink.services.interfaces.IUserService;
@@ -32,6 +36,7 @@ public class SubscriptionController {
     private final ISubscriptionService subscriptionService;
     private final IUserService userService;
     private final PaymentService paymentService;
+    private final SubscriptionRepository subscriptionRepository;
 
     @GetMapping
     public ResponseEntity<?> getAll(@AuthenticationPrincipal UserDetails userDetails) {
@@ -57,6 +62,39 @@ public class SubscriptionController {
 
         // Tạo payment và lấy payment URL
         BigDecimal amountToPay = subscriptionService.calculateAmountToPay(user, subscription, request);
+        log.info("Calculated amount to pay: {} for user: {}", amountToPay, user.getId());
+        if (amountToPay.compareTo(BigDecimal.ZERO) <= 0) {
+            log.info("Amount to pay is zero or negative ({}), activating subscription immediately for user: {}",
+                    amountToPay, user.getId());
+            amountToPay = BigDecimal.ONE;
+            Payment payment = Payment.builder().
+                    subscription(subscription).
+                    amount(amountToPay).
+                    currency(user.getCurrency()).
+                    status(PaymentStatus.COMPLETED).
+                    build();
+
+            Subscription current = subscriptionService.findCurrentActiveSubscription(user);
+            if (current != null) {
+                log.info("Current active subscription found: {}", current);
+                current.setActive(false);
+                current.setStatus(SubscriptionStatus.EXPIRED);
+                subscriptionRepository.save(current);
+            } else {
+                log.info("No current active subscription found for user: {}", user.getId());
+            }
+
+            paymentService.save(payment);
+
+            subscription.setStatus(SubscriptionStatus.ACTIVE);
+            subscription.setActive(true);
+            subscriptionRepository.save(subscription);
+
+            return ResponseEntity.ok(Map.of(
+                    "subscriptionId", subscription.getId(),
+                    "paymentUrl", "https://localhost:3000"));
+        }
+
         String paymentUrl = paymentService.createVnpayPayment(subscription, amountToPay, user.getCurrency(),
                 new HashMap<>());
 
