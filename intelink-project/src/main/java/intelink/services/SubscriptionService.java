@@ -57,57 +57,6 @@ public class SubscriptionService implements ISubscriptionService {
                 .orElse(null);
     }
 
-    // @Override
-    // @Transactional
-    // public Subscription registerSubscription(User user,
-    // RegisterSubscriptionRequest request) {
-    // // Find subscription plan
-    // SubscriptionPlan plan =
-    // subscriptionPlanRepository.findById(request.getSubscriptionPlanId())
-    // .orElseThrow(() -> new RuntimeException("Subscription plan not found with ID:
-    // " + request.getSubscriptionPlanId()));
-
-    // // Deactivate current active subscription if exists
-    // subscriptionRepository.findActiveSubscriptionByUser(user, Instant.now())
-    // .ifPresent(activeSubscription -> {
-    // log.info("Deactivating current subscription {} for user {}",
-    // activeSubscription.getId(), user.getId());
-    // activeSubscription.setActive(false);
-    // subscriptionRepository.save(activeSubscription);
-    // });
-
-    // // Calculate expiry date
-    // Instant expiresAt = null;
-    // if (plan.getType().name().equals("FREE")) {
-    // // Free plan never expires
-    // expiresAt = null;
-    // } else {
-    // // Paid plans expire after billing interval
-    // switch (plan.getBillingInterval()) {
-    // case MONTHLY -> expiresAt = Instant.now().plus(30, ChronoUnit.DAYS);
-    // case YEARLY -> expiresAt = Instant.now().plus(365, ChronoUnit.DAYS);
-    // default -> throw new RuntimeException("Unsupported billing interval: " +
-    // plan.getBillingInterval());
-    // }
-    // }
-
-    // // Create new subscription
-    // Subscription subscription = Subscription.builder()
-    // .user(user)
-    // .subscriptionPlan(plan)
-    // .status(SubscriptionStatus.ACTIVE)
-    // .active(true)
-    // .startsAt(Instant.now())
-    // .expiresAt(expiresAt)
-    // .build();
-
-    // Subscription savedSubscription = subscriptionRepository.save(subscription);
-    // log.info("Created new subscription {} for user {} with plan {}",
-    // savedSubscription.getId(), user.getId(), plan.getType());
-
-    // return savedSubscription;
-    // }
-
     @Override
     @Transactional
     public Subscription registerSubscription(User user, RegisterSubscriptionRequest request) throws Exception {
@@ -192,6 +141,66 @@ public class SubscriptionService implements ISubscriptionService {
                 savedSubscription.getId(), user.getId(), plan.getType(), proRateValue, amountToPay);
 
         return savedSubscription;
+    }
+
+    @Transactional
+    public Subscription createPendingSubscription(User user, RegisterSubscriptionRequest request) {
+        SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubscriptionPlanId())
+                .orElseThrow(() -> new RuntimeException("Subscription plan not found"));
+
+        // Tính ngày hết hạn
+        Instant expiresAt = null;
+        if (!plan.getType().name().equals("FREE")) {
+            switch (plan.getBillingInterval()) {
+                case MONTHLY -> expiresAt = Instant.now().plus(30, ChronoUnit.DAYS);
+                case YEARLY -> expiresAt = Instant.now().plus(365, ChronoUnit.DAYS);
+                default -> throw new RuntimeException("Unsupported billing interval");
+            }
+        }
+
+        Subscription subscription = Subscription.builder()
+                .user(user)
+                .subscriptionPlan(plan)
+                .status(SubscriptionStatus.PENDING)
+                .active(false)
+                .startsAt(Instant.now())
+                .expiresAt(expiresAt)
+                .build();
+
+        return subscriptionRepository.save(subscription);
+    }
+
+    @Transactional
+    public BigDecimal calculateAmountToPay(User user, Subscription subscription, RegisterSubscriptionRequest request) {
+        // Tính toán pro-rate nếu có subscription hiện tại và applyImmediately
+        Subscription currentSubscription = findCurrentActiveSubscription(user);
+        BigDecimal proRateValue = BigDecimal.ZERO;
+        BigDecimal planPrice = subscription.getSubscriptionPlan().getPrice();
+        BigDecimal amountToPay = planPrice;
+
+        if (currentSubscription != null && Boolean.TRUE.equals(request.getApplyImmediately())) {
+            SubscriptionPlan currentPlan = currentSubscription.getSubscriptionPlan();
+            if (!currentPlan.getType().name().equals("FREE")) {
+                Instant now = Instant.now();
+                Instant expiresAt = currentSubscription.getExpiresAt();
+                long totalDays = ChronoUnit.DAYS.between(currentSubscription.getStartsAt(), expiresAt);
+                long daysLeft = ChronoUnit.DAYS.between(now, expiresAt);
+
+                if (daysLeft > 0 && totalDays > 0) {
+                    BigDecimal dailyPrice = currentPlan.getPrice().divide(BigDecimal.valueOf(totalDays), 2,
+                            BigDecimal.ROUND_HALF_UP);
+                    proRateValue = dailyPrice.multiply(BigDecimal.valueOf(daysLeft));
+                }
+
+                amountToPay = planPrice.subtract(proRateValue);
+                if (amountToPay.compareTo(BigDecimal.ZERO) < 0) {
+                    user.setCreditBalance(user.getCreditBalance() + amountToPay.abs().doubleValue());
+                    userRepository.save(user);
+                    amountToPay = BigDecimal.ZERO;
+                }
+            }
+        }
+        return amountToPay;
     }
 
     @Override

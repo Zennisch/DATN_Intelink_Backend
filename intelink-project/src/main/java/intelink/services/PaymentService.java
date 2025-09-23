@@ -10,7 +10,10 @@ import intelink.repositories.PaymentRepository;
 import intelink.repositories.SubscriptionRepository;
 import intelink.services.interfaces.IPaymentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.net.URLEncoder;
@@ -21,6 +24,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService implements IPaymentService {
 
     private final ConfigPayment configPayment;
@@ -44,8 +48,7 @@ public class PaymentService implements IPaymentService {
                     subscription,
                     request.getAmount(),
                     request.getCurrency(),
-                    request.getBillingInfo()
-            );
+                    request.getBillingInfo());
             result.put("code", "00");
             result.put("message", "success");
             result.put("data", paymentUrl);
@@ -58,7 +61,8 @@ public class PaymentService implements IPaymentService {
         }
     }
 
-    public String createVnpayPayment(Subscription subscription, BigDecimal amount, String currency, Map<String, String> billingInfo) throws Exception {
+    public String createVnpayPayment(Subscription subscription, BigDecimal amount, String currency,
+            Map<String, String> billingInfo) throws Exception {
         Payment payment = Payment.builder()
                 .subscription(subscription)
                 .provider(PaymentProvider.VNPAY)
@@ -125,6 +129,7 @@ public class PaymentService implements IPaymentService {
             }
         }
         String vnp_SecureHash = configPayment.hmacSHA512(configPayment.vnp_HashSecret, hashData.toString());
+        log.info("VNPAY Payment - SecureHash: {}", vnp_SecureHash);
         query.append("&vnp_SecureHash=").append(vnp_SecureHash);
 
         payment.setTransactionId(vnp_TxnRef);
@@ -172,5 +177,66 @@ public class PaymentService implements IPaymentService {
             return Optional.of(payment);
         }
         return Optional.empty();
+    }
+
+    public boolean verifyVnpayCallback(Map<String, String> params) {
+        String secureHash = params.get("vnp_SecureHash");
+        Map<String, String> filteredParams = new HashMap<>(params);
+        filteredParams.remove("vnp_SecureHash");
+
+        List<String> fieldNames = new ArrayList<>(filteredParams.keySet());
+        Collections.sort(fieldNames);
+        StringBuilder hashData = new StringBuilder();
+        for (int i = 0; i < fieldNames.size(); i++) {
+            String key = fieldNames.get(i);
+            String value = filteredParams.get(key);
+            if (value != null && !value.isEmpty()) {
+                if (hashData.length() > 0)
+                    hashData.append("&");
+                hashData.append(key).append("=").append(value);
+            }
+        }
+
+        String secretKey = configPayment.vnp_HashSecret;
+        String calculatedHash = hmacSHA512(secretKey, hashData.toString());
+
+        log.info("VNPAY Callback - SecureHash from VNPAY: {}", secureHash);
+        log.info("VNPAY Callback - Calculated SecureHash: {}", calculatedHash);
+        log.info("VNPAY Callback - HashData: {}", hashData.toString());
+        log.info("VNPAY Callback - SecretKey: {}", secretKey);
+
+        boolean result = calculatedHash.equalsIgnoreCase(secureHash);
+        log.info("VNPAY Callback - Verify result: {}", result);
+
+        return result;
+    }
+
+    // Hàm tính HMAC SHA512
+    private String hmacSHA512(String key, String data) {
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA512");
+            javax.crypto.spec.SecretKeySpec secretKeySpec = new javax.crypto.spec.SecretKeySpec(
+                    key.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
+            mac.init(secretKeySpec);
+            byte[] bytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hash = new StringBuilder();
+            for (byte b : bytes) {
+                hash.append(String.format("%02x", b));
+            }
+            return hash.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error while calculating HMAC SHA512", e);
+        }
+    }
+
+    @Transactional
+    public Payment findByTransactionId(String transactionId) {
+        return paymentRepository.findByTransactionId(transactionId).orElse(null);
+    }
+
+    @Transactional
+    public Subscription getSubscriptionByPaymentId(UUID paymentId) {
+        Optional<Payment> paymentOpt = paymentRepository.findByIdWithSubscription(paymentId);
+        return paymentOpt.map(Payment::getSubscription).orElse(null);
     }
 }

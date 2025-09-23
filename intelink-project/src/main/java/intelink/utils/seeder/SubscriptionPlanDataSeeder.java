@@ -40,7 +40,7 @@ public class SubscriptionPlanDataSeeder {
         SubscriptionPlan proPlan = SubscriptionPlan.builder()
                 .type(SubscriptionPlanType.PRO)
                 .description("Professional plan with advanced features for businesses")
-                .price(new BigDecimal("9.99"))
+                .price(new BigDecimal("109900"))
                 .billingInterval(SubscriptionPlanBillingInterval.MONTHLY)
                 .maxShortUrls(100)
                 .shortCodeCustomizationEnabled(true)
@@ -55,7 +55,7 @@ public class SubscriptionPlanDataSeeder {
         SubscriptionPlan enterprisePlan = SubscriptionPlan.builder()
                 .type(SubscriptionPlanType.ENTERPRISE)
                 .description("Enterprise plan with unlimited features for large organizations")
-                .price(new BigDecimal("29.99"))
+                .price(new BigDecimal("1099000"))
                 .billingInterval(SubscriptionPlanBillingInterval.MONTHLY)
                 .maxShortUrls(-1) // -1 means unlimited
                 .shortCodeCustomizationEnabled(true)

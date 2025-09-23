@@ -6,6 +6,7 @@ import intelink.dto.response.subscription.SubscriptionResponse;
 import intelink.models.Subscription;
 import intelink.models.User;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface ISubscriptionService {
@@ -18,4 +19,8 @@ public interface ISubscriptionService {
     Subscription registerSubscription(User user, RegisterSubscriptionRequest request) throws Exception;
 
     void cancelSubscription(User user, UUID subscriptionId);
+
+    BigDecimal calculateAmountToPay(User user, Subscription subscription, RegisterSubscriptionRequest request);
+
+    Subscription createPendingSubscription(User user, RegisterSubscriptionRequest request);
 }

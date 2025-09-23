@@ -110,7 +110,7 @@ public class User {
 
     @Column(name = "currency", nullable = false, length = 3)
     @Builder.Default
-    private String currency = "USD";
+    private String currency = "VND";
 
     // Statistics group
     @Column(name = "total_short_urls", nullable = false)

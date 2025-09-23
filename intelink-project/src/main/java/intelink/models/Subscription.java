@@ -52,7 +52,8 @@ public class Subscription {
     private Boolean active;
 
     @Column(name = "credit_used", nullable = false)
-    private Double creditUsed;
+    @Builder.Default
+    private Double creditUsed = 0.0;
 
     @Column(name = "pro_rate_value", nullable = true)
     private Double proRateValue;
