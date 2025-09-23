@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import intelink.dto.request.subscription.RegisterSubscriptionRequest;
 import intelink.dto.response.subscription.GetAllSubscriptionsResponse;
+import intelink.dto.response.subscription.SubscriptionCostResponse;
 import intelink.dto.response.subscription.SubscriptionResponse;
 import intelink.models.Subscription;
 import intelink.models.SubscriptionPlan;
@@ -226,5 +227,66 @@ public class SubscriptionService implements ISubscriptionService {
         subscriptionRepository.save(subscription);
 
         log.info("Cancelled subscription {} for user {}", subscriptionId, user.getId());
+    }
+
+    @Transactional
+    public SubscriptionCostResponse calculateSubscriptionCost(User user, Long subscriptionPlanId,
+            boolean applyImmediately) {
+        SubscriptionPlan plan = subscriptionPlanRepository.findById(subscriptionPlanId)
+                .orElseThrow(() -> new RuntimeException("Subscription plan not found"));
+
+        Subscription currentSubscription = findCurrentActiveSubscription(user);
+
+        BigDecimal proRateValue = BigDecimal.ZERO;
+        BigDecimal planPrice = plan.getPrice();
+        BigDecimal amountToPay = planPrice;
+        double creditBalance = user.getCreditBalance();
+
+        String message = "OK";
+        Instant startDate;
+
+        if (currentSubscription != null) {
+            if (applyImmediately) {
+                Instant now = Instant.now();
+                SubscriptionPlan currentPlan = currentSubscription.getSubscriptionPlan();
+                if (!currentPlan.getType().name().equals("FREE")) {
+                    Instant expiresAt = currentSubscription.getExpiresAt();
+                    long totalDays = ChronoUnit.DAYS.between(currentSubscription.getStartsAt(), expiresAt);
+                    long daysLeft = ChronoUnit.DAYS.between(now, expiresAt);
+
+                    if (daysLeft > 0 && totalDays > 0) {
+                        BigDecimal dailyPrice = currentPlan.getPrice().divide(BigDecimal.valueOf(totalDays), 2,
+                                BigDecimal.ROUND_HALF_UP);
+                        proRateValue = dailyPrice.multiply(BigDecimal.valueOf(daysLeft));
+                    }
+
+                    amountToPay = planPrice.subtract(proRateValue);
+                    if (amountToPay.compareTo(BigDecimal.ZERO) < 0) {
+                        creditBalance += amountToPay.abs().doubleValue();
+                        amountToPay = BigDecimal.ZERO;
+                        message = "Bạn sẽ được cộng vào credit sau khi thanh toán.";
+                    }
+                }
+                startDate = now;
+            } else {
+                // Nếu không áp dụng ngay, ngày bắt đầu là ngày hết hạn của subscription hiện
+                // tại
+                startDate = currentSubscription.getExpiresAt();
+            }
+        } else {
+            // Nếu chưa có subscription, ngày bắt đầu là hiện tại
+            startDate = Instant.now();
+        }
+
+        return SubscriptionCostResponse.builder()
+                .subscriptionPlanId(subscriptionPlanId)
+                .planPrice(planPrice)
+                .proRateValue(proRateValue)
+                .amountToPay(amountToPay)
+                .creditBalance(creditBalance)
+                .currency(user.getCurrency())
+                .message(message)
+                .startDate(startDate)
+                .build();
     }
 }

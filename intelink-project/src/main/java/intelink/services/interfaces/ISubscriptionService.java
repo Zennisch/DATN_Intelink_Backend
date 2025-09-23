@@ -2,6 +2,7 @@ package intelink.services.interfaces;
 
 import intelink.dto.request.subscription.RegisterSubscriptionRequest;
 import intelink.dto.response.subscription.GetAllSubscriptionsResponse;
+import intelink.dto.response.subscription.SubscriptionCostResponse;
 import intelink.dto.response.subscription.SubscriptionResponse;
 import intelink.models.Subscription;
 import intelink.models.User;
@@ -23,4 +24,6 @@ public interface ISubscriptionService {
     BigDecimal calculateAmountToPay(User user, Subscription subscription, RegisterSubscriptionRequest request);
 
     Subscription createPendingSubscription(User user, RegisterSubscriptionRequest request);
+
+    SubscriptionCostResponse calculateSubscriptionCost(User user, Long subscriptionPlanId, boolean applyImmediately);
 }

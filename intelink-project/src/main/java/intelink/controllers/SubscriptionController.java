@@ -3,6 +3,7 @@ package intelink.controllers;
 import intelink.dto.request.subscription.RegisterSubscriptionRequest;
 import intelink.dto.response.subscription.CancelSubscriptionResponse;
 import intelink.dto.response.subscription.GetAllSubscriptionsResponse;
+import intelink.dto.response.subscription.SubscriptionCostResponse;
 import intelink.dto.response.subscription.SubscriptionResponse;
 import intelink.models.Subscription;
 import intelink.models.User;
@@ -77,5 +78,20 @@ public class SubscriptionController {
                 .message("Subscription cancelled successfully")
                 .subscriptionId(id)
                 .build());
+    }
+
+    @GetMapping("/cost")
+    public ResponseEntity<?> getSubscriptionCost(
+            @RequestParam Long subscriptionPlanId,
+            @RequestParam(required = false, defaultValue = "false") boolean applyImmediately,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = userService.getCurrentUser(userDetails);
+        log.info("Calculating subscription cost for user: {}, planId: {}, applyImmediately: {}",
+                user.getUsername(), subscriptionPlanId, applyImmediately);
+        SubscriptionCostResponse costResponse = subscriptionService.calculateSubscriptionCost(user, subscriptionPlanId,
+                applyImmediately);
+        log.info("Calculated cost response: {}", costResponse);
+        return ResponseEntity.ok(costResponse);
     }
 }
