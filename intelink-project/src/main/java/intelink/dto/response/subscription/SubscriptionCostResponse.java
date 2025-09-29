@@ -13,7 +13,8 @@ public class SubscriptionCostResponse {
     private BigDecimal planPrice;
     private BigDecimal proRateValue;
     private BigDecimal amountToPay;
-    private double creditBalance;
+    private Double creditBalance;
+    private Boolean requiresPayment;
     private String currency;
     private String message;
     private Instant startDate;

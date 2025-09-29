@@ -1,12 +1,14 @@
 package intelink.services;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import intelink.models.enums.SubscriptionPlanType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -235,57 +237,71 @@ public class SubscriptionService implements ISubscriptionService {
     public SubscriptionCostResponse calculateSubscriptionCost(User user, Long subscriptionPlanId,
             boolean applyImmediately) {
         SubscriptionPlan plan = subscriptionPlanRepository.findById(subscriptionPlanId)
-                .orElseThrow(() -> new RuntimeException("Subscription plan not found"));
-
+                .orElseThrow(() -> new RuntimeException("Subscription plan not found with ID: " + subscriptionPlanId));
         Subscription currentSubscription = findCurrentActiveSubscription(user);
 
         BigDecimal proRateValue = BigDecimal.ZERO;
         BigDecimal planPrice = plan.getPrice();
-        BigDecimal amountToPay = planPrice;
-        double creditBalance = user.getCreditBalance();
+        Double creditBalance = user.getCreditBalance();
 
-        String message = "OK";
+        BigDecimal amountToPay = planPrice;
+
+        String message;
         Instant startDate;
+
+        boolean requiresPayment = true;
 
         if (currentSubscription != null) {
             if (applyImmediately) {
                 Instant now = Instant.now();
+
                 SubscriptionPlan currentPlan = currentSubscription.getSubscriptionPlan();
-                if (!currentPlan.getType().name().equals("FREE")) {
+                if (!currentPlan.getType().equals(SubscriptionPlanType.FREE)) {
+                    Instant startsAt = currentSubscription.getStartsAt();
                     Instant expiresAt = currentSubscription.getExpiresAt();
-                    long totalDays = ChronoUnit.DAYS.between(currentSubscription.getStartsAt(), expiresAt);
+                    long totalDays = ChronoUnit.DAYS.between(startsAt, expiresAt);
                     long daysLeft = ChronoUnit.DAYS.between(now, expiresAt);
 
+                    // Tính pro-rate value
                     if (daysLeft > 0 && totalDays > 0) {
-                        BigDecimal dailyPrice = currentPlan.getPrice().divide(BigDecimal.valueOf(totalDays), 2,
-                                BigDecimal.ROUND_HALF_UP);
+                        BigDecimal raw = currentPlan.getPrice().divide(BigDecimal.valueOf(totalDays), RoundingMode.HALF_DOWN);
+                        BigDecimal dailyPrice = raw.setScale(2, RoundingMode.HALF_DOWN);
                         proRateValue = dailyPrice.multiply(BigDecimal.valueOf(daysLeft));
                     }
 
                     amountToPay = planPrice.subtract(proRateValue);
-                    if (amountToPay.compareTo(BigDecimal.ZERO) < 0) {
+                    if (amountToPay.compareTo(BigDecimal.ZERO) <= 0) {
                         creditBalance += amountToPay.abs().doubleValue();
                         amountToPay = BigDecimal.ZERO;
-                        message = "Bạn sẽ được cộng vào credit sau khi thanh toán.";
+                        message = "Your credit balance will be increased after payment.";
+                    } else {
+                        message = "You will be charged immediately. Pro-rate value from current plan applied.";
                     }
+                } else {
+                    amountToPay = BigDecimal.ZERO;
+                    message = "Switching to a free plan. No payment required.";
                 }
                 startDate = now;
             } else {
-                // Nếu không áp dụng ngay, ngày bắt đầu là ngày hết hạn của subscription hiện
-                // tại
                 startDate = currentSubscription.getExpiresAt();
+                message = "Current active subscription will expire on " + currentSubscription.getExpiresAt();
             }
         } else {
-            // Nếu chưa có subscription, ngày bắt đầu là hiện tại
             startDate = Instant.now();
+            message = "No current active subscription. Full price applies.";
+        }
+
+        if (amountToPay.compareTo(BigDecimal.ZERO) <= 0) {
+            requiresPayment = false;
         }
 
         return SubscriptionCostResponse.builder()
-                .subscriptionPlanId(subscriptionPlanId)
+                .subscriptionPlanId(plan.getId())
                 .planPrice(planPrice)
                 .proRateValue(proRateValue)
                 .amountToPay(amountToPay)
                 .creditBalance(creditBalance)
+                .requiresPayment(requiresPayment)
                 .currency(user.getCurrency())
                 .message(message)
                 .startDate(startDate)

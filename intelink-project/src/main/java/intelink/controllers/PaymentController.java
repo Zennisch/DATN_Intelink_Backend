@@ -74,7 +74,8 @@ public class PaymentController {
     @PostMapping("/vnpay/callback")
     public ResponseEntity<?> handleVnpayCallback(@RequestBody Map<String, String> params,
                                                  @AuthenticationPrincipal UserDetails userDetails
-    ) {        // Xác thực chữ ký, kiểm tra trạng thái giao dịch
+    ) {
+        // Xác thực chữ ký, kiểm tra trạng thái giao dịch
         boolean isValid = paymentService.verifyVnpayCallback(params);
         // if (!isValid) {
         //     return ResponseEntity.badRequest().body("Invalid payment callback");
