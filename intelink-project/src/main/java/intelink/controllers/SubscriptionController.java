@@ -8,9 +8,11 @@ import intelink.dto.response.subscription.SubscriptionResponse;
 import intelink.models.Payment;
 import intelink.models.Subscription;
 import intelink.models.User;
+import intelink.models.enums.PaymentProvider;
 import intelink.models.enums.PaymentStatus;
 import intelink.models.enums.SubscriptionStatus;
 import intelink.repositories.SubscriptionRepository;
+import intelink.repositories.UserRepository;
 import intelink.services.PaymentService;
 import intelink.services.interfaces.ISubscriptionService;
 import intelink.services.interfaces.IUserService;
@@ -37,6 +39,7 @@ public class SubscriptionController {
     private final IUserService userService;
     private final PaymentService paymentService;
     private final SubscriptionRepository subscriptionRepository;
+    private final UserRepository userRepository;
 
     @GetMapping
     public ResponseEntity<?> getAll(@AuthenticationPrincipal UserDetails userDetails) {
@@ -57,32 +60,41 @@ public class SubscriptionController {
             @Valid @RequestBody RegisterSubscriptionRequest request,
             @AuthenticationPrincipal UserDetails userDetails) throws Exception {
         User user = userService.getCurrentUser(userDetails);
-        // Tạo subscription ở trạng thái PENDING
         Subscription subscription = subscriptionService.createPendingSubscription(user, request);
 
-        // Tạo payment và lấy payment URL
-        BigDecimal amountToPay = subscriptionService.calculateAmountToPay(user, subscription, request);
-        log.info("Calculated amount to pay: {} for user: {}", amountToPay, user.getId());
+        SubscriptionCostResponse costResponse = subscriptionService.calculateSubscriptionCost(user,
+                request.getSubscriptionPlanId(), request.getApplyImmediately());
+        BigDecimal amountToPay = costResponse.getAmountToPay();
+
         if (amountToPay.compareTo(BigDecimal.ZERO) <= 0) {
-            log.info("Amount to pay is zero or negative ({}), activating subscription immediately for user: {}",
-                    amountToPay, user.getId());
             amountToPay = BigDecimal.ONE;
-            Payment payment = Payment.builder().
-                    subscription(subscription).
-                    amount(amountToPay).
-                    currency(user.getCurrency()).
-                    status(PaymentStatus.COMPLETED).
-                    build();
+            Payment payment = Payment.builder()
+                    .provider(PaymentProvider.NONE)
+                    .subscription(subscription)
+                    .amount(amountToPay)
+                    .currency(user.getCurrency())
+                    .status(PaymentStatus.COMPLETED)
+                    .build();
 
             Subscription current = subscriptionService.findCurrentActiveSubscription(user);
             if (current != null) {
-                log.info("Current active subscription found: {}", current);
-                current.setActive(false);
                 current.setStatus(SubscriptionStatus.EXPIRED);
+                current.setActive(false);
                 subscriptionRepository.save(current);
             } else {
-                log.info("No current active subscription found for user: {}", user.getId());
+                log.info("No current active subscription found for user: {}", user.getUsername());
             }
+
+            // Subtract credit balance
+            log.info("User {} has sufficient credit balance: {}, deducting amount: {}",
+                    user.getUsername(), user.getCreditBalance(), amountToPay.doubleValue());
+            double newCreditBalance = user.getCreditBalance() + costResponse.getProRateValue().doubleValue() - amountToPay.doubleValue();
+            if (newCreditBalance < 0) {
+                newCreditBalance = 0;
+            }
+            log.info("New credit balance for user {}: {}", user.getUsername(), newCreditBalance);
+            user.setCreditBalance(newCreditBalance);
+            userRepository.save(user);
 
             paymentService.save(payment);
 
@@ -92,16 +104,15 @@ public class SubscriptionController {
 
             return ResponseEntity.ok(Map.of(
                     "subscriptionId", subscription.getId(),
-                    "paymentUrl", "https://localhost:3000"));
+                    "paymentUrl", ""
+            ));
+        } else {
+            String paymentUrl = paymentService.createVnpayPayment(subscription, amountToPay, user.getCurrency(), new HashMap<>());
+            return ResponseEntity.ok(Map.of(
+                    "subscriptionId", subscription.getId(),
+                    "paymentUrl", paymentUrl
+            ));
         }
-
-        String paymentUrl = paymentService.createVnpayPayment(subscription, amountToPay, user.getCurrency(),
-                new HashMap<>());
-
-        // Trả về payment URL cho frontend
-        return ResponseEntity.ok(Map.of(
-                "subscriptionId", subscription.getId(),
-                "paymentUrl", paymentUrl));
     }
 
     @PostMapping("/{id}/cancel")

@@ -155,7 +155,7 @@ public class SubscriptionService implements ISubscriptionService {
 
         // Tính ngày hết hạn
         Instant expiresAt = null;
-        if (!plan.getType().name().equals("FREE")) {
+        if (!plan.getType().equals(SubscriptionPlanType.FREE)) {
             switch (plan.getBillingInterval()) {
                 case MONTHLY -> expiresAt = Instant.now().plus(30, ChronoUnit.DAYS);
                 case YEARLY -> expiresAt = Instant.now().plus(365, ChronoUnit.DAYS);
@@ -276,6 +276,20 @@ public class SubscriptionService implements ISubscriptionService {
                         message = "Your credit balance will be increased after payment.";
                     } else {
                         message = "You will be charged immediately. Pro-rate value from current plan applied.";
+                    }
+
+                    if (creditBalance > 0 && amountToPay.compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal credit = BigDecimal.valueOf(creditBalance);
+                        if (credit.compareTo(amountToPay) >= 0) {
+                            creditBalance = credit.subtract(amountToPay).doubleValue();
+                            amountToPay = BigDecimal.ZERO;
+                            message = "Your credit balance has been used for this payment.";
+                            requiresPayment = false;
+                        } else {
+                            amountToPay = amountToPay.subtract(credit);
+                            creditBalance = 0.0;
+                            message = "Your credit balance has been used. Remaining amount to pay: " + amountToPay;
+                        }
                     }
                 } else {
                     amountToPay = BigDecimal.ZERO;
