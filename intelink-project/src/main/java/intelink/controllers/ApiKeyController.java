@@ -26,13 +26,15 @@ public class ApiKeyController {
     private final IUserService userService;
 
     @GetMapping
-    public ResponseEntity<?> list(@AuthenticationPrincipal User user) {
+    public ResponseEntity<?> list(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
         List<ApiKeyResponse> keys = apiKeyService.listByUser(user);
         return ResponseEntity.ok(keys);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable UUID id, @AuthenticationPrincipal User user) {
+    public ResponseEntity<?> get(@PathVariable UUID id, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
         return apiKeyService.getById(id, user)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.ok(Map.of(
@@ -49,7 +51,8 @@ public class ApiKeyController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody CreateApiKeyRequest req, @AuthenticationPrincipal User user) {
+    public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody CreateApiKeyRequest req, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
         return apiKeyService.update(id, user, req)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.ok(Map.of(
@@ -59,7 +62,8 @@ public class ApiKeyController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable UUID id, @AuthenticationPrincipal User user) {
+    public ResponseEntity<?> delete(@PathVariable UUID id, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
         boolean deleted = apiKeyService.delete(id, user);
         if (deleted) {
             return ResponseEntity.ok(Map.of(
