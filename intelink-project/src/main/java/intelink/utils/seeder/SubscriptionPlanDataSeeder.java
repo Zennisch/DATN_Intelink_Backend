@@ -45,8 +45,8 @@ public class SubscriptionPlanDataSeeder {
                 .maxShortUrls(100)
                 .shortCodeCustomizationEnabled(true)
                 .statisticsEnabled(true)
-                .customDomainEnabled(true)
-                .apiAccessEnabled(true)
+                .customDomainEnabled(false)
+                .apiAccessEnabled(false)
                 .active(true)
                 .max_usage_per_url(1000)
                 .build();
