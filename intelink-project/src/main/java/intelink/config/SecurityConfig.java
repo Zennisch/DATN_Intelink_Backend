@@ -1,5 +1,6 @@
 package intelink.config;
 
+import intelink.config.security.ApiKeyAuthenticationFilter;
 import intelink.config.security.JwtAuthenticationEntryPoint;
 import intelink.config.security.JwtAuthenticationFilter;
 import intelink.config.security.OAuth2AuthenticationSuccessHandler;
@@ -33,6 +34,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
     private final OAuthService oAuthService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     @Value("${app.security.password-encryption-strength}")
@@ -84,6 +86,7 @@ public class SecurityConfig {
                         exceptionHandling.authenticationEntryPoint(jwtAuthenticationEntryPoint))
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuthService))

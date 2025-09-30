@@ -20,4 +20,5 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, UUID> {
 
     List<ApiKey> findByActiveTrue();
 
+    Optional<ApiKey> findByRawKey(String rawKey);
 }

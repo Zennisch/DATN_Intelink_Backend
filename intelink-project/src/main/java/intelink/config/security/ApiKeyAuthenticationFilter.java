@@ -30,21 +30,22 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        log.info("Processing ApiKey authentication for request: {}", request.getRequestURI());
 
         String apiKey = resolveApiKey(request);
+        log.info("API Key found in request: {}", apiKey);
 
         if (StringUtils.hasText(apiKey) && SecurityContextHolder.getContext().getAuthentication() == null) {
             ApiKey key = apiKeyService.validateAndGetApiKey(apiKey);
-            if (key != null && key.isUsable()) {
-                User user = key.getUser();
-                log.info("Authenticated via API key for user: {}", user.getUsername());
-                UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+            String username = apiKeyService.getUsernameByApiKey(key.getRawKey());
+            if (key.isUsable()) {
+                log.info("Authenticated via API key for user: {}", username);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(user, null, userDetails.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 apiKeyService.saveLastUsed(key);
-
             }
         }
 
@@ -53,7 +54,11 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
     private String resolveApiKey(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
+        log.info("Authorization header: {}", header);
         if (StringUtils.hasText(header) && header.startsWith("ApiKey ")) {
+            return header.substring(7);
+        }
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
             return header.substring(7);
         }
         String altHeader = request.getHeader("X-API-KEY");

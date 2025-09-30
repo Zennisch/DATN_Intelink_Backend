@@ -89,12 +89,12 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         // 6. Seed API Keys
-        if (apiKeyRepository.count() == 0) {
-            apiKeyDataSeeder.createApiKeys(users, 40);
-            log.info("Created API keys");
-        } else {
-            log.info("API keys already exist, skipping");
-        }
+//        if (apiKeyRepository.count() == 0) {
+//            apiKeyDataSeeder.createApiKeys(users, 40);
+//            log.info("Created API keys");
+//        } else {
+//            log.info("API keys already exist, skipping");
+//        }
 
         // 7. Seed Custom Domains
         if (customDomainRepository.count() == 0) {
