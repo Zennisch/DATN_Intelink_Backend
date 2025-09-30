@@ -1,5 +1,6 @@
 package intelink.controllers;
 
+import intelink.dto.request.url.BatchCreateShortUrlRequest;
 import intelink.dto.request.url.CreateShortUrlRequest;
 import intelink.dto.request.url.UpdatePasswordRequest;
 import intelink.dto.request.url.UpdateShortUrlRequest;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -202,5 +204,31 @@ public class ShortUrlController {
 
         PagedResponse<ShortUrlListResponse> response = PagedResponse.from(responsePage);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<?> createShortUrlsBatch(
+            @Valid @RequestBody BatchCreateShortUrlRequest batchRequest,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userService.getCurrentUser(userDetails);
+
+        List<CreateShortUrlResponse> results = batchRequest.getRequests().stream()
+                .map(req -> {
+                    ShortUrl shortUrl = null;
+                    try {
+                        shortUrl = shortUrlService.create(user, null, req);
+                    } catch (IllegalBlockSizeException | BadPaddingException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return CreateShortUrlResponse.fromEntity(shortUrl, accessUrl);
+                })
+                .toList();
+
+        return ResponseEntity.ok(
+                intelink.dto.response.url.BatchCreateShortUrlResponse.builder()
+                        .results(results)
+                        .build()
+        );
     }
 }

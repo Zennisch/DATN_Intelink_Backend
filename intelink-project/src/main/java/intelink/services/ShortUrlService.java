@@ -101,6 +101,9 @@ public class ShortUrlService implements IShortUrlService {
     @Transactional
     public ShortUrl create(User user, String customCode, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
         // 1. Determine short code
+        if (request.getCustomCode() != null && !request.getCustomCode().isEmpty()) {
+            customCode = request.getCustomCode();
+        }
         String shortCode = StringUtils.hasText(customCode) ? validateCustomCode(customCode) : generateShortCode(user.getId());
 
         // 2. Calculate expiry date
