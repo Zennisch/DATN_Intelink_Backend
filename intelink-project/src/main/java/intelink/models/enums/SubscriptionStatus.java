@@ -1,7 +1,7 @@
 package intelink.models.enums;
 
 public enum SubscriptionStatus {
-    ACTIVE, TRIALING, PAST_DUE, CANCELED, EXPIRED;
+    PENDING, ACTIVE, TRIALING, PAST_DUE, CANCELED, EXPIRED;
 
     public static SubscriptionStatus fromString(String status) {
         try {

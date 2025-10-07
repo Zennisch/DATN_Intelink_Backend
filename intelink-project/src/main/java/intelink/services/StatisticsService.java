@@ -2,6 +2,7 @@ package intelink.services;
 
 import intelink.dto.response.stat.StatisticsResponse;
 import intelink.dto.response.stat.TimeStatsResponse;
+import intelink.dto.response.stat.TopPeakTimesResponse;
 import intelink.models.ClickStat;
 import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;
@@ -129,102 +130,102 @@ public class StatisticsService implements IStatisticsService {
     }
 
     @Override
-public TimeStatsResponse getTimeStats(String shortCode, String customFrom, String customTo, String granularityStr) {
-    ShortUrl shortUrl = shortUrlService.findByShortCode(shortCode)
-            .orElseThrow(() -> new IllegalArgumentException("StatisticsService.getTimeStats: Short code not found: " + shortCode));
+    public TimeStatsResponse getTimeStats(String shortCode, String customFrom, String customTo, String granularityStr) {
+        ShortUrl shortUrl = shortUrlService.findByShortCode(shortCode)
+                .orElseThrow(() -> new IllegalArgumentException("StatisticsService.getTimeStats: Short code not found: " + shortCode));
 
-    Granularity granularity = granularityStr != null ? Granularity.fromString(granularityStr) : Granularity.HOURLY;
-    Instant now = Instant.now();
+        Granularity granularity = granularityStr != null ? Granularity.fromString(granularityStr) : Granularity.HOURLY;
+        Instant now = Instant.now();
 
-    Instant from, to;
-    int bucketCount;
+        Instant from, to;
+        int bucketCount;
 
-    // Xử lý mặc định nếu không truyền customFrom/customTo - sử dụng UTC
-    switch (granularity) {
-        case HOURLY -> {
-            to = DateTimeUtil.getBucketStart(now, granularity);
-            from = to.minus(23, ChronoUnit.HOURS);
-            bucketCount = 24;
+        // Xử lý mặc định nếu không truyền customFrom/customTo - sử dụng UTC
+        switch (granularity) {
+            case HOURLY -> {
+                to = DateTimeUtil.getBucketStart(now, granularity);
+                from = to.minus(23, ChronoUnit.HOURS);
+                bucketCount = 24;
+            }
+            case DAILY -> {
+                to = DateTimeUtil.getBucketStart(now, granularity);
+                from = to.minus(29, ChronoUnit.DAYS);
+                bucketCount = 30;
+            }
+            case MONTHLY -> {
+                to = DateTimeUtil.getBucketStart(now, granularity);
+                ZonedDateTime zdt = to.atZone(ZoneId.of("UTC"));
+                from = zdt.minusMonths(11).toInstant();
+                bucketCount = 12;
+            }
+            case YEARLY -> {
+                to = DateTimeUtil.getBucketStart(now, granularity);
+                ZonedDateTime zdt = to.atZone(ZoneId.of("UTC"));
+                from = zdt.minusYears(9).toInstant();
+                bucketCount = 10;
+            }
+            default -> throw new IllegalArgumentException("Unsupported granularity");
         }
-        case DAILY -> {
-            to = DateTimeUtil.getBucketStart(now, granularity);
-            from = to.minus(29, ChronoUnit.DAYS);
-            bucketCount = 30;
+
+        // Nếu truyền customFrom/customTo thì tính lại from, to, bucketCount
+        if (customFrom != null && customTo != null) {
+            from = Instant.parse(customFrom);
+            to = Instant.parse(customTo);
+
+            from = DateTimeUtil.getBucketStart(from, granularity);
+            to = DateTimeUtil.getBucketStart(to, granularity);
+
+            ZoneId zoneId = ZoneId.of("UTC");
+            switch (granularity) {
+                case HOURLY -> bucketCount = (int) ChronoUnit.HOURS.between(from, to) + 1;
+                case DAILY -> bucketCount = (int) ChronoUnit.DAYS.between(from, to) + 1;
+                case MONTHLY -> {
+                    ZonedDateTime zdtFrom = from.atZone(zoneId);
+                    ZonedDateTime zdtTo = to.atZone(zoneId);
+                    bucketCount = (int) ChronoUnit.MONTHS.between(zdtFrom, zdtTo) + 1;
+                }
+                case YEARLY -> {
+                    ZonedDateTime zdtFrom = from.atZone(zoneId);
+                    ZonedDateTime zdtTo = to.atZone(zoneId);
+                    bucketCount = (int) ChronoUnit.YEARS.between(zdtFrom, zdtTo) + 1;
+                }
+            }
         }
-        case MONTHLY -> {
-            to = DateTimeUtil.getBucketStart(now, granularity);
-            // Lùi 11 tháng từ tháng hiện tại để có 12 bucket
-            ZonedDateTime zdt = to.atZone(ZoneId.of("UTC"));
-            from = zdt.minusMonths(11).toInstant();
-            bucketCount = 12;
+
+        // Truy vấn dữ liệu
+        List<ClickStat> stats = clickStatRepository.findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanEqualOrderByBucketAsc(
+                shortUrl, granularity, from, to
+        );
+
+        // Map bucket -> clicks
+        Map<Instant, Long> bucketClicks = stats.stream()
+                .collect(Collectors.toMap(
+                        ClickStat::getBucket,
+                        ClickStat::getTotalClicks,
+                        Long::sum
+                ));
+
+        // Sinh danh sách bucket đủ số lượng
+        List<TimeStatsResponse.Bucket> buckets = new ArrayList<>();
+        Instant bucket = DateTimeUtil.getBucketStart(from, granularity);
+        ZoneId zoneId = ZoneId.of("UTC");
+
+        for (int i = 0; i < bucketCount; i++) {
+            long clicks = bucketClicks.getOrDefault(bucket, 0L);
+            buckets.add(new TimeStatsResponse.Bucket(bucket.toString(), clicks));
+
+            // Tăng bucket lên theo granularity - sử dụng calendar arithmetic
+            switch (granularity) {
+                case HOURLY -> bucket = bucket.plus(1, ChronoUnit.HOURS);
+                case DAILY -> bucket = bucket.plus(1, ChronoUnit.DAYS);
+                case MONTHLY -> bucket = bucket.atZone(zoneId).plusMonths(1).toInstant();
+                case YEARLY -> bucket = bucket.atZone(zoneId).plusYears(1).toInstant();
+            }
         }
-        case YEARLY -> {
-            to = DateTimeUtil.getBucketStart(now, granularity);
-            // Lùi 9 năm từ năm hiện tại để có 10 bucket
-            ZonedDateTime zdt = to.atZone(ZoneId.of("UTC"));
-            from = zdt.minusYears(9).toInstant();
-            bucketCount = 10;
-        }
-        default -> throw new IllegalArgumentException("Unsupported granularity");
+
+        long totalClicks = buckets.stream().mapToLong(TimeStatsResponse.Bucket::getClicks).sum();
+        return new TimeStatsResponse(granularity.name(), from.toString(), to.toString(), totalClicks, buckets);
     }
-
-    // Nếu truyền customFrom/customTo thì tính lại from, to, bucketCount
-if (customFrom != null && customTo != null) {
-    from = Instant.parse(customFrom);
-    to = Instant.parse(customTo);
-
-    // Normalize từ và đến về bucket đầu tiên của granularity
-    from = DateTimeUtil.getBucketStart(from, granularity);
-    to = DateTimeUtil.getBucketStart(to, granularity);
-
-    // Tính số bucket giữa from và to
-    ChronoUnit unit = getChronoUnit(granularity);
-    bucketCount = (int) unit.between(from, to) + 1;
-}
-
-// Truy vấn dữ liệu
-List<ClickStat> stats = clickStatRepository.findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanEqualOrderByBucketAsc(
-        shortUrl, granularity, from, to
-);
-
-// Map bucket -> clicks
-Map<Instant, Long> bucketClicks = stats.stream()
-        .collect(Collectors.toMap(
-                ClickStat::getBucket,
-                ClickStat::getTotalClicks,
-                Long::sum
-        ));
-
-// Sinh danh sách bucket đủ số lượng
-List<TimeStatsResponse.Bucket> buckets = new ArrayList<>();
-Instant bucket = DateTimeUtil.getBucketStart(from, granularity);
-
-for (int i = 0; i < bucketCount; i++) {
-    long clicks = bucketClicks.getOrDefault(bucket, 0L);
-    buckets.add(new TimeStatsResponse.Bucket(bucket.toString(), clicks));
-    
-    // Tăng bucket lên theo granularity - sử dụng calendar arithmetic
-    switch (granularity) {
-        case HOURLY -> bucket = bucket.plus(1, ChronoUnit.HOURS);
-        case DAILY -> bucket = bucket.plus(1, ChronoUnit.DAYS);
-        case MONTHLY -> {
-            // Tăng 1 tháng chính xác theo calendar
-            ZonedDateTime zdt = bucket.atZone(ZoneId.of("UTC"));
-            zdt = zdt.plusMonths(1);
-            bucket = zdt.toInstant();
-        }
-        case YEARLY -> {
-            // Tăng 1 năm chính xác theo calendar
-            ZonedDateTime zdt = bucket.atZone(ZoneId.of("UTC"));
-            zdt = zdt.plusYears(1);
-            bucket = zdt.toInstant();
-        }
-    }
-}
-
-    long totalClicks = buckets.stream().mapToLong(TimeStatsResponse.Bucket::getClicks).sum();
-    return new TimeStatsResponse(granularity.name(), from.toString(), to.toString(), totalClicks, buckets);
-}
 
     @Override
     public StatisticsResponse getDimensionStats(String shortCode, String type) {
@@ -259,6 +260,7 @@ for (int i = 0; i < bucketCount; i++) {
                 .data(statDataList)
                 .build();
     }
+
 
     private DimensionType mapStringToDimensionType(String type) {
         return switch (type.toLowerCase()) {
@@ -297,5 +299,53 @@ for (int i = 0; i < bucketCount; i++) {
         };
     }
 
+    /**
+     * Trả về bucket (thời gian) có số lượt click nhiều nhất theo granularity.
+     */
+    @Override
+    public Map<String, Object> getPeakTimeStats(String shortCode, String customFrom, String customTo, String granularityStr) {
+        TimeStatsResponse stats = getTimeStats(shortCode, customFrom, customTo, granularityStr);
+        if (stats.getBuckets() == null || stats.getBuckets().isEmpty()) {
+            return Map.of(
+                    "peakTime", null,
+                    "clicks", 0,
+                    "granularity", stats.getGranularity()
+            );
+        }
+        // Tìm bucket có số click lớn nhất
+        TimeStatsResponse.Bucket peak = stats.getBuckets().stream()
+                .max((b1, b2) -> Long.compare(b1.getClicks(), b2.getClicks()))
+                .orElse(null);
+
+        return Map.of(
+                "peakTime", peak != null ? peak.getTime() : null,
+                "clicks", peak != null ? peak.getClicks() : 0,
+                "granularity", stats.getGranularity()
+        );
+    }
+
+    @Override
+    public TopPeakTimesResponse getTopPeakTimes(String shortCode, String granularityStr) {
+        ShortUrl shortUrl = shortUrlService.findByShortCode(shortCode)
+                .orElseThrow(() -> new IllegalArgumentException("Short code not found: " + shortCode));
+        Granularity granularity = granularityStr != null ? Granularity.fromString(granularityStr) : Granularity.HOURLY;
+
+        List<ClickStat> stats = clickStatRepository.findByShortUrlAndGranularityOrderByBucketAsc(shortUrl, granularity);
+
+        List<TopPeakTimesResponse.PeakTime> topList = stats.stream()
+                .sorted((a, b) -> Long.compare(b.getTotalClicks(), a.getTotalClicks()))
+                .limit(10)
+                .map(stat -> new TopPeakTimesResponse.PeakTime(
+                        stat.getBucket().toString(),
+                        stat.getTotalClicks()
+                ))
+                .toList();
+
+        return new TopPeakTimesResponse(
+                granularity.name(),
+                topList.size(),
+                topList
+        );
+    }
 
 }

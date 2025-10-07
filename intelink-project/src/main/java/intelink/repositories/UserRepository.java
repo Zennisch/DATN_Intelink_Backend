@@ -1,11 +1,9 @@
 package intelink.repositories;
 
 import intelink.models.User;
-import intelink.models.enums.UserProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -23,11 +21,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Modifying
     @Query("UPDATE User u SET u.totalClicks = u.totalClicks + 1 WHERE u.id = :userId")
-    void increaseTotalClicks(@Param("userId") Long userId);
-
-    @Modifying
-    @Query("UPDATE User u SET u.totalClicks = u.totalClicks + :amount WHERE u.id = :userId")
-    void incrementTotalClicksWithAmount(@Param("userId") Long userId, @Param("amount") int amount);
+    void increaseTotalClicks(Long userId);
 
     @Modifying
     @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls + 1 WHERE u.id = :userId")
@@ -37,7 +31,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls - 1 WHERE u.id = :userId")
     void decreaseTotalShortUrls(Long userId);
 
-    Optional<User> findByProviderAndProviderUserId(UserProvider provider, String providerUserId);
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.shortUrls WHERE u.username = :username")
-    Optional<User> findByUsernameFetchShortUrls(@Param("username") String username);
 }

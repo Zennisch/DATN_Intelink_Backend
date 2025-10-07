@@ -12,15 +12,15 @@ import java.util.UUID;
 
 @Repository
 public interface CustomDomainRepository extends JpaRepository<CustomDomain, UUID> {
-    
+
     Optional<CustomDomain> findByDomain(String domain);
-    
+
     List<CustomDomain> findByUser(User user);
-    
+
     List<CustomDomain> findByStatus(CustomDomainStatus status);
-    
+
     List<CustomDomain> findByUserAndActiveTrue(User user);
-    
+
     List<CustomDomain> findByVerifiedTrue();
-    
+
 }

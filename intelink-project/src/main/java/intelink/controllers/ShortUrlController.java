@@ -1,16 +1,18 @@
 package intelink.controllers;
 
+import intelink.dto.request.url.BatchCreateShortUrlRequest;
 import intelink.dto.request.url.CreateShortUrlRequest;
 import intelink.dto.request.url.UpdatePasswordRequest;
 import intelink.dto.request.url.UpdateShortUrlRequest;
+import intelink.dto.response.PagedResponse;
 import intelink.dto.response.url.CreateShortUrlResponse;
 import intelink.dto.response.url.ShortUrlDetailResponse;
 import intelink.dto.response.url.ShortUrlListResponse;
-import intelink.dto.response.PagedResponse;
 import intelink.dto.response.url.UpdateShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.User;
 import intelink.services.interfaces.IShortUrlService;
+import intelink.services.interfaces.IUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,15 +27,17 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/v1/url")
-public class UrlController {
+public class ShortUrlController {
 
     private final IShortUrlService shortUrlService;
+    private final IUserService userService;
 
     @Value("${app.url.access}")
     private String accessUrl;
@@ -41,10 +45,11 @@ public class UrlController {
     @PostMapping
     public ResponseEntity<?> createShortUrl(
             @Valid @RequestBody CreateShortUrlRequest request,
+            @RequestParam(required = false) String customCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) throws IllegalBlockSizeException, BadPaddingException {
-        User user = shortUrlService.getCurrentUser(userDetails);
-        ShortUrl shortUrl = shortUrlService.create(user, request);
+        User user = userService.getCurrentUser(userDetails);
+        ShortUrl shortUrl = shortUrlService.create(user, customCode, request);
         CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, accessUrl);
         return ResponseEntity.ok(response);
     }
@@ -55,14 +60,14 @@ public class UrlController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         Pageable pageable = PageRequest.of(page, size);
         Page<ShortUrl> shortUrlPage = shortUrlService.getUserShortUrls(user.getId(), pageable);
-        
-        Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl -> 
-            ShortUrlListResponse.fromEntity(shortUrl, accessUrl)
+
+        Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl ->
+                ShortUrlListResponse.fromEntity(shortUrl, accessUrl)
         );
-        
+
         PagedResponse<ShortUrlListResponse> response = PagedResponse.from(responsePage);
         return ResponseEntity.ok(response);
     }
@@ -72,9 +77,9 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
-        Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCodeAndUserId(shortCode, user.getId());
-        
+        User user = userService.getCurrentUser(userDetails);
+        Optional<ShortUrl> shortUrlOpt = shortUrlService.findByUserIdAndShortCode(user.getId(), shortCode);
+
         if (shortUrlOpt.isEmpty()) {
             throw new IllegalArgumentException("Short URL not found");
         }
@@ -90,13 +95,13 @@ public class UrlController {
             @Valid @RequestBody UpdateShortUrlRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         ShortUrl updatedUrl = shortUrlService.updateShortUrl(
-            user.getId(),
-            shortCode,
-            request.getDescription(),
-            request.getMaxUsage(),
-            request.getAvailableDays()
+                user.getId(),
+                shortCode,
+                request.getDescription(),
+                request.getMaxUsage(),
+                request.getAvailableDays()
         );
         UpdateShortUrlResponse response = UpdateShortUrlResponse.success(updatedUrl.getShortCode());
         return ResponseEntity.ok(response);
@@ -107,14 +112,14 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         shortUrlService.deleteShortUrl(user.getId(), shortCode);
-        
+
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-            .message("Short URL deleted successfully")
-            .shortCode(shortCode)
-            .success(true)
-            .build();
+                .message("Short URL deleted successfully")
+                .shortCode(shortCode)
+                .success(true)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -123,14 +128,14 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         shortUrlService.enableShortUrl(user.getId(), shortCode);
-        
+
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-            .message("Short URL enabled successfully")
-            .shortCode(shortCode)
-            .success(true)
-            .build();
+                .message("Short URL enabled successfully")
+                .shortCode(shortCode)
+                .success(true)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -139,14 +144,14 @@ public class UrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         shortUrlService.disableShortUrl(user.getId(), shortCode);
-        
+
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-            .message("Short URL disabled successfully")
-            .shortCode(shortCode)
-            .success(true)
-            .build();
+                .message("Short URL disabled successfully")
+                .shortCode(shortCode)
+                .success(true)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -156,19 +161,19 @@ public class UrlController {
             @Valid @RequestBody UpdatePasswordRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
+        User user = userService.getCurrentUser(userDetails);
         ShortUrl updatedUrl = shortUrlService.updatePassword(
-            user.getId(),
-            shortCode,
-            request.getNewPassword(),
-            request.getCurrentPassword()
+                user.getId(),
+                shortCode,
+                request.getNewPassword(),
+                request.getCurrentPassword()
         );
-        
+
         UpdateShortUrlResponse response = UpdateShortUrlResponse.builder()
-            .message("Password updated successfully")
-            .shortCode(updatedUrl.getShortCode())
-            .success(true)
-            .build();
+                .message("Password updated successfully")
+                .shortCode(updatedUrl.getShortCode())
+                .success(true)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -182,22 +187,48 @@ public class UrlController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = shortUrlService.getCurrentUser(userDetails);
-        
+        User user = userService.getCurrentUser(userDetails);
+
         Pageable pageable;
         if ("asc".equalsIgnoreCase(sortDirection)) {
             pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sortBy).ascending());
         } else {
             pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sortBy).descending());
         }
-        
+
         Page<ShortUrl> shortUrlPage = shortUrlService.searchShortUrls(user.getId(), query, status, pageable);
-        
-        Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl -> 
-            ShortUrlListResponse.fromEntity(shortUrl, accessUrl)
+
+        Page<ShortUrlListResponse> responsePage = shortUrlPage.map(shortUrl ->
+                ShortUrlListResponse.fromEntity(shortUrl, accessUrl)
         );
-        
+
         PagedResponse<ShortUrlListResponse> response = PagedResponse.from(responsePage);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<?> createShortUrlsBatch(
+            @Valid @RequestBody BatchCreateShortUrlRequest batchRequest,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userService.getCurrentUser(userDetails);
+
+        List<CreateShortUrlResponse> results = batchRequest.getRequests().stream()
+                .map(req -> {
+                    ShortUrl shortUrl = null;
+                    try {
+                        shortUrl = shortUrlService.create(user, null, req);
+                    } catch (IllegalBlockSizeException | BadPaddingException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return CreateShortUrlResponse.fromEntity(shortUrl, accessUrl);
+                })
+                .toList();
+
+        return ResponseEntity.ok(
+                intelink.dto.response.url.BatchCreateShortUrlResponse.builder()
+                        .results(results)
+                        .build()
+        );
     }
 }

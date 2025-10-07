@@ -1,8 +1,8 @@
 package intelink.controllers;
 
 import intelink.dto.request.url.UnlockUrlRequest;
-import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.dto.response.redirect.RedirectResult;
+import intelink.dto.response.url.UnlockUrlResponse;
 import intelink.exceptions.IncorrectPasswordException;
 import intelink.exceptions.ShortUrlUnavailableException;
 import intelink.services.interfaces.IClickLogService;
@@ -59,8 +59,13 @@ public class RedirectController {
             HttpServletRequest httpRequest
     ) {
         UnlockUrlResponse response = shortUrlService.unlockUrl(shortCode, request.getPassword(), httpRequest);
+        if (!response.getSuccess()) {
+            log.warn("ShortUrlService.unlockUrl: Failed to unlock URL: {}. Reason: {}", shortCode, response.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
         clickLogService.record(shortCode, httpRequest);
         log.info("ShortUrlService.unlockUrl: URL unlocked successfully: {}", shortCode);
+        // Trả về JSON thay vì redirect
         return ResponseEntity.ok(response);
     }
 }

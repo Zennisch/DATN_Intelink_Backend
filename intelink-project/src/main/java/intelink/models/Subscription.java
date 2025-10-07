@@ -51,12 +51,22 @@ public class Subscription {
     @Column(name = "active", nullable = false)
     private Boolean active;
 
+    @Column(name = "credit_used", nullable = false)
+    @Builder.Default
+    private Double creditUsed = 0.0;
+
+    @Column(name = "pro_rate_value", nullable = true)
+    private Double proRateValue;
+
     // Audit group
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "starts_at", nullable = false)
     private Instant startsAt;
+
+    @Column(name = "activated_at", nullable = true)
+    private Instant activatedAt;
 
     @Column(name = "expires_at", nullable = true)
     private Instant expiresAt;

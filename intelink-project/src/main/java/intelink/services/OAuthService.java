@@ -1,13 +1,14 @@
 package intelink.services;
 
 import intelink.config.security.JwtTokenProvider;
-import intelink.dto.object.Auth;
+import intelink.dto.object.AuthToken;
 import intelink.models.OAuthAccount;
 import intelink.models.User;
 import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
 import intelink.repositories.OAuthAccountRepository;
 import intelink.repositories.UserRepository;
+import intelink.services.interfaces.IOAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -23,7 +24,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OAuthService extends DefaultOAuth2UserService {
+public class OAuthService extends DefaultOAuth2UserService implements IOAuthService {
 
     private final UserRepository userRepository;
     private final OAuthAccountRepository oAuthAccountRepository;
@@ -130,9 +131,9 @@ public class OAuthService extends DefaultOAuth2UserService {
         return oAuth2User;
     }
 
-    public Auth callback(String authToken) {
+    public AuthToken callback(String jwtToken) {
         // 1. Validate token
-        String email = jwtTokenProvider.getUsernameFromToken(authToken);
+        String email = jwtTokenProvider.getUsernameFromToken(jwtToken);
 
         // 2. If valid, find user exists by email
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -146,6 +147,6 @@ public class OAuthService extends DefaultOAuth2UserService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
-        return new Auth(user, token, refreshToken, expiresAt);
+        return new AuthToken(user, token, refreshToken, expiresAt);
     }
 }

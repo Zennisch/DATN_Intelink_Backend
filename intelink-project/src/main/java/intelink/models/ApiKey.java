@@ -35,6 +35,9 @@ public class ApiKey {
     @Column(name = "name", nullable = false, length = 128)
     private String name;
 
+    @Column(name = "raw_key", nullable = false, unique = true, length = 255)
+    private String rawKey;
+
     @Column(name = "key_hash", nullable = false, unique = true, length = 255)
     private String keyHash;
 

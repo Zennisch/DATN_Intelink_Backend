@@ -8,7 +8,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateSubscriptionRequest {
+public class RegisterSubscriptionRequest {
     @NotNull(message = "Subscription plan ID is required")
     private Long subscriptionPlanId;
+
+    private Boolean autoRenew = false;
+
+    private Boolean applyImmediately = false;
 }

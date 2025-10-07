@@ -2,6 +2,7 @@ package intelink.utils;
 
 import intelink.dto.object.UserAgentInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,9 +31,7 @@ public class UserAgentUtil {
     private static final Pattern BOT_PATTERN = Pattern.compile("bot|crawler|spider|scraper", Pattern.CASE_INSENSITIVE);
 
     public static UserAgentInfo parseUserAgent(String userAgent) {
-        if (userAgent == null || userAgent.trim().isEmpty()) {
-            return null;
-        }
+        if (!StringUtils.hasText(userAgent)) return null;
 
         log.debug("UserAgentUtil.parseUserAgent - Parsing user agent: {}", userAgent);
 

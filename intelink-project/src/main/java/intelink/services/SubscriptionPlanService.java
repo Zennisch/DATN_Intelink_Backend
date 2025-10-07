@@ -48,7 +48,7 @@ public class SubscriptionPlanService implements ISubscriptionPlanService {
         if (!repository.existsById(id)) {
             throw new RuntimeException("Subscription plan not found with ID: " + id);
         }
-        
+
         SubscriptionPlan plan = SubscriptionPlan.builder()
                 .id(id)
                 .type(SubscriptionPlanType.fromString(request.getType()))

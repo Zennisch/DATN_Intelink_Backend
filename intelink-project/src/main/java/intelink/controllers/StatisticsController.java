@@ -2,9 +2,9 @@ package intelink.controllers;
 
 import intelink.dto.response.stat.StatisticsResponse;
 import intelink.dto.response.stat.TimeStatsResponse;
+import intelink.dto.response.stat.TopPeakTimesResponse;
 import intelink.services.interfaces.IStatisticsService;
 import lombok.RequiredArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +50,7 @@ public class StatisticsController {
             @PathVariable String shortCode,
             @RequestParam String type) {
         log.info("StatisticsController.getDimensionStats: Getting {} dimension stats for short code: {}", type, shortCode);
-        StatisticsResponse stats = statisticsService.getDimensionStats(shortCode,type);
+        StatisticsResponse stats = statisticsService.getDimensionStats(shortCode, type);
         return ResponseEntity.ok(stats);
 
     }
@@ -63,5 +63,25 @@ public class StatisticsController {
         overview.put("location", statisticsService.getLocationStats(shortCode));
         overview.put("time", statisticsService.getTimeStats(shortCode, null, null, null));
         return ResponseEntity.ok(overview);
+    }
+
+    @GetMapping("/{shortCode}/peak-time")
+    public ResponseEntity<Map<String, Object>> getPeakTimeStats(
+            @PathVariable String shortCode,
+            @RequestParam(required = false) String customFrom,
+            @RequestParam(required = false) String customTo,
+            @RequestParam(required = false, defaultValue = "HOURLY") String granularity) {
+        log.info("StatisticsController.getPeakTimeStats: Fetching peak time stats for shortCode: {}, from: {}, to: {}, granularity: {}",
+                shortCode, customFrom, customTo, granularity);
+        Map<String, Object> result = statisticsService.getPeakTimeStats(shortCode, customFrom, customTo, granularity);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{shortCode}/top-peak-times")
+    public ResponseEntity<TopPeakTimesResponse> getTopPeakTimes(
+            @PathVariable String shortCode,
+            @RequestParam(defaultValue = "HOURLY") String granularity) {
+        TopPeakTimesResponse result = statisticsService.getTopPeakTimes(shortCode, granularity);
+        return ResponseEntity.ok(result);
     }
 }

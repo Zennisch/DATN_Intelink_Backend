@@ -37,6 +37,7 @@ public class SubscriptionPlan {
 
     // Details group
     @Column(name = "type", nullable = false, unique = true, length = 32)
+    @Enumerated(EnumType.STRING)
     private SubscriptionPlanType type;
 
     @Column(name = "description", nullable = true, length = 1024)

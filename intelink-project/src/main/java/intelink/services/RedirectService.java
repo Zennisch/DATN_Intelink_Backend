@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.AbstractMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -24,6 +26,10 @@ public class RedirectService implements IRedirectService {
 
     @Value("${app.url.password-unlock}")
     private String passwordUnlockUrlTemplate;
+
+    private static <K, V> Map.Entry<K, V> entry(K k, V v) {
+        return new AbstractMap.SimpleEntry<>(k, v);
+    }
 
     @Transactional
     public RedirectResult handleRedirect(String shortCode, String password, HttpServletRequest request) {

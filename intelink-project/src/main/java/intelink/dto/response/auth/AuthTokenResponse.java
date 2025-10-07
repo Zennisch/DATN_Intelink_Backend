@@ -1,14 +1,14 @@
 package intelink.dto.response.auth;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import intelink.dto.object.Auth;
+import intelink.dto.object.AuthToken;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AuthResponse {
+public class AuthTokenResponse {
 
     private String token;
     private String refreshToken;
@@ -17,8 +17,8 @@ public class AuthResponse {
     private String role;
     private Long expiresAt;
 
-    public static AuthResponse fromEntity(Auth obj) {
-        return AuthResponse.builder()
+    public static AuthTokenResponse fromEntity(AuthToken obj) {
+        return AuthTokenResponse.builder()
                 .token(obj.getToken())
                 .refreshToken(obj.getRefreshToken())
                 .username(obj.getUser().getUsername())

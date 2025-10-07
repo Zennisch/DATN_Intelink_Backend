@@ -25,7 +25,7 @@ public class SubscriptionResponse {
     private Instant createdAt;
     private Instant startsAt;
     private Instant expiresAt;
-    
+
     // Plan info
     private Long planId;
     private SubscriptionPlanType planType;
@@ -36,10 +36,9 @@ public class SubscriptionResponse {
     private Boolean statisticsEnabled;
     private Boolean customDomainEnabled;
     private Boolean apiAccessEnabled;
-    
-    public static SubscriptionResponse fromEntity(Subscription subscription) {
-        SubscriptionPlan plan = subscription.getSubscriptionPlan();
-        
+
+    public static SubscriptionResponse fromEntities(Subscription subscription, SubscriptionPlan plan) {
+        if (subscription == null) return null;
         return SubscriptionResponse.builder()
                 .id(subscription.getId())
                 .status(subscription.getStatus())

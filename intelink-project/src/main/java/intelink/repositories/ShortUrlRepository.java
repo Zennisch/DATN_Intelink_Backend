@@ -18,21 +18,21 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
 
     @Modifying
     @Query("UPDATE ShortUrl s SET s.totalClicks = s.totalClicks + 1 WHERE s.shortCode = :shortCode")
-    void incrementTotalClicks(@Param("shortCode") String shortCode);
+    void increaseTotalClicks(@Param("shortCode") String shortCode);
 
     Page<ShortUrl> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
-    
-    Page<ShortUrl> findByUserId(Long userId, Pageable pageable);
 
     @Query("SELECT s FROM ShortUrl s WHERE s.user.id = :userId " +
-           "AND s.deletedAt IS NULL " +
-           "AND (:query IS NULL OR :query = '' OR " +
-           "LOWER(s.description) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(s.originalUrl) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(s.shortCode) LIKE LOWER(CONCAT('%', :query, '%'))) " +
-           "AND (:status IS NULL OR s.status = :status)")
-    Page<ShortUrl> searchShortUrls(@Param("userId") Long userId, 
-                                   @Param("query") String query, 
-                                   @Param("status") ShortUrlStatus status, 
+            "AND s.deletedAt IS NULL " +
+            "AND (:query IS NULL OR :query = '' OR " +
+            "LOWER(s.description) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(s.originalUrl) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(s.shortCode) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+            "AND (:status IS NULL OR s.status = :status)")
+    Page<ShortUrl> searchShortUrls(@Param("userId") Long userId,
+                                   @Param("query") String query,
+                                   @Param("status") ShortUrlStatus status,
                                    Pageable pageable);
+
+    Optional<ShortUrl> findByUserIdAndShortCode(Long userId, String shortCode);
 }

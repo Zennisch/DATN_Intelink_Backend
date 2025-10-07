@@ -1,12 +1,14 @@
 package intelink.services.interfaces;
 
-import intelink.dto.object.Auth;
+import intelink.dto.object.AuthToken;
 import intelink.dto.request.auth.LoginRequest;
 import intelink.dto.request.auth.RegisterRequest;
 import intelink.dto.request.auth.ResetPasswordRequest;
+import intelink.dto.response.auth.UserProfileResponse;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import jakarta.mail.MessagingException;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
 
@@ -20,13 +22,13 @@ public interface IUserService {
 
     void resetPassword(String token, ResetPasswordRequest resetPasswordRequest);
 
-    Auth login(LoginRequest loginRequest);
+    AuthToken login(LoginRequest loginRequest);
 
-    Auth refreshToken(String authHeader);
+    AuthToken refreshToken(User user);
 
-    User profile(String authHeader);
+    UserProfileResponse getProfile(User user);
 
-    void logout(String authHeader);
+    void logout(User user);
 
     Optional<User> findByUsername(String username);
 
@@ -35,5 +37,9 @@ public interface IUserService {
     void increaseTotalShortUrls(Long userId);
 
     void decreaseTotalShortUrls(Long userId);
+
+    User getCurrentUser();
+
+    User getCurrentUser(UserDetails userDetails);
 
 }

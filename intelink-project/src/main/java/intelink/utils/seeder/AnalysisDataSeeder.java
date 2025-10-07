@@ -3,9 +3,9 @@ package intelink.utils.seeder;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAnalysisResult;
 import intelink.models.enums.ShortUrlAnalysisEngine;
+import intelink.models.enums.ShortUrlAnalysisPlatformType;
 import intelink.models.enums.ShortUrlAnalysisStatus;
 import intelink.models.enums.ShortUrlAnalysisThreatType;
-import intelink.models.enums.ShortUrlAnalysisPlatformType;
 import intelink.repositories.ShortUrlAnalysisResultRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +29,13 @@ public class AnalysisDataSeeder {
         for (int i = 0; i < count; i++) {
             ShortUrl randomShortUrl = utils.getRandomElement(shortUrls);
             ShortUrlAnalysisStatus status = utils.getRandomAnalysisStatus();
-            ShortUrlAnalysisEngine engine = utils.getRandom().nextDouble() < 0.8 ? 
-                ShortUrlAnalysisEngine.GOOGLE_SAFE_BROWSING : 
-                ShortUrlAnalysisEngine.VIRUSTOTAL;
-            
-            ShortUrlAnalysisThreatType threatType = status == ShortUrlAnalysisStatus.SAFE ? 
-                ShortUrlAnalysisThreatType.NONE : utils.getRandomThreatType();
-            
+            ShortUrlAnalysisEngine engine = utils.getRandom().nextDouble() < 0.8 ?
+                    ShortUrlAnalysisEngine.GOOGLE_SAFE_BROWSING :
+                    ShortUrlAnalysisEngine.VIRUSTOTAL;
+
+            ShortUrlAnalysisThreatType threatType = status == ShortUrlAnalysisStatus.SAFE ?
+                    ShortUrlAnalysisThreatType.NONE : utils.getRandomThreatType();
+
             ShortUrlAnalysisPlatformType platformType = utils.getRandomPlatformType();
 
             ShortUrlAnalysisResult result = ShortUrlAnalysisResult.builder()

@@ -28,4 +28,7 @@ public class CreateShortUrlRequest {
     @Min(value = 1, message = "Available days must be positive")
     private Integer availableDays;
 
+    @Size(max = 32, message = "Custom code must not exceed 64 characters")
+    private String customCode;
+
 }
