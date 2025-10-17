@@ -26,4 +26,6 @@ public interface ISubscriptionService {
     Subscription createPendingSubscription(User user, RegisterSubscriptionRequest request);
 
     SubscriptionCostResponse calculateSubscriptionCost(User user, Long subscriptionPlanId, boolean applyImmediately);
+
+    Subscription createFreeSubscription(User user);
 }

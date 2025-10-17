@@ -321,4 +321,31 @@ public class SubscriptionService implements ISubscriptionService {
                 .startDate(startDate)
                 .build();
     }
+
+    @Transactional
+    public Subscription createFreeSubscription(User user) {
+        // Tìm FREE subscription plan
+        SubscriptionPlan freePlan = subscriptionPlanRepository.findByType(SubscriptionPlanType.FREE)
+                .orElseThrow(() -> new RuntimeException("FREE subscription plan not found. Please ensure FREE plan exists in database."));
+
+        // Kiểm tra xem user đã có active subscription chưa
+        Subscription existingSubscription = findCurrentActiveSubscription(user);
+        if (existingSubscription != null) {
+            log.warn("User {} already has an active subscription: {}", user.getUsername(), existingSubscription.getId());
+            return existingSubscription;
+        }
+
+        // Tạo FREE subscription
+        Subscription freeSubscription = Subscription.builder()
+                .user(user)
+                .subscriptionPlan(freePlan)
+                .status(SubscriptionStatus.ACTIVE)
+                .active(true)
+                .startsAt(Instant.now())
+                .expiresAt(null) // FREE plan không có ngày hết hạn
+                .build();
+
+        log.info("Creating FREE subscription for user: {}", user.getUsername());
+        return subscriptionRepository.save(freeSubscription);
+    }
 }
