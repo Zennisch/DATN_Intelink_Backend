@@ -1,7 +1,16 @@
 package intelink.models;
 
+import lombok.*;
+
 import java.time.Instant;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString
+@Builder
 public class ShortUrl {
     public Long id;
     public User user;

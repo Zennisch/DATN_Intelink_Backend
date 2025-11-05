@@ -2,8 +2,17 @@ package intelink.models;
 
 import intelink.models.enums.UserRole;
 import intelink.models.enums.UserStatus;
+import lombok.*;
+
 import java.time.Instant;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString
+@Builder
 public class User {
     public Long id;
     

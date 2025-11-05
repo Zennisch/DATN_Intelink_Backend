@@ -1,9 +1,18 @@
 package intelink.models;
 
 import intelink.models.enums.UserProvider;
+import lombok.*;
+
 import java.time.Instant;
 import java.util.UUID;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString
+@Builder
 public class OAuthAccount {
     public UUID id;
     public User user;

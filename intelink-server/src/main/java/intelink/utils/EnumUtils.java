@@ -1,4 +1,4 @@
-package intelink.models.utils;
+package intelink.utils;
 
 public class EnumUtils {
     public static <T extends Enum<T>> T fromString(Class<T> enumClass, String value) {
