@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ClickStatRepository extends JpaRepository<ClickStat, Long> {
+public interface    ClickStatRepository extends JpaRepository<ClickStat, Long> {
     Optional<ClickStat> findByShortUrlAndGranularityAndBucket(ShortUrl shortUrl, Granularity granularity, Instant bucket);
 
     List<ClickStat> findByShortUrlAndGranularityOrderByBucketAsc(ShortUrl shortUrl, Granularity granularity);
