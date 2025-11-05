@@ -2,6 +2,7 @@ package intelink.models;
 
 import intelink.models.enums.ClickStatus;
 import intelink.models.enums.IPVersion;
+import jakarta.persistence.PrePersist;
 import lombok.*;
 
 import java.time.Instant;
@@ -23,4 +24,11 @@ public class ClickLog {
     public String referrer;
     public ClickStatus status;
     public Instant timestamp;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.timestamp == null) {
+            this.timestamp = Instant.now();
+        }
+    }
 }

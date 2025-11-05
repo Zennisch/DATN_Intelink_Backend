@@ -1,5 +1,7 @@
 package intelink.models;
 
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.*;
 
 import java.time.Instant;
@@ -34,4 +36,15 @@ public class ShortUrl {
     
     public Instant createdAt;
     public Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = Instant.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
 }
