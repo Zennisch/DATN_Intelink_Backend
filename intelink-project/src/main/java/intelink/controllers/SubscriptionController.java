@@ -66,6 +66,8 @@ public class SubscriptionController {
                 request.getSubscriptionPlanId(), request.getApplyImmediately());
         BigDecimal amountToPay = costResponse.getAmountToPay();
 
+        log.info("Registering subscription for user: {}, planId: {}, applyImmediately: {}, amountToPay: {}",
+                user.getUsername(), request.getSubscriptionPlanId(), request.getApplyImmediately(), amountToPay);
         if (amountToPay.compareTo(BigDecimal.ZERO) <= 0) {
             amountToPay = BigDecimal.ONE;
             Payment payment = Payment.builder()

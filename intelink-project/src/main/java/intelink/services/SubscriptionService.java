@@ -255,8 +255,13 @@ public class SubscriptionService implements ISubscriptionService {
             if (applyImmediately) {
                 Instant now = Instant.now();
 
+                log.info("Amount to pay 1: {}", amountToPay);
                 SubscriptionPlan currentPlan = currentSubscription.getSubscriptionPlan();
-                if (!currentPlan.getType().equals(SubscriptionPlanType.FREE)) {
+
+                // Check if current plan is not FREE and has valid expiration date
+                if (!currentPlan.getType().equals(SubscriptionPlanType.FREE) &&
+                    currentSubscription.getExpiresAt() != null) {
+
                     Instant startsAt = currentSubscription.getStartsAt();
                     Instant expiresAt = currentSubscription.getExpiresAt();
                     long totalDays = ChronoUnit.DAYS.between(startsAt, expiresAt);
@@ -270,9 +275,11 @@ public class SubscriptionService implements ISubscriptionService {
                     }
 
                     amountToPay = planPrice.subtract(proRateValue);
+                    log.info("Amount to pay 2: {}", amountToPay);
                     if (amountToPay.compareTo(BigDecimal.ZERO) <= 0) {
                         creditBalance += amountToPay.abs().doubleValue();
                         amountToPay = BigDecimal.ZERO;
+                        log.info("Amount to pay 3: {}", amountToPay);
                         message = "Your credit balance will be increased after payment.";
                     } else {
                         message = "You will be charged immediately. Pro-rate value from current plan applied.";
@@ -283,22 +290,28 @@ public class SubscriptionService implements ISubscriptionService {
                         if (credit.compareTo(amountToPay) >= 0) {
                             creditBalance = credit.subtract(amountToPay).doubleValue();
                             amountToPay = BigDecimal.ZERO;
+                            log.info("Amount to pay 4: {}", amountToPay);
                             message = "Your credit balance has been used for this payment.";
                             requiresPayment = false;
                         } else {
                             amountToPay = amountToPay.subtract(credit);
+                            log.info("Amount to pay 5: {}", amountToPay);
                             creditBalance = 0.0;
                             message = "Your credit balance has been used. Remaining amount to pay: " + amountToPay;
                         }
                     }
                 } else {
-                    amountToPay = BigDecimal.ZERO;
-                    message = "Switching to a free plan. No payment required.";
+                    amountToPay = planPrice; // Full price for FREE plan upgrade
+                    log.info("Amount to pay 6: {}", amountToPay);
+                    message = "Upgrading from free plan. Full price applies.";
                 }
                 startDate = now;
             } else {
-                startDate = currentSubscription.getExpiresAt();
-                message = "Current active subscription will expire on " + currentSubscription.getExpiresAt();
+                startDate = currentSubscription.getExpiresAt() != null ?
+                          currentSubscription.getExpiresAt() : Instant.now();
+                message = currentSubscription.getExpiresAt() != null ?
+                         "Current active subscription will expire on " + currentSubscription.getExpiresAt() :
+                         "Current subscription has no expiration. New subscription will start immediately.";
             }
         } else {
             startDate = Instant.now();
@@ -320,5 +333,32 @@ public class SubscriptionService implements ISubscriptionService {
                 .message(message)
                 .startDate(startDate)
                 .build();
+    }
+
+    @Transactional
+    public Subscription createFreeSubscription(User user) {
+        // Tìm FREE subscription plan
+        SubscriptionPlan freePlan = subscriptionPlanRepository.findByType(SubscriptionPlanType.FREE)
+                .orElseThrow(() -> new RuntimeException("FREE subscription plan not found. Please ensure FREE plan exists in database."));
+
+        // Kiểm tra xem user đã có active subscription chưa
+        Subscription existingSubscription = findCurrentActiveSubscription(user);
+        if (existingSubscription != null) {
+            log.warn("User {} already has an active subscription: {}", user.getUsername(), existingSubscription.getId());
+            return existingSubscription;
+        }
+
+        // Tạo FREE subscription
+        Subscription freeSubscription = Subscription.builder()
+                .user(user)
+                .subscriptionPlan(freePlan)
+                .status(SubscriptionStatus.ACTIVE)
+                .active(true)
+                .startsAt(Instant.now())
+                .expiresAt(null) // FREE plan không có ngày hết hạn
+                .build();
+
+        log.info("Creating FREE subscription for user: {}", user.getUsername());
+        return subscriptionRepository.save(freeSubscription);
     }
 }

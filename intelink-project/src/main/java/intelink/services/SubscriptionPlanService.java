@@ -79,4 +79,10 @@ public class SubscriptionPlanService implements ISubscriptionPlanService {
         plan.setActive(!plan.getActive());
         return repository.save(plan);
     }
+
+    public SubscriptionPlan findByType(String type) {
+        SubscriptionPlanType planType = SubscriptionPlanType.fromString(type);
+        return repository.findByType(planType)
+                .orElseThrow(() -> new RuntimeException("Subscription plan not found with type: " + type));
+    }
 }
