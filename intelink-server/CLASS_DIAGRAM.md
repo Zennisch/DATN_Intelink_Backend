@@ -32,8 +32,8 @@ classDiagram
 
     class IPVersion {
         <<enumeration>>
-        IPv4
-        IPv6
+        IPV4
+        IPV6
         UNKNOWN
     }
 
@@ -73,6 +73,13 @@ classDiagram
         LANGUAGE
 
         CUSTOM
+    }
+
+    class VerificationTokenType {
+        <<enumeration>>
+        EMAIL_VERIFICATION
+        PASSWORD_RESET
+        OAUTH_STATE
     }
 
     class User {
@@ -115,6 +122,18 @@ classDiagram
 
         createdAt: Instant
         updatedAt: Instant
+    }
+
+    class VerificationToken {
+        id: UUID
+        user: User
+
+        token: String
+        type: VerificationTokenType
+        used: Boolean
+
+        expiresAt: Instant
+        createdAt: Instant
     }
 
     class ShortUrl {
@@ -183,6 +202,7 @@ classDiagram
     }
 
     User o-- OAuthAccount
+    User o-- VerificationToken
     User o-- ShortUrl
     ShortUrl o-- ShortUrlAccessControl
     ShortUrl o-- ClickLog
@@ -192,6 +212,7 @@ classDiagram
     User --> UserRole
     User --> UserStatus
     OAuthAccount --> UserProvider
+    VerificationToken --> VerificationTokenType
     ShortUrlAccessControl --> AccessControlType
     ClickLog --> IPVersion
     ClickLog --> ClickStatus

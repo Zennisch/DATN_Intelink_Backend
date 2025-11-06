@@ -39,7 +39,8 @@ public class VerificationToken {
     private VerificationTokenType type;
 
     @Column(name = "used", nullable = false)
-    private Boolean used;
+    @Builder.Default
+    private Boolean used = false;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
