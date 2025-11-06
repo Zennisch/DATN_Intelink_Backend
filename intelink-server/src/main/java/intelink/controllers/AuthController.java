@@ -1,6 +1,7 @@
 package intelink.controllers;
 
 import intelink.dto.auth.*;
+import intelink.helper.AuthToken;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.services.OAuthAccountService;
@@ -58,6 +59,14 @@ public class AuthController {
         userService.resetPassword(token, request);
         String msg = "Password reset successfully. You can now log in with your new password.";
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
+        return ResponseEntity.ok(resp);
+    }
+
+    // ========== Login
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        AuthToken obj = userService.login(request);
+        AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
 }

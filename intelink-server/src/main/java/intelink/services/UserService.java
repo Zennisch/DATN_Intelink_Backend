@@ -1,7 +1,10 @@
 package intelink.services;
 
+import intelink.configs.securities.JwtTokenProvider;
+import intelink.dto.auth.LoginRequest;
 import intelink.dto.auth.RegisterRequest;
 import intelink.dto.auth.ResetPasswordRequest;
+import intelink.helper.AuthToken;
 import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserRole;
@@ -12,11 +15,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -25,6 +32,8 @@ import java.util.Optional;
 @Slf4j
 public class UserService {
 
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final VerificationTokenService verificationTokenService;
@@ -181,5 +190,38 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
         log.info("UserService.resetPassword: Password reset for user ID: {}", user.getId());
+    }
+
+    @Transactional
+    public AuthToken login(LoginRequest loginRequest) {
+        // 0. Extract fields
+        String username = loginRequest.username();
+        String password = loginRequest.password();
+
+        // 1. Authenticate user
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+
+        // 2. Check if user exists for this username
+        Optional<User> userOpt = userRepository.findByUsernameOrEmail(username, username);
+        if (userOpt.isEmpty()) {
+            throw new BadCredentialsException("Invalid username or password");
+        }
+
+        // 3. If exists, check if email is verified for local users
+        User user = userOpt.get();
+        if (!user.getVerified()) {
+            throw new BadCredentialsException("Please verify your email before logging in");
+        }
+
+        // 4. Update last login time
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
+
+        // 5. Generate JWT token
+        String token = jwtTokenProvider.generateToken(authentication.getName());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(authentication.getName());
+        Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
+
+        return new AuthToken(user, token, refreshToken, expiresAt);
     }
 }
