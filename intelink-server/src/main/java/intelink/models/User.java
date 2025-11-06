@@ -24,64 +24,64 @@ public class User {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    public Long id;
+    private Long id;
 
     @Size(min = 6, max = 32)
     @Column(name = "username", nullable = false, unique = true)
-    public String username;
+    private String username;
 
     @Email
     @Column(name = "email", nullable = false, unique = true, length = 128)
-    public String email;
+    private String email;
 
     @Column(name = "password", nullable = false)
     @ToString.Exclude
-    public String password;
+    private String password;
 
     @Column(name = "verified", nullable = false)
     @Builder.Default
-    public Boolean verified = false;
+    private Boolean verified = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     @Builder.Default
-    public UserRole role = UserRole.USER;
+    private UserRole role = UserRole.USER;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
-    public UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status = UserStatus.ACTIVE;
 
     @Column(name = "last_login_at")
-    public Instant lastLoginAt;
+    private Instant lastLoginAt;
 
     @Column(name = "profile_name", length = 64)
-    public String profileName;
+    private String profileName;
 
     @Column(name = "profile_picture_url", length = 256)
-    public String profilePictureURL;
+    private String profilePictureURL;
 
     @Column(name = "total_short_urls", nullable = false)
     @Builder.Default
-    public Integer totalShortUrls = 0;
+    private Integer totalShortUrls = 0;
 
     @Column(name = "total_clicks", nullable = false)
     @Builder.Default
-    public Long totalClicks = 0L;
+    private Long totalClicks = 0L;
 
     @Column(name = "balance", nullable = false)
     @Builder.Default
-    public Double balance = 0.0;
+    private Double balance = 0.0;
 
     @Column(name = "currency", nullable = false, length = 3)
     @Builder.Default
-    public String currency = "VND";
+    private String currency = "VND";
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    public Instant createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    public Instant updatedAt;
+    private Instant updatedAt;
 
     @PrePersist
     protected void onCreate() {

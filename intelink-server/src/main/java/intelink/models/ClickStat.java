@@ -23,31 +23,31 @@ public class ClickStat {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    public UUID id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_url_id", nullable = false)
-    public ShortUrl shortUrl;
+    private ShortUrl shortUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "granularity", nullable = false)
-    public Granularity granularity;
+    private Granularity granularity;
 
     @Column(name = "bucket_start", nullable = false)
-    public Instant bucketStart;
+    private Instant bucketStart;
 
     @Column(name = "bucket_end", nullable = false)
-    public Instant bucketEnd;
+    private Instant bucketEnd;
 
     @Column(name = "total_clicks", nullable = false)
     @Builder.Default
-    public Long totalClicks = 0L;
+    private Long totalClicks = 0L;
 
     @Column(name = "allowed_clicks", nullable = false)
     @Builder.Default
-    public Long allowedClicks = 0L;
+    private Long allowedClicks = 0L;
 
     @Column(name = "blocked_clicks", nullable = false)
     @Builder.Default
-    public Long blockedClicks = 0L;
+    private Long blockedClicks = 0L;
 }

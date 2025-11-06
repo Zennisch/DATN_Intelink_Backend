@@ -22,28 +22,28 @@ public class DimensionStat {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    public UUID id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_url_id", nullable = false)
-    public ShortUrl shortUrl;
+    private ShortUrl shortUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    public DimensionType type;
+    private DimensionType type;
 
     @Column(name = "value", nullable = false, length = 512)
-    public String value;
+    private String value;
 
     @Column(name = "total_clicks", nullable = false)
     @Builder.Default
-    public Long totalClicks = 0L;
+    private Long totalClicks = 0L;
 
     @Column(name = "allowed_clicks", nullable = false)
     @Builder.Default
-    public Long allowedClicks = 0L;
+    private Long allowedClicks = 0L;
 
     @Column(name = "blocked_clicks", nullable = false)
     @Builder.Default
-    public Long blockedClicks = 0L;
+    private Long blockedClicks = 0L;
 }

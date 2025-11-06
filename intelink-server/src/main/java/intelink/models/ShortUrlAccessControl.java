@@ -18,16 +18,16 @@ public class ShortUrlAccessControl {
 
     @Id
     @Column(name = "id", nullable = false)
-    public Long id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_url_id", nullable = false)
-    public ShortUrl shortUrl;
+    private ShortUrl shortUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    public AccessControlType type;
+    private AccessControlType type;
 
     @Column(name = "value", nullable = false, length = 2048)
-    public String value;
+    private String value;
 }

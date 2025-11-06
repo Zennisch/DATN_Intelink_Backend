@@ -21,58 +21,58 @@ public class ShortUrl {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    public Long id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    public User user;
+    private User user;
 
     @Column(name = "title", length = 32)
-    public String title;
+    private String title;
 
     @Column(name = "description")
-    public String description;
+    private String description;
 
     @Column(name = "original_url", nullable = false, length = 2048)
-    public String originalUrl;
+    private String originalUrl;
 
     @Column(name = "short_code", nullable = false, unique = true, length = 16)
-    public String shortCode;
+    private String shortCode;
 
     @Column(name = "enabled", nullable = false)
     @Builder.Default
-    public Boolean enabled = true;
+    private Boolean enabled = true;
 
     @Column(name = "max_usage")
-    public Integer maxUsage;
+    private Integer maxUsage;
 
     @Column(name = "expires_at")
-    public Instant expiresAt;
+    private Instant expiresAt;
 
     @Column(name = "deleted_at")
-    public Instant deletedAt;
+    private Instant deletedAt;
 
     @Column(name = "total_clicks", nullable = false)
     @Builder.Default
-    public Long totalClicks = 0L;
+    private Long totalClicks = 0L;
 
     @Column(name = "allowed_clicks", nullable = false)
     @Builder.Default
-    public Long allowedClicks = 0L;
+    private Long allowedClicks = 0L;
 
     @Column(name = "blocked_clicks", nullable = false)
     @Builder.Default
-    public Long blockedClicks = 0L;
+    private Long blockedClicks = 0L;
 
     @Column(name = "unique_clicks", nullable = false)
     @Builder.Default
-    public Long uniqueClicks = 0L;
+    private Long uniqueClicks = 0L;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    public Instant createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    public Instant updatedAt;
+    private Instant updatedAt;
 
     @PrePersist
     protected void onCreate() {
