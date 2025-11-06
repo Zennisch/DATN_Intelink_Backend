@@ -90,4 +90,12 @@ public class AuthController {
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
     }
+
+    // ========== OAuth Login
+    @GetMapping("/oauth/callback")
+    public ResponseEntity<?> oAuthCallback(@RequestParam String token) {
+        AuthToken obj = oAuthAccountService.callback(token);
+        AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
+        return ResponseEntity.ok(resp);
+    }
 }

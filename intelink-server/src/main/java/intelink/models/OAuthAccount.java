@@ -42,7 +42,7 @@ public class OAuthAccount {
     @Column(name = "provider_email", length = 256)
     private String providerEmail;
 
-    @Column(name = "access_token", nullable = false, length = 2048)
+    @Column(name = "access_token", length = 2048)
     private String accessToken;
 
     @Column(name = "refresh_token", length = 2048)
