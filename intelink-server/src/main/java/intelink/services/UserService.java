@@ -10,9 +10,13 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,20 @@ public class UserService {
     @Value("${app.url.reset-password}")
     private String resetPasswordEmailUrlTemplate;
 
+    private void sendVerificationEmail(User user) throws MessagingException {
+        VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.EMAIL_VERIFICATION, 24);
+        String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
+        emailService.sendVerificationEmail(user.getEmail(), verificationLink);
+        log.info("[UserService] Verification email sent to {}", user.getEmail());
+    }
+
+    @Scheduled(cron = "0 0 0 * * *")
+    public void cleanupUnverifiedUsers() {
+        LocalDateTime threshold = LocalDateTime.now().minusHours(24);
+        int deletedCount = userRepository.deleteUnverifiedUsersBefore(threshold);
+        log.info("[UserService] Cleaned up {} unverified users", deletedCount);
+    }
+
     @Transactional
     public User register(RegisterRequest registerRequest, UserRole role) throws MessagingException {
         // 0. Extract fields
@@ -39,27 +57,45 @@ public class UserService {
         String password = registerRequest.password();
 
         // 1. Validate input
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByUsernameAndVerifiedTrue(username)) {
             throw new IllegalArgumentException("Username already exists");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmailAndVerifiedTrue(email)) {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        // 2. Create user
+        // 2. Check unverified users
+        Optional<User> existingUserByEmail = userRepository.findByEmailAndVerifiedFalse(email);
+        Optional<User> existingUserByUsername = userRepository.findByUsernameAndVerifiedFalse(username);
+
+        // Scenario: Both email AND username match same unverified user -> Resend verification
+        if (existingUserByEmail.isPresent() && existingUserByUsername.isPresent()
+                && existingUserByEmail.get().getId().equals(existingUserByUsername.get().getId())) {
+            User user = existingUserByEmail.get();
+            user.setPassword(passwordEncoder.encode(password));
+            userRepository.save(user);
+            sendVerificationEmail(user);
+            return user;
+        }
+
+        // Scenario: Email hoặc username bị chiếm bởi user chưa verify -> Từ chối
+        if (existingUserByEmail.isPresent()) {
+            throw new IllegalArgumentException("Email is pending verification. Please verify or contact support.");
+        }
+        if (existingUserByUsername.isPresent()) {
+            throw new IllegalArgumentException("Username is pending verification. Please choose another username.");
+        }
+
+        // 3. Scenario: No matches -> Create new user
         User user = User.builder().username(username).email(email).password(passwordEncoder.encode(password)).role(role).build();
 
         User savedUser = userRepository.save(user);
-        log.info("UserService.create: User created with ID: {}", savedUser.getId());
+        log.info("[UserService] User created with ID: {}", savedUser.getId());
 
         // 3. Create FREE subscription for new user
 
         // 4. Generate email verification token and send email
-        VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.EMAIL_VERIFICATION, 24);
-
-        String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
-        emailService.sendVerificationEmail(user.getEmail(), verificationLink);
-        log.info("UserService.create: Verification email sent to {}", user.getEmail());
+        sendVerificationEmail(user);
 
         return savedUser;
     }
