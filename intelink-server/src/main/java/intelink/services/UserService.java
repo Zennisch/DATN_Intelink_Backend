@@ -125,4 +125,25 @@ public class UserService {
         userRepository.save(user);
         log.info("[UserService] Email verified for user ID: {}", user.getId());
     }
+
+    @Transactional
+    public void forgotPassword(String email) throws MessagingException {
+        // 1. Check if user with the email exists
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            // Do not reveal if the email exists for security reasons
+            log.debug("[UserService] Password reset requested for non-existing email: {}", email);
+            return;
+        }
+        log.debug("[UserService] Password reset requested for email: {}", email);
+
+        // 2. If exists, generate password reset token
+        User user = userOpt.get();
+        VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.PASSWORD_RESET, 1);
+        String resetLink = resetPasswordEmailUrlTemplate.replace("{token}", verificationToken.getToken());
+
+        // 3. Send password reset email
+        emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
+        log.info("[UserService] Password reset email sent to {}", user.getEmail());
+    }
 }
