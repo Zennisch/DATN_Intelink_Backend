@@ -80,4 +80,14 @@ public class AuthController {
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
+
+    // ========== Logout
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
+        userService.logout(user);
+        String msg = "Logged out successfully";
+        AuthInfoResponse resp = new AuthInfoResponse(true, msg);
+        return ResponseEntity.ok(resp);
+    }
 }

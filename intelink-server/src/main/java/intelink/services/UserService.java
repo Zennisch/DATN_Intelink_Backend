@@ -242,6 +242,14 @@ public class UserService {
     }
 
     @Transactional
+    public void logout(User user) {
+        // For JWT, logout is typically handled on the client side by deleting the token.
+        // Optionally, you can implement token blacklisting here if needed.
+        SecurityContextHolder.clearContext();
+        log.info("UserService.logout: User ID {} logged out", user.getId());
+    }
+
+    @Transactional
     public User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         log.debug("UserService.getCurrentUser: Username from context: {}", username);
