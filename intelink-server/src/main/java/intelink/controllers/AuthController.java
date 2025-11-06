@@ -91,6 +91,14 @@ public class AuthController {
         return ResponseEntity.ok(resp);
     }
 
+    // ========== Get User Profile
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
+        UserProfileResponse resp = userService.getProfile(user);
+        return ResponseEntity.ok(resp);
+    }
+
     // ========== OAuth Login
     @GetMapping("/oauth/callback")
     public ResponseEntity<?> oAuthCallback(@RequestParam String token) {

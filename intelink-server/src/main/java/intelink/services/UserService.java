@@ -4,6 +4,7 @@ import intelink.configs.securities.JwtTokenProvider;
 import intelink.dto.auth.LoginRequest;
 import intelink.dto.auth.RegisterRequest;
 import intelink.dto.auth.ResetPasswordRequest;
+import intelink.dto.auth.UserProfileResponse;
 import intelink.helper.AuthToken;
 import intelink.models.User;
 import intelink.models.VerificationToken;
@@ -14,20 +15,17 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -239,6 +237,11 @@ public class UserService {
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
         return new AuthToken(user, token, refreshToken, expiresAt);
+    }
+
+    @Transactional
+    public UserProfileResponse getProfile(User user) {
+        return new UserProfileResponse(user);
     }
 
     @Transactional
