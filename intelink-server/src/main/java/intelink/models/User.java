@@ -6,8 +6,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import net.minidev.json.annotate.JsonIgnore;
 
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,11 +22,27 @@ import java.time.Instant;
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<OAuthAccount> oauthAccounts;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<VerificationToken> verificationTokens;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    private List<ShortUrl> shortUrls;
 
     @Size(min = 6, max = 32)
     @Column(name = "username", nullable = false, unique = true)
