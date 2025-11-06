@@ -1,9 +1,6 @@
 package intelink.controllers;
 
-import intelink.dto.auth.AuthInfoResponse;
-import intelink.dto.auth.ForgotPasswordRequest;
-import intelink.dto.auth.RegisterRequest;
-import intelink.dto.auth.RegisterResponse;
+import intelink.dto.auth.*;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.services.OAuthAccountService;
@@ -48,6 +45,18 @@ public class AuthController {
         String email = request.email();
         userService.forgotPassword(email);
         String msg = "The password reset link has been sent to " + email;
+        AuthInfoResponse resp = new AuthInfoResponse(true, msg);
+        return ResponseEntity.ok(resp);
+    }
+
+    // ========== Reset Password
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestParam("token") String token,
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        userService.resetPassword(token, request);
+        String msg = "Password reset successfully. You can now log in with your new password.";
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
     }

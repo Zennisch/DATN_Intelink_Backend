@@ -1,6 +1,7 @@
 package intelink.services;
 
 import intelink.dto.auth.RegisterRequest;
+import intelink.dto.auth.ResetPasswordRequest;
 import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserRole;
@@ -145,5 +146,40 @@ public class UserService {
         // 3. Send password reset email
         emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
         log.info("[UserService] Password reset email sent to {}", user.getEmail());
+    }
+
+    @Transactional
+    public void resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
+        // 1. Validate token and passwords
+        if (token == null || token.isEmpty()) {
+            throw new BadCredentialsException("Invalid password reset token");
+        }
+
+        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, VerificationTokenType.PASSWORD_RESET);
+        if (tokenOpt.isEmpty()) {
+            throw new BadCredentialsException("Invalid or expired password reset token");
+        }
+
+        // 2. Check if token already used
+        if (tokenOpt.get().getUsed()) {
+            throw new BadCredentialsException("Password reset token has already been used");
+        }
+
+        String password = resetPasswordRequest.password();
+        String confirmPassword = resetPasswordRequest.confirmPassword();
+        if (!password.equals(confirmPassword)) {
+            throw new BadCredentialsException("New password and confirmation do not match");
+        }
+
+        // 3. Set token as used
+        VerificationToken verificationToken = tokenOpt.get();
+        User user = verificationToken.getUser();
+        verificationTokenService.setTokenAsUsed(verificationToken);
+        log.info("UserService.resetPassword: Password reset token marked as used for user ID: {}", user.getId());
+
+        // 4. Update user's password
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
+        log.info("UserService.resetPassword: Password reset for user ID: {}", user.getId());
     }
 }
