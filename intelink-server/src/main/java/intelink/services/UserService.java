@@ -14,14 +14,20 @@ import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -223,5 +229,36 @@ public class UserService {
         Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
 
         return new AuthToken(user, token, refreshToken, expiresAt);
+    }
+
+    @Transactional
+    public AuthToken refreshToken(User user) {
+        String username = user.getUsername();
+        String token = jwtTokenProvider.generateToken(username);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+        Long expiresAt = jwtTokenProvider.getExpirationTimeFromToken(token);
+
+        return new AuthToken(user, token, refreshToken, expiresAt);
+    }
+
+    @Transactional
+    public User getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.debug("UserService.getCurrentUser: Username from context: {}", username);
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new UsernameNotFoundException(username);
+        }
+        return userOpt.get();
+    }
+
+    @Transactional
+    public User getCurrentUser(UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new UsernameNotFoundException(username);
+        }
+        return userOpt.get();
     }
 }

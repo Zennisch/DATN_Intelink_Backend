@@ -11,6 +11,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -66,6 +68,15 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         AuthToken obj = userService.login(request);
+        AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
+        return ResponseEntity.ok(resp);
+    }
+
+    // ========== Refresh Token
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getCurrentUser(userDetails);
+        AuthToken obj = userService.refreshToken(user);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
