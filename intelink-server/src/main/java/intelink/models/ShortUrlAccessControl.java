@@ -1,5 +1,6 @@
 package intelink.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.enums.AccessControlType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,6 +23,8 @@ public class ShortUrlAccessControl {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_url_id", nullable = false)
+    @ToString.Exclude
+    @JsonIgnore
     private ShortUrl shortUrl;
 
     @Enumerated(EnumType.STRING)

@@ -1,5 +1,6 @@
 package intelink.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.enums.ClickStatus;
 import intelink.models.enums.IPVersion;
 import jakarta.persistence.*;
@@ -26,6 +27,8 @@ public class ClickLog {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "short_url_id", nullable = false)
+    @ToString.Exclude
+    @JsonIgnore
     private ShortUrl shortUrl;
 
     @Enumerated(EnumType.STRING)

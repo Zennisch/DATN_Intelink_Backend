@@ -1,12 +1,12 @@
 package intelink.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import intelink.models.enums.UserRole;
 import intelink.models.enums.UserStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import net.minidev.json.annotate.JsonIgnore;
 
 import java.time.Instant;
 import java.util.List;
