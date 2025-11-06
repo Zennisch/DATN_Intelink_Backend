@@ -2,6 +2,9 @@ package intelink.repositories;
 
 import intelink.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -19,11 +22,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
 
-    boolean existsByEmail(String email);
-
     boolean existsByUsernameAndVerifiedTrue(String username);
 
     boolean existsByEmailAndVerifiedTrue(String email);
 
-    int deleteUnverifiedUsersBefore(LocalDateTime threshold);
+    @Modifying
+    @Query("DELETE FROM User u WHERE u.verified = false AND u.createdAt < :threshold")
+    int deleteUnverifiedUsersBefore(@Param("threshold") LocalDateTime threshold);
 }

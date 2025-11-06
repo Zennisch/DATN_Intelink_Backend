@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,4 +101,28 @@ public class UserService {
         return savedUser;
     }
 
+    @Transactional
+    public void verifyEmail(String token) {
+        // 1. Validate token
+        Optional<VerificationToken> tokenOpt = verificationTokenService.findValidToken(token, VerificationTokenType.EMAIL_VERIFICATION);
+        if (tokenOpt.isEmpty()) {
+            throw new BadCredentialsException("Invalid or expired verification token");
+        }
+
+        // 2. Check if token already used
+        if (tokenOpt.get().getUsed()) {
+            throw new BadCredentialsException("Verification token has already been used");
+        }
+
+        // 3. Set token as used
+        VerificationToken verificationToken = tokenOpt.get();
+        User user = verificationToken.getUser();
+        verificationTokenService.setTokenAsUsed(verificationToken);
+        log.info("[UserService] Verification token marked as used for user ID: {}", user.getId());
+
+        // 4. Mark user's email as verified
+        user.setVerified(true);
+        userRepository.save(user);
+        log.info("[UserService] Email verified for user ID: {}", user.getId());
+    }
 }
