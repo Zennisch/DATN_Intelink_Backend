@@ -2,7 +2,9 @@ package intelink.configs;
 
 import intelink.configs.securities.JwtAuthenticationEntryPoint;
 import intelink.configs.securities.JwtAuthenticationFilter;
+import intelink.configs.securities.OAuth2AuthenticationSuccessHandler;
 import intelink.models.enums.UserRole;
+import intelink.services.OAuthAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +34,11 @@ public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final OAuthAccountService oAuthAccountService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+    private final String ADMIN = UserRole.ADMIN.name();
+    private final String USER = UserRole.USER.name();
 
     @Value("${app.security.password-encryption-strength}")
     private int passwordStrength;
@@ -72,6 +79,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -83,6 +92,11 @@ public class SecurityConfig {
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuthAccountService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
@@ -91,10 +105,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/{shortCode}").permitAll()
                         .requestMatchers(HttpMethod.POST, "/{shortCode}/unlock").permitAll()
 
-                        .requestMatchers("/api/v1/urls/**").hasAnyRole(UserRole.ADMIN.toString(), UserRole.USER.toString())
-                        .requestMatchers("/api/v1/statistics/**").hasAnyRole(UserRole.ADMIN.toString(), UserRole.USER.toString())
+                        .requestMatchers("/api/v1/urls/**").hasAnyRole(ADMIN, USER)
+                        .requestMatchers("/api/v1/statistics/**").hasAnyRole(ADMIN, USER)
 
-                        .requestMatchers("/api/v1/admin/**").hasRole(UserRole.ADMIN.toString())
+                        .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
 
                         .anyRequest().authenticated());
 
