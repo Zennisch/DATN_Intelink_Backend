@@ -1,7 +1,7 @@
 package intelink.models.enums;
 
 public enum IPVersion {
-    IPv4,
-    IPv6,
+    IPV4,
+    IPV6,
     UNKNOWN
 }
