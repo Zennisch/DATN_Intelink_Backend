@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,4 +28,12 @@ public interface    ClickStatRepository extends JpaRepository<ClickStat, Long> {
     List<ClickStat> findByShortUrlAndGranularityAndBucketGreaterThanEqualAndBucketLessThanEqualOrderByBucketAsc(
             ShortUrl shortUrl, Granularity granularity, Instant from, Instant to
     );
+
+    List<ClickStat> findByGranularityAndBucketBetween(Granularity granularity, Instant bucketAfter, Instant bucketBefore);
+
+    List<ClickStat> findByShortUrl_ShortCodeInAndGranularityAndBucketBetween(Collection<String> shortUrlShortCodes, Granularity granularity, Instant bucketAfter, Instant bucketBefore);
+
+    List<ClickStat> findByShortUrl_ShortCodeInAndBucketBetween(Collection<String> shortUrlShortCodes, Instant bucketAfter, Instant bucketBefore);
+
+    List<ClickStat> findByBucketBetween(Instant bucketAfter, Instant bucketBefore);
 }
