@@ -6,6 +6,7 @@ import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.services.OAuthAccountService;
 import intelink.services.UserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/v1/auth")
+@SecurityRequirement(name = "bearerAuth")
 public class AuthController {
 
     private final UserService userService;
