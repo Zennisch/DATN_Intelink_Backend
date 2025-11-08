@@ -1,4 +1,4 @@
-package intelink.repositories;
+package intelink.modules.user;
 
 import intelink.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;

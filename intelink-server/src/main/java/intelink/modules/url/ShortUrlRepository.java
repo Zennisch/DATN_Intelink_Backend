@@ -1,4 +1,4 @@
-package intelink.repositories;
+package intelink.modules.url;
 
 import intelink.models.ShortUrl;
 import org.springframework.data.jpa.repository.JpaRepository;

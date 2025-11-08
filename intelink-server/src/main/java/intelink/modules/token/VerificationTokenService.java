@@ -1,9 +1,8 @@
-package intelink.services;
+package intelink.modules.token;
 
 import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.VerificationTokenType;
-import intelink.repositories.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

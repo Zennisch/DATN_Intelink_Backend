@@ -1,6 +1,5 @@
-package intelink.services;
+package intelink.modules.url;
 
-import intelink.repositories.ShortUrlRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

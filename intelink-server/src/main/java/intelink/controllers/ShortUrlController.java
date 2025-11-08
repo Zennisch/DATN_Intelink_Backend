@@ -1,7 +1,7 @@
 package intelink.controllers;
 
-import intelink.services.ShortUrlService;
-import intelink.services.UserService;
+import intelink.modules.url.ShortUrlService;
+import intelink.modules.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,7 +1,7 @@
 package intelink.configs.securities;
 
 import intelink.models.User;
-import intelink.repositories.UserRepository;
+import intelink.modules.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;

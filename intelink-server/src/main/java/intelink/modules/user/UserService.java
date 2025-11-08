@@ -1,4 +1,4 @@
-package intelink.services;
+package intelink.modules.user;
 
 import intelink.configs.securities.JwtTokenProvider;
 import intelink.dto.auth.LoginRequest;
@@ -10,7 +10,8 @@ import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserRole;
 import intelink.models.enums.VerificationTokenType;
-import intelink.repositories.UserRepository;
+import intelink.modules.utils.EmailService;
+import intelink.modules.token.VerificationTokenService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
