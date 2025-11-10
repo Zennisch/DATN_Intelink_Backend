@@ -1,10 +1,7 @@
 // java
 package intelink.services;
 
-import intelink.dto.response.stat.AggregateByCountryResponse;
-import intelink.dto.response.stat.CountryStat;
-import intelink.dto.response.stat.TimeSeriesAggregateResponse;
-import intelink.dto.response.stat.TimeSeriesPoint;
+import intelink.dto.response.stat.*;
 import intelink.models.ClickStat;
 import intelink.models.DimensionStat;
 import intelink.models.enums.DimensionType;
@@ -212,5 +209,76 @@ public class AggregateStatisticsService {
                 totalViews,
                 points
         );
+    }
+
+    public AggregateByDimensionResponse getByDimension(String shortCodesCsv, String from, String to, Integer limit, DimensionType type) {
+        List<String> shortCodes = parseShortCodes(shortCodesCsv);
+
+        // parse date range (use start for from, end for to). If both null, use lifetime DimensionStat
+        Instant fromInst = parseToInstantStart(from);
+        Instant toInst = parseToInstantEnd(to);
+
+        Map<String, Long> agg = new HashMap<>();
+
+        if (fromInst == null && toInst == null) {
+            // lifetime totals stored in DimensionStat for the requested type
+            List<DimensionStat> stats;
+            if (shortCodes == null) {
+                stats = dimensionStatRepository.findByType(type);
+            } else {
+                stats = dimensionStatRepository.findByTypeAndShortUrl_ShortCodeIn(type, shortCodes);
+            }
+
+            for (DimensionStat s : stats) {
+                String val = s.getValue() == null ? "UNKNOWN" : s.getValue();
+                agg.put(val, agg.getOrDefault(val, 0L) + s.getTotalClicks());
+            }
+        } else {
+            // ensure both bounds present
+            Instant now = Instant.now();
+            toInst = (toInst == null) ? now : toInst;
+            fromInst = (fromInst == null) ? toInst.minus(29, ChronoUnit.DAYS) : fromInst;
+
+            List<ClickStat> clickStats;
+            if (shortCodes == null) {
+                clickStats = clickStatRepository.findByBucketBetween(fromInst, toInst);
+            } else {
+                clickStats = clickStatRepository.findByShortUrl_ShortCodeInAndBucketBetween(shortCodes, fromInst, toInst);
+            }
+
+            Map<String, Long> clicksByShortCode = new HashMap<>();
+            for (ClickStat cs : clickStats) {
+                if (cs.getShortUrl() == null || cs.getShortUrl().getShortCode() == null) continue;
+                String sc = cs.getShortUrl().getShortCode();
+                clicksByShortCode.merge(sc, cs.getTotalClicks(), Long::sum);
+            }
+
+            if (!clicksByShortCode.isEmpty()) {
+                List<String> shortCodesInClicks = new ArrayList<>(clicksByShortCode.keySet());
+                List<DimensionStat> dimStats = dimensionStatRepository.findByTypeAndShortUrl_ShortCodeIn(type, shortCodesInClicks);
+
+                Map<String, String> shortCodeToValue = new HashMap<>();
+                for (DimensionStat ds : dimStats) {
+                    if (ds.getShortUrl() == null || ds.getShortUrl().getShortCode() == null) continue;
+                    shortCodeToValue.put(ds.getShortUrl().getShortCode(), ds.getValue() == null ? "UNKNOWN" : ds.getValue());
+                }
+
+                for (Map.Entry<String, Long> e : clicksByShortCode.entrySet()) {
+                    String sc = e.getKey();
+                    Long clicks = e.getValue();
+                    String val = shortCodeToValue.getOrDefault(sc, "UNKNOWN");
+                    agg.merge(val, clicks, Long::sum);
+                }
+            }
+        }
+
+        int effectiveLimit = limit != null ? limit : 10;
+        List<DimensionStatDto> list = agg.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue(Comparator.reverseOrder()))
+                .limit(effectiveLimit)
+                .map(e -> new DimensionStatDto(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
+
+        return new AggregateByDimensionResponse(type.name(), effectiveLimit, from, to, list);
     }
 }
