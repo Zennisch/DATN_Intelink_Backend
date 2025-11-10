@@ -18,4 +18,6 @@ public interface ISubscriptionPlanService {
     void deleteById(Long id);
 
     SubscriptionPlan toggleStatus(Long id);
+
+    SubscriptionPlan findByType(String type);
 }

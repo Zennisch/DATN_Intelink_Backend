@@ -76,7 +76,17 @@ public class UserService implements IUserService {
         User savedUser = userRepository.save(user);
         log.info("UserService.create: User created with ID: {}", savedUser.getId());
 
-        // 3. Generate email verification token and send email
+        // 3. Create FREE subscription for new user
+        try {
+            subscriptionService.createFreeSubscription(savedUser);
+            log.info("UserService.create: FREE subscription created for user ID: {}", savedUser.getId());
+        } catch (Exception e) {
+            log.error("UserService.create: Failed to create FREE subscription for user ID: {}. Error: {}", 
+                      savedUser.getId(), e.getMessage(), e);
+            // Không throw exception để không ảnh hưởng đến quá trình đăng ký
+        }
+
+        // 4. Generate email verification token and send email
         VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.EMAIL_VERIFICATION, 24);
 
         String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
