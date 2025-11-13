@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+src/main/resources/geoLite2/LICENSE_KEY.txt
+src/main/resources/geoLite2/GeoLite2-City.mmdb
