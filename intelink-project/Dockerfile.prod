@@ -1,35 +1,23 @@
-FROM maven:3.9.9-eclipse-temurin-17-focal AS builder
+FROM maven:3.9.9-eclipse-temurin-17-focal AS build
 
 WORKDIR /app
 
-COPY pom.xml /app
+COPY mvnw mvnw.cmd /app/
+COPY .mvn /app/.mvn/
+COPY pom.xml /app/
+
 RUN mvn dependency:go-offline -B
 
-COPY src /app/src
+COPY src /app/src/
 
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:17-jre-focal
 
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
 WORKDIR /app
 
-COPY --from=builder /app/target/*.jar app.jar
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-
-RUN chmod +x /app/docker-entrypoint.sh
-RUN chown -R appuser:appuser /app
-
-USER appuser
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
-
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

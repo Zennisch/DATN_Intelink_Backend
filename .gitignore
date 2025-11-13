@@ -1,4 +1,5 @@
 .env
+.env.dev
 .idea/
 **/terraform.tfvars
 **/iam.json
