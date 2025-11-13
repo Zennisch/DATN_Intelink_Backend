@@ -99,6 +99,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/{shortCode}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/{shortCode}/unlock").permitAll()
                         .requestMatchers(HttpMethod.POST, "/{shortCode}/unlock").permitAll()
 
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

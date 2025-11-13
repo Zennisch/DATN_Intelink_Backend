@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,4 +21,8 @@ public interface DimensionStatRepository extends JpaRepository<DimensionStat, UU
 
     @Query("SELECT ds FROM DimensionStat ds WHERE ds.shortUrl = :shortUrl AND ds.type = :type ORDER BY ds.totalClicks DESC")
     List<DimensionStat> findByShortUrlAndTypeOrderByTotalClicksDesc(@Param("shortUrl") ShortUrl shortUrl, @Param("type") DimensionType type);
+
+    List<DimensionStat> findByType(DimensionType type);
+
+    List<DimensionStat> findByTypeAndShortUrl_ShortCodeIn(DimensionType type, Collection<String> shortUrlShortCodes);
 }
