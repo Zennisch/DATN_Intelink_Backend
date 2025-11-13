@@ -1,5 +1,5 @@
 resource "google_compute_instance" "jec_vm" {
-  name         = "jec"
+  name         = "intelink"
   machine_type = "e2-highcpu-2"
   zone         = "${var.gcp_region}-a"
 
@@ -36,13 +36,13 @@ resource "google_compute_firewall" "allow_ssh" {
   target_tags   = ["allow-ssh"]
 }
 
-resource "google_compute_firewall" "allow_app_ports_8000" {
-  name    = "allow-app-ports-8000-jec"
+resource "google_compute_firewall" "allow_app_ports_8080" {
+  name    = "allow-app-ports-8080-jec"
   network = "default"
 
   allow {
     protocol = "tcp"
-    ports    = ["8000"]
+    ports    = ["8080"]
   }
 
   source_ranges = ["0.0.0.0/0"]
