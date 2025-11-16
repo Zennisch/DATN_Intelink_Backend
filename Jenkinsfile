@@ -98,7 +98,7 @@ pipeline {
                         --min-instances 0 \
                         --max-instances 10 \
                         --timeout 600 \
-                        --add-cloudsql-instances=$GCP_CLOUD_SQL_INSTANCE
+                        --add-cloudsql-instances=$GCP_CLOUD_SQL_INSTANCE \
                         --service-account $GCP_SERVICE_ACCOUNT_EMAIL
                 '''
                 echo 'Deployment completed successfully.'
