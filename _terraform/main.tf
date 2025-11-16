@@ -1,76 +1,38 @@
-resource "google_compute_instance" "jec_vm" {
-  name         = "intelink"
-  machine_type = "e2-highcpu-2"
-  zone         = "${var.gcp_region}-a"
+resource "google_artifact_registry_repository" "intelink_repository" {
+  location      = var.gcp_region
+  repository_id = var.repository_id
+  description   = "Docker repository for Intelink images"
+  format        = "DOCKER"
+}
 
-  boot_disk {
-    initialize_params {
-      image = "ubuntu-2404-lts-amd64"
-      size  = 10
-      type  = "pd-standard"
+resource "google_sql_database_instance" "intelink_sql" {
+  name             = var.cloudsql_name
+  database_version = var.cloudsql_version
+  region           = var.gcp_region
+  
+  settings {
+    tier = var.cloudsql_tier
+    edition = var.cloudsql_edition
+    
+    ip_configuration {
+      ipv4_enabled = true
     }
   }
-
-  network_interface {
-    network = "default"
-    access_config {}
-  }
-
-  metadata = {
-    ssh-keys = var.ssh_public_key
-  }
-
-  tags = ["jec", "allow-ssh", "allow-app-ports"]
+  
+  deletion_protection = false
 }
 
-resource "google_compute_firewall" "allow_ssh" {
-  name    = "allow-ssh-jec"
-  network = "default"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["allow-ssh"]
+resource "google_sql_database" "intelink_db" {
+  name     = var.database_name
+  instance = google_sql_database_instance.intelink_sql.name
 }
 
-resource "google_compute_firewall" "allow_app_ports_8080" {
-  name    = "allow-app-ports-8080-jec"
-  network = "default"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["8080"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["allow-app-ports"]
+resource "google_sql_user" "postgres_user" {
+  name     = var.database_user
+  instance = google_sql_database_instance.intelink_sql.name
+  password = var.database_password
 }
 
-resource "google_compute_firewall" "allow_app_ports_443" {
-  name    = "allow-app-ports-443-jec"
-  network = "default"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["allow-app-ports"]
-}
-
-resource "google_compute_firewall" "allow_app_ports_80" {
-  name    = "allow-app-ports-80-jec"
-  network = "default"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["80"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["allow-app-ports"]
+output "cloud_sql_connection_name" {
+  value = google_sql_database_instance.intelink_sql.connection_name
 }
