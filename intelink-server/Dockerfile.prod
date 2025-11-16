@@ -1,0 +1,23 @@
+FROM maven:3.9.9-eclipse-temurin-17-focal AS build
+
+WORKDIR /app
+
+COPY mvnw mvnw.cmd /app/
+COPY .mvn /app/.mvn/
+COPY pom.xml /app/
+
+RUN mvn dependency:go-offline -B
+
+COPY src /app/src/
+
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-focal
+
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

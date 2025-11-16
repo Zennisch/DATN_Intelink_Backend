@@ -61,7 +61,7 @@ pipeline {
                 echo 'Building Docker image...'
                 sh '''
                     . $WORKSPACE/.env
-                    docker build -t $GCP_IMAGE_URL $WORKSPACE/intelink-project --quiet
+                    docker build -t $GCP_IMAGE_URL $WORKSPACE/intelink-server --quiet
                 '''
                 echo 'Docker image built successfully.'
             }
@@ -99,6 +99,7 @@ pipeline {
                         --max-instances 10 \
                         --timeout 600 \
                         --add-cloudsql-instances=$GCP_CLOUD_SQL_INSTANCE
+                        --service-account $GCP_SERVICE_ACCOUNT_EMAIL
                 '''
                 echo 'Deployment completed successfully.'
             }
