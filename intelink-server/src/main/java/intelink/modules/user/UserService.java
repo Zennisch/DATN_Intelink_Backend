@@ -230,7 +230,7 @@ public class UserService {
         return new AuthToken(user, token, refreshToken, expiresAt);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public AuthToken refreshToken(User user) {
         String username = user.getUsername();
         String token = jwtTokenProvider.generateToken(username);
@@ -240,12 +240,12 @@ public class UserService {
         return new AuthToken(user, token, refreshToken, expiresAt);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public UserProfileResponse getProfile(User user) {
         return new UserProfileResponse(user);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public void logout(User user) {
         // For JWT, logout is typically handled on the client side by deleting the token.
         // Optionally, you can implement token blacklisting here if needed.
@@ -253,7 +253,7 @@ public class UserService {
         log.info("UserService.logout: User ID {} logged out", user.getId());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         log.debug("UserService.getCurrentUser: Username from context: {}", username);
@@ -264,7 +264,7 @@ public class UserService {
         return userOpt.get();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public User getCurrentUser(UserDetails userDetails) {
         String username = userDetails.getUsername();
         Optional<User> userOpt = userRepository.findByUsername(username);
@@ -272,5 +272,10 @@ public class UserService {
             throw new UsernameNotFoundException(username);
         }
         return userOpt.get();
+    }
+
+    @Transactional
+    public void increaseTotalShortUrls(Long userId) {
+        userRepository.incrementTotalShortUrls(userId);
     }
 }

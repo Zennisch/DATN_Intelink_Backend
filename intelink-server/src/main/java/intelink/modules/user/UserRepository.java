@@ -31,4 +31,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("DELETE FROM User u WHERE u.verified = false AND u.createdAt < :threshold")
     int deleteUnverifiedUsersBefore(@Param("threshold") LocalDateTime threshold);
+
+    @Modifying
+    @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls + 1 WHERE u.id = :userId")
+    void incrementTotalShortUrls(Long userId);
 }

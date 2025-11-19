@@ -158,11 +158,11 @@
             <artifactId>geoip2</artifactId>
             <version>4.3.1</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.idealista/format-preserving-encryption -->
+        <!-- https://mvnrepository.com/artifact/io.github.mysto/ff3 -->
         <dependency>
-            <groupId>com.idealista</groupId>
-            <artifactId>format-preserving-encryption</artifactId>
-            <version>1.0.0</version>
+            <groupId>io.github.mysto</groupId>
+            <artifactId>ff3</artifactId>
+            <version>1.2.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
         <dependency>

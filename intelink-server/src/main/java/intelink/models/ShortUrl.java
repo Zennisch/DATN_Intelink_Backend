@@ -1,6 +1,7 @@
 package intelink.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import intelink.models.enums.AccessControlMode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -79,6 +80,11 @@ public class ShortUrl {
     @Column(name = "total_clicks", nullable = false)
     @Builder.Default
     private Long totalClicks = 0L;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "access_control_mode", nullable = false)
+    @Builder.Default
+    private AccessControlMode accessControlMode = AccessControlMode.NONE;
 
     @Column(name = "allowed_clicks", nullable = false)
     @Builder.Default
