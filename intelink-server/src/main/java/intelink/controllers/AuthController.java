@@ -4,7 +4,7 @@ import intelink.dto.auth.*;
 import intelink.helper.AuthToken;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
-import intelink.modules.oauth.OAuthAccountService;
+import intelink.modules.user.OAuthAccountService;
 import intelink.modules.user.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.mail.MessagingException;

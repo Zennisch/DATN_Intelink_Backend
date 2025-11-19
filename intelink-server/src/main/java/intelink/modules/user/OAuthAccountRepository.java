@@ -1,4 +1,4 @@
-package intelink.modules.oauth;
+package intelink.modules.user;
 
 import intelink.models.OAuthAccount;
 import intelink.models.enums.UserProvider;

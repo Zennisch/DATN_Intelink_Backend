@@ -4,7 +4,7 @@ import intelink.configs.securities.JwtAuthenticationEntryPoint;
 import intelink.configs.securities.JwtAuthenticationFilter;
 import intelink.configs.securities.OAuth2AuthenticationSuccessHandler;
 import intelink.models.enums.UserRole;
-import intelink.modules.oauth.OAuthAccountService;
+import intelink.modules.user.OAuthAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

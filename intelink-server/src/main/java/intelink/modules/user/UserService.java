@@ -10,7 +10,6 @@ import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserRole;
 import intelink.models.enums.VerificationTokenType;
-import intelink.modules.token.VerificationTokenService;
 import intelink.modules.utils.EmailService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
