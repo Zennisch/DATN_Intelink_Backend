@@ -26,7 +26,7 @@ public record CreateShortUrlRequest(
         @Min(value = 1, message = "Available days must be positive")
         Integer availableDays,
 
-        @Min(value = 0, message = "Max usage must be non-negative")
+        @Min(value = 1, message = "Max usage must be positive")
         Integer maxUsage,
 
         @Size(max = 128, message = "Password must not exceed 128 characters")
