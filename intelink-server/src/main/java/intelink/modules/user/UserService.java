@@ -45,15 +45,15 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.url.verify-email}")
-    private String verificationEmailUrlTemplate;
+    @Value("${app.url.template.verify-email}")
+    private String verifyEmailUrlTemplate;
 
-    @Value("${app.url.reset-password}")
-    private String resetPasswordEmailUrlTemplate;
+    @Value("${app.url.template.reset-password}")
+    private String resetPasswordUrlTemplate;
 
     private void sendVerificationEmail(User user) throws MessagingException {
         VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.EMAIL_VERIFICATION, 24);
-        String verificationLink = verificationEmailUrlTemplate.replace("{token}", verificationToken.getToken());
+        String verificationLink = verifyEmailUrlTemplate.replace("{token}", verificationToken.getToken());
         emailService.sendVerificationEmail(user.getEmail(), verificationLink);
         log.info("[UserService] Verification email sent to {}", user.getEmail());
     }
@@ -155,7 +155,7 @@ public class UserService {
         // 2. If exists, generate password reset token
         User user = userOpt.get();
         VerificationToken verificationToken = verificationTokenService.createToken(user, VerificationTokenType.PASSWORD_RESET, 1);
-        String resetLink = resetPasswordEmailUrlTemplate.replace("{token}", verificationToken.getToken());
+        String resetLink = resetPasswordUrlTemplate.replace("{token}", verificationToken.getToken());
 
         // 3. Send password reset email
         emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
