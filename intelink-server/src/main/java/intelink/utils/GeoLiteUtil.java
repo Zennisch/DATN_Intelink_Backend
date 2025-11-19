@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component
 @Slf4j
@@ -19,38 +20,68 @@ public class GeoLiteUtil {
 
     @Getter
     private static DatabaseReader cityDatabaseReader;
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public static String getCountryFromIp(String ip) {
+    public static void setCityDatabaseReader(DatabaseReader newReader) throws IOException {
+        lock.writeLock().lock();
         try {
+            DatabaseReader oldReader = cityDatabaseReader;
+            cityDatabaseReader = newReader;
+
+            if (oldReader != null) {
+                oldReader.close();
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public static String getCountryNameFromIp(String ip) {
+        lock.readLock().lock();
+        try {
+            if (cityDatabaseReader == null) {
+                return null;
+            }
             CityResponse response = cityDatabaseReader.city(InetAddress.getByName(ip));
-            String countryIsoCode = response.getCountry().getIsoCode();
-            String countryName = response.getCountry().getName();
-            if (countryIsoCode != null && countryName != null) {
-                return countryIsoCode + " / " + countryName;
-            } else if (countryIsoCode != null) {
-                return countryIsoCode;
-            } else return countryName;
+            return response.getCountry().getName();
         } catch (Exception e) {
-            log.error("GeoLiteUtil.getCountryFromIp - Failed to get country for IP {}: {}", ip, e.getMessage());
+            log.error("GeoLiteUtil.getCountryNameFromIp - Failed to get country for IP {}: {}", ip, e.getMessage());
             return null;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public static String getCountryIsoFromIp(String ip) {
+        lock.readLock().lock();
+        try {
+            if (cityDatabaseReader == null) {
+                return null;
+            }
+            CityResponse response = cityDatabaseReader.city(InetAddress.getByName(ip));
+            return response.getCountry().getIsoCode();
+        } catch (Exception e) {
+            log.error("GeoLiteUtil.getCountryIsoFromIp - Failed to get country for IP {}: {}", ip, e.getMessage());
+            return null;
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     public static String getCityFromIp(String ip) {
+        lock.readLock().lock();
         try {
+            if (cityDatabaseReader == null) {
+                return null;
+            }
             CityResponse response = cityDatabaseReader.city(InetAddress.getByName(ip));
             return response.getCity().getName();
         } catch (Exception e) {
             log.error("GeoLiteUtil.getCityFromIp - Failed to get city for IP {}: {}", ip, e.getMessage());
             return null;
+        } finally {
+            lock.readLock().unlock();
         }
-    }
-
-    public static void setCityDatabaseReader(DatabaseReader reader) throws IOException {
-        if (cityDatabaseReader != null) {
-            cityDatabaseReader.close();
-        }
-        cityDatabaseReader = reader;
     }
 
 }
