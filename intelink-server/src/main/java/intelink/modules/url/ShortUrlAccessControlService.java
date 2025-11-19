@@ -13,7 +13,7 @@ import java.util.List;
 @Slf4j
 public class ShortUrlAccessControlService {
 
-    private ShortUrlAccessControlRepository shortUrlAccessControlRepository;
+    private final ShortUrlAccessControlRepository shortUrlAccessControlRepository;
 
     public ShortUrlAccessControl save(ShortUrlAccessControl accessControl) {
         return shortUrlAccessControlRepository.save(accessControl);
