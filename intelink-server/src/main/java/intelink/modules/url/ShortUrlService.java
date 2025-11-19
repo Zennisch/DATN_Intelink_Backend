@@ -8,6 +8,7 @@ import intelink.models.User;
 import intelink.models.enums.AccessControlMode;
 import intelink.models.enums.AccessControlType;
 import intelink.modules.user.UserService;
+import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.FPEUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -105,6 +106,7 @@ public class ShortUrlService {
         if (request.accessControlMode() != null && request.accessControlMode() != AccessControlMode.NONE) {
             if (request.accessControlCIDRs() != null) {
                 for (String cidr : request.accessControlCIDRs()) {
+                    AccessControlValidationUtil.validateCIDR(cidr);
                     ShortUrlAccessControl cidrAccessControl = ShortUrlAccessControl.builder()
                             .shortUrl(shortUrl)
                             .type(AccessControlType.CIDR)
@@ -115,6 +117,7 @@ public class ShortUrlService {
             }
             if (request.accessControlGeographies() != null) {
                 for (String geography : request.accessControlGeographies()) {
+                    AccessControlValidationUtil.validateGeography(geography);
                     ShortUrlAccessControl geoAccessControl = ShortUrlAccessControl.builder()
                             .shortUrl(shortUrl)
                             .type(AccessControlType.GEOGRAPHY)

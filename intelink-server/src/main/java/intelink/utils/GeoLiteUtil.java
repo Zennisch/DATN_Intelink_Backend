@@ -2,15 +2,11 @@ package intelink.utils;
 
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -18,9 +14,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Slf4j
 public class GeoLiteUtil {
 
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     @Getter
     private static DatabaseReader cityDatabaseReader;
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public static void setCityDatabaseReader(DatabaseReader newReader) throws IOException {
         lock.writeLock().lock();

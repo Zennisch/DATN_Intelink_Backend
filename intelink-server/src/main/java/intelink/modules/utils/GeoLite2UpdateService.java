@@ -24,13 +24,11 @@ import java.nio.file.Paths;
 @Slf4j
 public class GeoLite2UpdateService {
 
+    private static final String DOWNLOAD_URL = "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=%s&suffix=tar.gz";
     @Value("${app.geolite2.license-key}")
     private String licenseKey;
-
     @Value("${app.geolite2.database.path}")
     private String databasePath;
-
-    private static final String DOWNLOAD_URL = "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=%s&suffix=tar.gz";
 
     @Scheduled(initialDelay = 0, fixedRateString = "${app.geolite2.update.schedule.fixed-rate}")
     public void updateGeoLite2Database() {
