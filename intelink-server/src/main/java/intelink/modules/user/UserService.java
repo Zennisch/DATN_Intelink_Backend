@@ -5,7 +5,7 @@ import intelink.dto.auth.LoginRequest;
 import intelink.dto.auth.RegisterRequest;
 import intelink.dto.auth.ResetPasswordRequest;
 import intelink.dto.auth.UserProfileResponse;
-import intelink.helper.AuthToken;
+import intelink.utils.helper.AuthToken;
 import intelink.models.User;
 import intelink.models.VerificationToken;
 import intelink.models.enums.UserRole;

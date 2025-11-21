@@ -1,7 +1,7 @@
 package intelink.utils;
 
 import com.privacylogistics.FF3Cipher;
-import intelink.helper.Cipher;
+import intelink.utils.helper.Cipher;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;

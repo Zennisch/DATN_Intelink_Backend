@@ -22,7 +22,7 @@ services:
             dockerfile: Dockerfile
         image: myjenkins-blueocean:2.528.2-1
         container_name: jenkins-blueocean
-        restart: on-failure
+        restart: unless-stopped
         user: root
         networks:
             - jenkins

@@ -1,4 +1,4 @@
-package intelink.helper;
+package intelink.utils.helper;
 
 public record Cipher(
         String text,

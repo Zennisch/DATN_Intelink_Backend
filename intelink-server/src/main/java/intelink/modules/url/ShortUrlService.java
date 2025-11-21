@@ -1,7 +1,7 @@
 package intelink.modules.url;
 
 import intelink.dto.url.CreateShortUrlRequest;
-import intelink.helper.Cipher;
+import intelink.utils.helper.Cipher;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
 import intelink.models.User;
@@ -20,6 +20,7 @@ import org.springframework.util.StringUtils;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -139,4 +140,8 @@ public class ShortUrlService {
         return shortUrl;
     }
 
+    @Transactional(readOnly = true)
+    public Optional<ShortUrl> findByShortCode(String shortCode) {
+        return shortUrlRepository.findByShortCode(shortCode);
+    }
 }

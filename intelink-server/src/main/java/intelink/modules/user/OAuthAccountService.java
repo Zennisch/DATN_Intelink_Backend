@@ -1,7 +1,7 @@
 package intelink.modules.user;
 
 import intelink.configs.securities.JwtTokenProvider;
-import intelink.helper.AuthToken;
+import intelink.utils.helper.AuthToken;
 import intelink.models.OAuthAccount;
 import intelink.models.User;
 import intelink.models.enums.UserProvider;

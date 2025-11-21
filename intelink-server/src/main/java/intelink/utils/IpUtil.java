@@ -1,6 +1,6 @@
 package intelink.utils;
 
-import intelink.helper.IpProcessResult;
+import intelink.utils.helper.IpProcessResult;
 import intelink.models.enums.IPVersion;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -41,13 +41,7 @@ public class IpUtil {
     public static IpProcessResult process(HttpServletRequest request) {
         String ip = getClientIpAddress(request);
         if (!isValidIp(ip)) {
-            return IpProcessResult.builder()
-                    .ipVersion(IPVersion.UNKNOWN)
-                    .ipAddress(ip)
-                    .ipNormalized(null)
-                    .subnet(null)
-                    .isPrivate(false)
-                    .build();
+            return new IpProcessResult(IPVersion.UNKNOWN, ip, null, null, false);
         }
 
         try {
@@ -82,22 +76,10 @@ public class IpUtil {
                 ipNormalized = null;
                 subnet = null;
             }
-            return IpProcessResult.builder()
-                    .ipVersion(ipVersion)
-                    .ipAddress(ip)
-                    .ipNormalized(ipNormalized)
-                    .subnet(subnet)
-                    .isPrivate(isPrivate)
-                    .build();
+            return new IpProcessResult(ipVersion, ip, ipNormalized, subnet, isPrivate);
         } catch (Exception e) {
             log.error("[IpUtil.process] Error processing IP: {} - {}", ip, e.getMessage());
-            return IpProcessResult.builder()
-                    .ipVersion(IPVersion.UNKNOWN)
-                    .ipAddress(ip)
-                    .ipNormalized(null)
-                    .subnet(null)
-                    .isPrivate(false)
-                    .build();
+            return new IpProcessResult(IPVersion.UNKNOWN, ip, null, null, false);
         }
     }
 

@@ -1,4 +1,4 @@
-package intelink.helper;
+package intelink.utils.helper;
 
 import intelink.models.User;
 

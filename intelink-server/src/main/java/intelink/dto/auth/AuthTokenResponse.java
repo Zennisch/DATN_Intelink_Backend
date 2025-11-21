@@ -1,6 +1,6 @@
 package intelink.dto.auth;
 
-import intelink.helper.AuthToken;
+import intelink.utils.helper.AuthToken;
 
 public record AuthTokenResponse(
         String token,

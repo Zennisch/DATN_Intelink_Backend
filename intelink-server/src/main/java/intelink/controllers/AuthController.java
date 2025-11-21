@@ -1,7 +1,7 @@
 package intelink.controllers;
 
 import intelink.dto.auth.*;
-import intelink.helper.AuthToken;
+import intelink.utils.helper.AuthToken;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.modules.user.OAuthAccountService;
