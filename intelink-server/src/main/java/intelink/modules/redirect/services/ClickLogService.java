@@ -31,7 +31,7 @@ public class ClickLogService {
 
     @Async("clickLogExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public CompletableFuture<Void> recordAllowedClick(ShortUrl shortUrl, HttpServletRequest request) {
+    public CompletableFuture<Void> recordClick(ShortUrl shortUrl, HttpServletRequest request, ClickStatus status, String reason) {
         try {
             IpInfo ipInfo = IpUtil.process(request);
             String ipAddress = ipInfo.ipAddress();
@@ -42,8 +42,13 @@ public class ClickLogService {
             String countryCode = GeoLiteUtil.getCountryIsoFromIp(ipAddress);
             String city = GeoLiteUtil.getCityFromIp(ipAddress);
 
-            boolean isUniqueClick = !clickLogRepository.existsByShortUrlAndIpAddressAndUserAgent(shortUrl, ipAddress, userAgent);
-            shortUrlService.incrementAllowedCounters(shortUrl.getId(), isUniqueClick ? 1 : 0);
+            switch (status) {
+                case ALLOWED -> {
+                    boolean isUniqueClick = !clickLogRepository.existsByShortUrlAndIpAddressAndUserAgent(shortUrl, ipAddress, userAgent);
+                    shortUrlService.incrementAllowedCounters(shortUrl.getId(), isUniqueClick ? 1 : 0);
+                }
+                case BLOCKED -> shortUrlService.incrementBlockedCounter(shortUrl.getId());
+            }
 
             UserAgentInfo userAgentInfo = UserAgentUtil.parseUserAgent(userAgent);
             String browser = userAgentInfo != null ? userAgentInfo.browser() : null;
@@ -59,42 +64,17 @@ public class ClickLogService {
                     deviceType
             );
 
-
             ClickLog clickLog = ClickLog.builder()
                     .shortUrl(shortUrl)
                     .ipAddress(ipAddress)
                     .userAgent(userAgent)
                     .referrer(referrer)
-                    .status(ClickStatus.ALLOWED)
+                    .status(status)
+                    .reason(reason)
                     .build();
             clickLogRepository.save(clickLog);
         } catch (Exception e) {
-            log.error("[ClickLogService.recordAllowedClicks] Error recording allowed click for ShortUrl ID {}: {}", shortUrl.getId(), e.getMessage());
-        }
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("clickLogExecutor")
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public CompletableFuture<Void> recordBlockedClick(ShortUrl shortUrl, HttpServletRequest request) {
-        try {
-            IpInfo ipInfo = IpUtil.process(request);
-            String ipAddress = ipInfo.ipAddress();
-            String userAgent = request.getHeader("User-Agent");
-            String referrer = request.getHeader("Referer");
-
-            shortUrlService.incrementBlockedCounter(shortUrl.getId());
-
-            ClickLog clickLog = ClickLog.builder()
-                    .shortUrl(shortUrl)
-                    .ipAddress(ipAddress)
-                    .userAgent(userAgent)
-                    .referrer(referrer)
-                    .status(ClickStatus.BLOCKED)
-                    .build();
-            clickLogRepository.save(clickLog);
-        } catch (Exception e) {
-            log.error("[ClickLogService.recordBlockedClicks] Error recording blocked click for ShortUrl ID {}: {}", shortUrl.getId(), e.getMessage());
+            log.error("[ClickLogService.recordClick] Error recording {} click for ShortUrl ID {}: {}", status, shortUrl.getId(), e.getMessage());
         }
         return CompletableFuture.completedFuture(null);
     }

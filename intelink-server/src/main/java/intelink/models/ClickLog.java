@@ -48,6 +48,9 @@ public class ClickLog {
     @Column(name = "status", nullable = false)
     private ClickStatus status;
 
+    @Column(name = "reason", length = 1024)
+    private String reason;
+
     @Column(name = "timestamp", nullable = false)
     private Instant timestamp;
 
