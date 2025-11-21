@@ -77,14 +77,14 @@ public class ShortUrl {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    @Column(name = "total_clicks", nullable = false)
-    @Builder.Default
-    private Long totalClicks = 0L;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "access_control_mode", nullable = false)
     @Builder.Default
     private AccessControlMode accessControlMode = AccessControlMode.NONE;
+
+    @Column(name = "total_clicks", nullable = false)
+    @Builder.Default
+    private Long totalClicks = 0L;
 
     @Column(name = "allowed_clicks", nullable = false)
     @Builder.Default

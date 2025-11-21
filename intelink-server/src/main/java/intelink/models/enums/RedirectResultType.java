@@ -1,6 +1,6 @@
 package intelink.models.enums;
 
-public enum RedirectType {
+public enum RedirectResultType {
     SUCCESS,
     NOT_FOUND,
     UNAVAILABLE,

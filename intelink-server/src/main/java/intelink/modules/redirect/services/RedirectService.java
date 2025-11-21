@@ -30,6 +30,7 @@ public class RedirectService {
     private final ShortUrlService shortUrlService;
     private final ShortUrlAccessControlService shortUrlAccessControlService;
     private final PasswordEncoder passwordEncoder;
+    private final ClickLogService clickLogService;
 
     @Value("${app.url.template.password-unlock}")
     private String passwordUnlockUrlTemplate;
@@ -85,12 +86,14 @@ public class RedirectService {
             // WHITELIST: IP must be in the CIDR list
             if (accessControlMode == AccessControlMode.WHITELIST && !ipMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] IP {} not in CIDR whitelist for Short URL: {}", ipAddress, shortCode);
+                shortUrlService.recordBlockedClicks(shortUrl.getId());
                 return RedirectResult.accessDenied(shortCode);
             }
 
             // BLACKLIST: IP must not be in the CIDR list
             if (accessControlMode == AccessControlMode.BLACKLIST && ipMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] IP {} blocked by CIDR blacklist for Short URL: {}", ipAddress, shortCode);
+                shortUrlService.recordBlockedClicks(shortUrl.getId());
                 return RedirectResult.accessDenied(shortCode);
             }
         }
@@ -104,12 +107,14 @@ public class RedirectService {
             // WHITELIST: Country must be in the list
             if (accessControlMode == AccessControlMode.WHITELIST && !countryMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] Country {} ({}) not in whitelist for Short URL: {}", country, countryCode, shortCode);
+                shortUrlService.recordBlockedClicks(shortUrl.getId());
                 return RedirectResult.accessDenied(shortCode);
             }
 
             // BLACKLIST: Country must not be in the list
             if (accessControlMode == AccessControlMode.BLACKLIST && countryMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] Country {} ({}) blocked by blacklist for Short URL: {}", country, countryCode, shortCode);
+                shortUrlService.recordBlockedClicks(shortUrl.getId());
                 return RedirectResult.accessDenied(shortCode);
             }
         }
@@ -127,6 +132,8 @@ public class RedirectService {
             }
         }
 
+        String userAgent = request.getHeader("User-Agent");
+        shortUrlService.recordAllowedClicks(shortUrl.getId(), ipAddress, userAgent);
         return RedirectResult.success(shortUrl.getOriginalUrl());
     }
 
