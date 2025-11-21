@@ -7,7 +7,6 @@ import intelink.models.User;
 import intelink.models.enums.AccessControlMode;
 import intelink.models.enums.AccessControlType;
 import intelink.modules.auth.services.UserService;
-import intelink.modules.redirect.services.ClickLogService;
 import intelink.modules.url.repositories.ShortUrlRepository;
 import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.FPEUtil;
@@ -32,7 +31,6 @@ public class ShortUrlService {
     private final ShortUrlRepository shortUrlRepository;
     private final UserService userService;
     private final ShortUrlAccessControlService shortUrlAccessControlService;
-    private final ClickLogService clickLogService;
     private final PasswordEncoder passwordEncoder;
 
     private final Integer SHORT_CODE_LENGTH = 10;
@@ -143,32 +141,18 @@ public class ShortUrlService {
         return shortUrl;
     }
 
+    @Transactional
+    public ShortUrl save(ShortUrl shortUrl) {
+        return shortUrlRepository.save(shortUrl);
+    }
+
     @Transactional(readOnly = true)
     public Optional<ShortUrl> findByShortCode(String shortCode) {
         return shortUrlRepository.findByShortCode(shortCode);
     }
 
-    @Transactional
-    public void recordAllowedClicks(Long shortUrlId, String ipAddress, String userAgent) {
-        ShortUrl shortUrl = shortUrlRepository.findById(shortUrlId)
-                .orElseThrow(() -> new IllegalArgumentException("Short URL not found with ID: " + shortUrlId));
-        shortUrl.setTotalClicks(shortUrl.getTotalClicks() + 1);
-        shortUrl.setAllowedClicks(shortUrl.getAllowedClicks() + 1);
-
-        boolean isUniqueClick = !clickLogService.existsByShortUrlAndIpAddressAndUserAgent(shortUrl, ipAddress, userAgent);
-        if (isUniqueClick) {
-            shortUrl.setUniqueClicks(shortUrl.getUniqueClicks() + 1);
-        }
-
-        shortUrlRepository.save(shortUrl);
-    }
-
-    @Transactional
-    public void recordBlockedClicks(Long shortUrlId) {
-        ShortUrl shortUrl = shortUrlRepository.findById(shortUrlId)
-                .orElseThrow(() -> new IllegalArgumentException("Short URL not found with ID: " + shortUrlId));
-        shortUrl.setTotalClicks(shortUrl.getTotalClicks() + 1);
-        shortUrl.setBlockedClicks(shortUrl.getBlockedClicks() + 1);
-        shortUrlRepository.save(shortUrl);
+    @Transactional(readOnly = true)
+    public ShortUrl findByShortCodeOrNull(String shortCode) {
+        return shortUrlRepository.findByShortCode(shortCode).orElse(null);
     }
 }

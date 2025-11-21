@@ -71,11 +71,11 @@ public class RedirectService {
         }
 
         // 3. Process IP information
+        AccessControlMode accessControlMode = shortUrl.getAccessControlMode();
         IpProcessResult ipProcessResult = IpUtil.process(request);
         String ipAddress = ipProcessResult.ipAddress();
         String country = GeoLiteUtil.getCountryNameFromIp(ipAddress);
         String countryCode = GeoLiteUtil.getCountryIsoFromIp(ipAddress);
-        AccessControlMode accessControlMode = shortUrl.getAccessControlMode();
 
         // 3.1 CIDR access control check
         List<ShortUrlAccessControl> cidrAccessControls = shortUrlAccessControlService.findAllByShortUrlAndType(shortUrl, AccessControlType.CIDR);
@@ -86,14 +86,14 @@ public class RedirectService {
             // WHITELIST: IP must be in the CIDR list
             if (accessControlMode == AccessControlMode.WHITELIST && !ipMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] IP {} not in CIDR whitelist for Short URL: {}", ipAddress, shortCode);
-                shortUrlService.recordBlockedClicks(shortUrl.getId());
+                clickLogService.recordBlockedClicks(shortCode, request);
                 return RedirectResult.accessDenied(shortCode);
             }
 
             // BLACKLIST: IP must not be in the CIDR list
             if (accessControlMode == AccessControlMode.BLACKLIST && ipMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] IP {} blocked by CIDR blacklist for Short URL: {}", ipAddress, shortCode);
-                shortUrlService.recordBlockedClicks(shortUrl.getId());
+                clickLogService.recordBlockedClicks(shortCode, request);
                 return RedirectResult.accessDenied(shortCode);
             }
         }
@@ -107,14 +107,14 @@ public class RedirectService {
             // WHITELIST: Country must be in the list
             if (accessControlMode == AccessControlMode.WHITELIST && !countryMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] Country {} ({}) not in whitelist for Short URL: {}", country, countryCode, shortCode);
-                shortUrlService.recordBlockedClicks(shortUrl.getId());
+                clickLogService.recordBlockedClicks(shortCode, request);
                 return RedirectResult.accessDenied(shortCode);
             }
 
             // BLACKLIST: Country must not be in the list
             if (accessControlMode == AccessControlMode.BLACKLIST && countryMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] Country {} ({}) blocked by blacklist for Short URL: {}", country, countryCode, shortCode);
-                shortUrlService.recordBlockedClicks(shortUrl.getId());
+                clickLogService.recordBlockedClicks(shortCode, request);
                 return RedirectResult.accessDenied(shortCode);
             }
         }
@@ -132,8 +132,7 @@ public class RedirectService {
             }
         }
 
-        String userAgent = request.getHeader("User-Agent");
-        shortUrlService.recordAllowedClicks(shortUrl.getId(), ipAddress, userAgent);
+        clickLogService.recordAllowedClicks(shortCode, request);
         return RedirectResult.success(shortUrl.getOriginalUrl());
     }
 
