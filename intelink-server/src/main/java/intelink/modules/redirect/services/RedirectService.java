@@ -9,7 +9,7 @@ import intelink.modules.url.services.ShortUrlService;
 import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.GeoLiteUtil;
 import intelink.utils.IpUtil;
-import intelink.utils.helper.IpProcessResult;
+import intelink.utils.helper.IpInfo;
 import intelink.utils.helper.RedirectResult;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -76,8 +76,8 @@ public class RedirectService {
 
         // 3. Process IP information
         AccessControlMode accessControlMode = shortUrl.getAccessControlMode();
-        IpProcessResult ipProcessResult = IpUtil.process(request);
-        String ipAddress = ipProcessResult.ipAddress();
+        IpInfo ipInfo = IpUtil.process(request);
+        String ipAddress = ipInfo.ipAddress();
         String country = GeoLiteUtil.getCountryNameFromIp(ipAddress);
         String countryCode = GeoLiteUtil.getCountryIsoFromIp(ipAddress);
 
@@ -90,14 +90,14 @@ public class RedirectService {
             // WHITELIST: IP must be in the CIDR list
             if (accessControlMode == AccessControlMode.WHITELIST && !ipMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] IP {} not in CIDR whitelist for Short URL: {}", ipAddress, shortCode);
-                clickLogService.recordBlockedClicks(shortUrl, request);
+                clickLogService.recordBlockedClick(shortUrl, request);
                 return RedirectResult.accessDenied(shortCode);
             }
 
             // BLACKLIST: IP must not be in the CIDR list
             if (accessControlMode == AccessControlMode.BLACKLIST && ipMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] IP {} blocked by CIDR blacklist for Short URL: {}", ipAddress, shortCode);
-                clickLogService.recordBlockedClicks(shortUrl, request);
+                clickLogService.recordBlockedClick(shortUrl, request);
                 return RedirectResult.accessDenied(shortCode);
             }
         }
@@ -111,14 +111,14 @@ public class RedirectService {
             // WHITELIST: Country must be in the list
             if (accessControlMode == AccessControlMode.WHITELIST && !countryMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] Country {} ({}) not in whitelist for Short URL: {}", country, countryCode, shortCode);
-                clickLogService.recordBlockedClicks(shortUrl, request);
+                clickLogService.recordBlockedClick(shortUrl, request);
                 return RedirectResult.accessDenied(shortCode);
             }
 
             // BLACKLIST: Country must not be in the list
             if (accessControlMode == AccessControlMode.BLACKLIST && countryMatchedInList) {
                 log.warn("[RedirectService.handleRedirect] Country {} ({}) blocked by blacklist for Short URL: {}", country, countryCode, shortCode);
-                clickLogService.recordBlockedClicks(shortUrl, request);
+                clickLogService.recordBlockedClick(shortUrl, request);
                 return RedirectResult.accessDenied(shortCode);
             }
         }
@@ -136,7 +136,7 @@ public class RedirectService {
             }
         }
 
-        clickLogService.recordAllowedClicks(shortUrl, request);
+        clickLogService.recordAllowedClick(shortUrl, request);
         return RedirectResult.success(shortUrl.getOriginalUrl());
     }
 

@@ -1,7 +1,7 @@
 package intelink.utils;
 
 import intelink.models.enums.IPVersion;
-import intelink.utils.helper.IpProcessResult;
+import intelink.utils.helper.IpInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,10 +38,10 @@ public class IpUtil {
             "^([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}$|^::1$|^::$|^(([0-9a-fA-F]{1,4}:){0,6}([0-9a-fA-F]{1,4})?::([0-9a-fA-F]{1,4}:){0,6}([0-9a-fA-F]{1,4})?)$"
     );
 
-    public static IpProcessResult process(HttpServletRequest request) {
+    public static IpInfo process(HttpServletRequest request) {
         String ip = getClientIpAddress(request);
         if (!isValidIp(ip)) {
-            return new IpProcessResult(IPVersion.UNKNOWN, ip, null, null, false);
+            return new IpInfo(IPVersion.UNKNOWN, ip, null, null, false);
         }
 
         try {
@@ -76,10 +76,10 @@ public class IpUtil {
                 ipNormalized = null;
                 subnet = null;
             }
-            return new IpProcessResult(ipVersion, ip, ipNormalized, subnet, isPrivate);
+            return new IpInfo(ipVersion, ip, ipNormalized, subnet, isPrivate);
         } catch (Exception e) {
             log.error("[IpUtil.process] Error processing IP: {} - {}", ip, e.getMessage());
-            return new IpProcessResult(IPVersion.UNKNOWN, ip, null, null, false);
+            return new IpInfo(IPVersion.UNKNOWN, ip, null, null, false);
         }
     }
 

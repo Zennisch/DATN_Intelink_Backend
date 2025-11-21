@@ -5,8 +5,12 @@ import intelink.models.ShortUrl;
 import intelink.models.enums.ClickStatus;
 import intelink.modules.redirect.repositories.ClickLogRepository;
 import intelink.modules.url.services.ShortUrlService;
+import intelink.utils.GeoLiteUtil;
 import intelink.utils.IpUtil;
-import intelink.utils.helper.IpProcessResult;
+import intelink.utils.UserAgentUtil;
+import intelink.utils.helper.DimensionInfo;
+import intelink.utils.helper.IpInfo;
+import intelink.utils.helper.UserAgentInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,15 +31,34 @@ public class ClickLogService {
 
     @Async("clickLogExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public CompletableFuture<Void> recordAllowedClicks(ShortUrl shortUrl, HttpServletRequest request) {
+    public CompletableFuture<Void> recordAllowedClick(ShortUrl shortUrl, HttpServletRequest request) {
         try {
-            IpProcessResult ipProcessResult = IpUtil.process(request);
-            String ipAddress = ipProcessResult.ipAddress();
+            IpInfo ipInfo = IpUtil.process(request);
+            String ipAddress = ipInfo.ipAddress();
             String userAgent = request.getHeader("User-Agent");
             String referrer = request.getHeader("Referer");
 
+            String country = GeoLiteUtil.getCountryNameFromIp(ipAddress);
+            String countryCode = GeoLiteUtil.getCountryIsoFromIp(ipAddress);
+            String city = GeoLiteUtil.getCityFromIp(ipAddress);
+
             boolean isUniqueClick = !clickLogRepository.existsByShortUrlAndIpAddressAndUserAgent(shortUrl, ipAddress, userAgent);
             shortUrlService.incrementAllowedCounters(shortUrl.getId(), isUniqueClick ? 1 : 0);
+
+            UserAgentInfo userAgentInfo = UserAgentUtil.parseUserAgent(userAgent);
+            String browser = userAgentInfo != null ? userAgentInfo.browser() : null;
+            String os = userAgentInfo != null ? userAgentInfo.os() : null;
+            String deviceType = userAgentInfo != null ? userAgentInfo.deviceType() : null;
+
+            DimensionInfo dimensionInfo = new DimensionInfo(
+                    country,
+                    countryCode,
+                    city,
+                    browser,
+                    os,
+                    deviceType
+            );
+
 
             ClickLog clickLog = ClickLog.builder()
                     .shortUrl(shortUrl)
@@ -53,10 +76,10 @@ public class ClickLogService {
 
     @Async("clickLogExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public CompletableFuture<Void> recordBlockedClicks(ShortUrl shortUrl, HttpServletRequest request) {
+    public CompletableFuture<Void> recordBlockedClick(ShortUrl shortUrl, HttpServletRequest request) {
         try {
-            IpProcessResult ipProcessResult = IpUtil.process(request);
-            String ipAddress = ipProcessResult.ipAddress();
+            IpInfo ipInfo = IpUtil.process(request);
+            String ipAddress = ipInfo.ipAddress();
             String userAgent = request.getHeader("User-Agent");
             String referrer = request.getHeader("Referer");
 

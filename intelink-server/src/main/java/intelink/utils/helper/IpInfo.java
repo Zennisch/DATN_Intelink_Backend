@@ -2,7 +2,7 @@ package intelink.utils.helper;
 
 import intelink.models.enums.IPVersion;
 
-public record IpProcessResult(
+public record IpInfo(
         IPVersion ipVersion,
         String ipAddress,
         String ipNormalized,

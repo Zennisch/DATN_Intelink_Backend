@@ -1,6 +1,6 @@
 package intelink.utils;
 
-public class EnumUtils {
+public class EnumUtil {
     public static <T extends Enum<T>> T fromString(Class<T> enumClass, String value) {
         try {
             return Enum.valueOf(enumClass, value.toUpperCase());

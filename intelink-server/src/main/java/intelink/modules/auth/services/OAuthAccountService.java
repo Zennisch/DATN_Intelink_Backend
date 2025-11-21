@@ -7,7 +7,7 @@ import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
 import intelink.modules.auth.repositories.OAuthAccountRepository;
 import intelink.modules.auth.repositories.UserRepository;
-import intelink.utils.EnumUtils;
+import intelink.utils.EnumUtil;
 import intelink.utils.helper.AuthToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class OAuthAccountService extends DefaultOAuth2UserService {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        UserProvider provider = EnumUtils.fromString(UserProvider.class, registrationId);
+        UserProvider provider = EnumUtil.fromString(UserProvider.class, registrationId);
 
         return processOAuth2User(oAuth2User, provider);
     }
