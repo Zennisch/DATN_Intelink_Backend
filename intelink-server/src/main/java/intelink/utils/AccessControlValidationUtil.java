@@ -2,6 +2,8 @@ package intelink.utils;
 
 import org.springframework.util.StringUtils;
 
+import java.net.InetAddress;
+
 public class AccessControlValidationUtil {
 
     public static void validateCIDR(String cidr) {
@@ -54,5 +56,36 @@ public class AccessControlValidationUtil {
         return ip.matches(ipv6Pattern);
     }
 
+    public static boolean isIpInCidrRange(String ipAddress, String cidr) {
+        try {
+            String[] cidrParts = cidr.split("/");
+            String cidrIp = cidrParts[0];
+            int prefixLength = Integer.parseInt(cidrParts[1]);
 
+            byte[] ipBytes = InetAddress.getByName(ipAddress).getAddress();
+            byte[] cidrBytes = InetAddress.getByName(cidrIp).getAddress();
+
+            if (ipBytes.length != cidrBytes.length) {
+                return false;
+            }
+
+            int fullBytes = prefixLength / 8;
+            int remainingBits = prefixLength % 8;
+
+            for (int i = 0; i < fullBytes; i++) {
+                if (ipBytes[i] != cidrBytes[i]) {
+                    return false;
+                }
+            }
+
+            if (remainingBits > 0) {
+                int mask = 0xFF << (8 - remainingBits);
+                return (ipBytes[fullBytes] & mask) == (cidrBytes[fullBytes] & mask);
+            }
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

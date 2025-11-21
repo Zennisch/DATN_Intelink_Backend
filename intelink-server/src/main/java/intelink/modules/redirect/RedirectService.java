@@ -2,9 +2,11 @@ package intelink.modules.redirect;
 
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
+import intelink.models.enums.AccessControlMode;
 import intelink.models.enums.AccessControlType;
 import intelink.modules.url.ShortUrlAccessControlService;
 import intelink.modules.url.ShortUrlService;
+import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.GeoLiteUtil;
 import intelink.utils.IpUtil;
 import intelink.utils.helper.IpProcessResult;
@@ -72,19 +74,42 @@ public class RedirectService {
         String ipAddress = ipProcessResult.ipAddress();
         String country = GeoLiteUtil.getCountryNameFromIp(ipAddress);
         String countryCode = GeoLiteUtil.getCountryIsoFromIp(ipAddress);
+        AccessControlMode accessControlMode = shortUrl.getAccessControlMode();
 
-        // 3.1 CIDR access control check (Will implement later)
+        // 3.1 CIDR access control check
         List<ShortUrlAccessControl> cidrAccessControls = shortUrlAccessControlService.findAllByShortUrlAndType(shortUrl, AccessControlType.CIDR);
         if (!cidrAccessControls.isEmpty()) {
+            boolean ipMatchedInList = cidrAccessControls.stream()
+                    .anyMatch(ac -> AccessControlValidationUtil.isIpInCidrRange(ipAddress, ac.getValue()));
 
+            // WHITELIST: IP must be in the CIDR list
+            if (accessControlMode == AccessControlMode.WHITELIST && !ipMatchedInList) {
+                log.warn("[RedirectService.handleRedirect] IP {} not in CIDR whitelist for Short URL: {}", ipAddress, shortCode);
+                return RedirectResult.accessDenied(shortCode);
+            }
+
+            // BLACKLIST: IP must not be in the CIDR list
+            if (accessControlMode == AccessControlMode.BLACKLIST && ipMatchedInList) {
+                log.warn("[RedirectService.handleRedirect] IP {} blocked by CIDR blacklist for Short URL: {}", ipAddress, shortCode);
+                return RedirectResult.accessDenied(shortCode);
+            }
         }
 
-        // 3.2 Geography access control check (Check by ISO country code)
+        // 3.2 Geography access control check
         List<ShortUrlAccessControl> geographyAccessControls = shortUrlAccessControlService.findAllByShortUrlAndType(shortUrl, AccessControlType.GEOGRAPHY);
         if (!geographyAccessControls.isEmpty()) {
-            boolean countryAllowed = geographyAccessControls.stream().anyMatch(ac -> ac.getValue().equalsIgnoreCase(countryCode));
-            if (!countryAllowed) {
-                log.warn("[RedirectService.handleRedirect] Access denied for country: {} ({}) on Short URL: {}", country, countryCode, shortCode);
+            boolean countryMatchedInList = geographyAccessControls.stream()
+                    .anyMatch(ac -> ac.getValue().equalsIgnoreCase(countryCode));
+
+            // WHITELIST: Country must be in the list
+            if (accessControlMode == AccessControlMode.WHITELIST && !countryMatchedInList) {
+                log.warn("[RedirectService.handleRedirect] Country {} ({}) not in whitelist for Short URL: {}", country, countryCode, shortCode);
+                return RedirectResult.accessDenied(shortCode);
+            }
+
+            // BLACKLIST: Country must not be in the list
+            if (accessControlMode == AccessControlMode.BLACKLIST && countryMatchedInList) {
+                log.warn("[RedirectService.handleRedirect] Country {} ({}) blocked by blacklist for Short URL: {}", country, countryCode, shortCode);
                 return RedirectResult.accessDenied(shortCode);
             }
         }
