@@ -3,7 +3,6 @@ package intelink.modules.redirect;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
 import intelink.models.enums.AccessControlType;
-import intelink.models.enums.IPVersion;
 import intelink.modules.url.ShortUrlAccessControlService;
 import intelink.modules.url.ShortUrlService;
 import intelink.utils.GeoLiteUtil;
@@ -83,8 +82,7 @@ public class RedirectService {
         // 3.2 Geography access control check (Check by ISO country code)
         List<ShortUrlAccessControl> geographyAccessControls = shortUrlAccessControlService.findAllByShortUrlAndType(shortUrl, AccessControlType.GEOGRAPHY);
         if (!geographyAccessControls.isEmpty()) {
-            boolean countryAllowed = geographyAccessControls.stream()
-                    .anyMatch(ac -> ac.getValue().equalsIgnoreCase(countryCode));
+            boolean countryAllowed = geographyAccessControls.stream().anyMatch(ac -> ac.getValue().equalsIgnoreCase(countryCode));
             if (!countryAllowed) {
                 log.warn("[RedirectService.handleRedirect] Access denied for country: {} ({}) on Short URL: {}", country, countryCode, shortCode);
                 return RedirectResult.accessDenied(shortCode);

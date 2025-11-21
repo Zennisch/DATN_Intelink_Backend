@@ -3,10 +3,10 @@ package intelink.utils.helper;
 import intelink.models.enums.RedirectType;
 
 public record RedirectResult(
-    RedirectType type,
-    String message,
-    String shortCode,
-    String redirectUrl
+        RedirectType type,
+        String message,
+        String shortCode,
+        String redirectUrl
 ) {
     public static RedirectResult success(String redirectUrl) {
         return new RedirectResult(RedirectType.SUCCESS, null, null, redirectUrl);

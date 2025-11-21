@@ -59,7 +59,7 @@ public class CreateShortUrlResponse {
                 }
             }
         }
-        
+
         String fullShortUrl = accessUrlTemplate.replace("{shortCode}", shortUrl.getShortCode());
 
         return CreateShortUrlResponse.builder()

@@ -1,7 +1,7 @@
 package intelink.utils;
 
-import intelink.utils.helper.IpProcessResult;
 import intelink.models.enums.IPVersion;
+import intelink.utils.helper.IpProcessResult;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
