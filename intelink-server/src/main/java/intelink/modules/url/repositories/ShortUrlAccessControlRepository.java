@@ -1,4 +1,4 @@
-package intelink.modules.url;
+package intelink.modules.url.repositories;
 
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;

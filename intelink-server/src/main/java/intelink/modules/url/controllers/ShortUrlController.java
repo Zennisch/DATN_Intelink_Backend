@@ -1,13 +1,13 @@
-package intelink.controllers;
+package intelink.modules.url.controllers;
 
 import intelink.dto.url.CreateShortUrlRequest;
 import intelink.dto.url.CreateShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
 import intelink.models.User;
-import intelink.modules.url.ShortUrlAccessControlService;
-import intelink.modules.url.ShortUrlService;
-import intelink.modules.user.UserService;
+import intelink.modules.url.services.ShortUrlAccessControlService;
+import intelink.modules.url.services.ShortUrlService;
+import intelink.modules.auth.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,11 +1,11 @@
-package intelink.modules.redirect;
+package intelink.modules.redirect.services;
 
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
 import intelink.models.enums.AccessControlMode;
 import intelink.models.enums.AccessControlType;
-import intelink.modules.url.ShortUrlAccessControlService;
-import intelink.modules.url.ShortUrlService;
+import intelink.modules.url.services.ShortUrlAccessControlService;
+import intelink.modules.url.services.ShortUrlService;
 import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.GeoLiteUtil;
 import intelink.utils.IpUtil;

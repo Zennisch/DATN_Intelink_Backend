@@ -1,8 +1,9 @@
-package intelink.modules.url;
+package intelink.modules.url.services;
 
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
 import intelink.models.enums.AccessControlType;
+import intelink.modules.url.repositories.ShortUrlAccessControlRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

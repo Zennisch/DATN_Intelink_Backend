@@ -1,4 +1,4 @@
-package intelink.modules.utils;
+package intelink.modules.utils.services;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

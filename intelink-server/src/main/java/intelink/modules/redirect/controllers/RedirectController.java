@@ -1,6 +1,6 @@
-package intelink.controllers;
+package intelink.modules.redirect.controllers;
 
-import intelink.modules.redirect.RedirectService;
+import intelink.modules.redirect.services.RedirectService;
 import intelink.utils.helper.RedirectResult;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

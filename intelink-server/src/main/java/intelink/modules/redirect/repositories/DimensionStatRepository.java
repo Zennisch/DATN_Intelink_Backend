@@ -1,4 +1,4 @@
-package intelink.modules.redirect;
+package intelink.modules.redirect.repositories;
 
 import intelink.models.DimensionStat;
 import org.springframework.data.jpa.repository.JpaRepository;

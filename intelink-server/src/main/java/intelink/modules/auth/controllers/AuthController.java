@@ -1,10 +1,10 @@
-package intelink.controllers;
+package intelink.modules.auth.controllers;
 
 import intelink.dto.auth.*;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
-import intelink.modules.user.OAuthAccountService;
-import intelink.modules.user.UserService;
+import intelink.modules.auth.services.OAuthAccountService;
+import intelink.modules.auth.services.UserService;
 import intelink.utils.helper.AuthToken;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.mail.MessagingException;

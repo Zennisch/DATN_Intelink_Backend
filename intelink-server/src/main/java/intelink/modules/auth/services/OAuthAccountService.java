@@ -1,10 +1,12 @@
-package intelink.modules.user;
+package intelink.modules.auth.services;
 
 import intelink.configs.securities.JwtTokenProvider;
 import intelink.models.OAuthAccount;
 import intelink.models.User;
 import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
+import intelink.modules.auth.repositories.OAuthAccountRepository;
+import intelink.modules.auth.repositories.UserRepository;
 import intelink.utils.EnumUtils;
 import intelink.utils.helper.AuthToken;
 import lombok.RequiredArgsConstructor;

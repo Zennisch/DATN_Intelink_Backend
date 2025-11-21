@@ -1,4 +1,4 @@
-package intelink.modules.user;
+package intelink.modules.auth.repositories;
 
 import intelink.models.VerificationToken;
 import intelink.models.enums.VerificationTokenType;

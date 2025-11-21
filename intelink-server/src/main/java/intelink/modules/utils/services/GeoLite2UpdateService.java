@@ -1,4 +1,4 @@
-package intelink.modules.utils;
+package intelink.modules.utils.services;
 
 import com.maxmind.geoip2.DatabaseReader;
 import intelink.utils.GeoLiteUtil;

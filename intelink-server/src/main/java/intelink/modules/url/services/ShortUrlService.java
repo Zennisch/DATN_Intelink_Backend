@@ -1,4 +1,4 @@
-package intelink.modules.url;
+package intelink.modules.url.services;
 
 import intelink.dto.url.CreateShortUrlRequest;
 import intelink.models.ShortUrl;
@@ -6,7 +6,8 @@ import intelink.models.ShortUrlAccessControl;
 import intelink.models.User;
 import intelink.models.enums.AccessControlMode;
 import intelink.models.enums.AccessControlType;
-import intelink.modules.user.UserService;
+import intelink.modules.url.repositories.ShortUrlRepository;
+import intelink.modules.auth.services.UserService;
 import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.FPEUtil;
 import intelink.utils.helper.Cipher;

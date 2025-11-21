@@ -1,4 +1,4 @@
-package intelink.modules.redirect;
+package intelink.modules.redirect.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
