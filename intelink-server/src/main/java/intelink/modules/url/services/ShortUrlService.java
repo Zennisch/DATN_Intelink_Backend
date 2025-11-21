@@ -13,6 +13,8 @@ import intelink.utils.FPEUtil;
 import intelink.utils.helper.Cipher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -142,17 +144,24 @@ public class ShortUrlService {
     }
 
     @Transactional
+    @CacheEvict(value = "shortUrls", key = "#shortUrl.shortCode")
     public ShortUrl save(ShortUrl shortUrl) {
         return shortUrlRepository.save(shortUrl);
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "shortUrls", key = "#shortCode")
     public Optional<ShortUrl> findByShortCode(String shortCode) {
         return shortUrlRepository.findByShortCode(shortCode);
     }
 
-    @Transactional(readOnly = true)
-    public ShortUrl findByShortCodeOrNull(String shortCode) {
-        return shortUrlRepository.findByShortCode(shortCode).orElse(null);
+    @Transactional
+    public void incrementAllowedCounters(Long shortUrlId, Integer uniqueIncrement) {
+        shortUrlRepository.incrementAllowedCounters(shortUrlId, uniqueIncrement);
+    }
+
+    @Transactional
+    public void incrementBlockedCounter(Long shortUrlId) {
+        shortUrlRepository.incrementBlockedCounter(shortUrlId);
     }
 }

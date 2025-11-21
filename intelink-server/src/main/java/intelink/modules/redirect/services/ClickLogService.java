@@ -22,21 +22,14 @@ public class ClickLogService {
     private final ShortUrlService shortUrlService;
 
     @Transactional
-    public void recordAllowedClicks(String shortCode, HttpServletRequest request) {
+    public void recordAllowedClicks(ShortUrl shortUrl, HttpServletRequest request) {
         IpProcessResult ipProcessResult = IpUtil.process(request);
         String ipAddress = ipProcessResult.ipAddress();
         String userAgent = request.getHeader("User-Agent");
         String referrer = request.getHeader("Referer");
 
-        ShortUrl shortUrl = shortUrlService.findByShortCodeOrNull(shortCode);
         boolean isUniqueClick = !clickLogRepository.existsByShortUrlAndIpAddressAndUserAgent(shortUrl, ipAddress, userAgent);
-        shortUrl.setTotalClicks(shortUrl.getTotalClicks() + 1);
-        shortUrl.setAllowedClicks(shortUrl.getAllowedClicks() + 1);
-        if (isUniqueClick) {
-            shortUrl.setUniqueClicks(shortUrl.getUniqueClicks() + 1);
-        }
-
-        shortUrlService.save(shortUrl);
+        shortUrlService.incrementAllowedCounters(shortUrl.getId(), isUniqueClick ? 1 : 0);
 
         ClickLog clickLog = ClickLog.builder()
                 .shortUrl(shortUrl)
@@ -49,16 +42,13 @@ public class ClickLogService {
     }
 
     @Transactional
-    public void recordBlockedClicks(String shortCode, HttpServletRequest request) {
+    public void recordBlockedClicks(ShortUrl shortUrl, HttpServletRequest request) {
         IpProcessResult ipProcessResult = IpUtil.process(request);
         String ipAddress = ipProcessResult.ipAddress();
         String userAgent = request.getHeader("User-Agent");
         String referrer = request.getHeader("Referer");
 
-        ShortUrl shortUrl = shortUrlService.findByShortCodeOrNull(shortCode);
-        shortUrl.setTotalClicks(shortUrl.getTotalClicks() + 1);
-        shortUrl.setBlockedClicks(shortUrl.getBlockedClicks() + 1);
-        shortUrlService.save(shortUrl);
+        shortUrlService.incrementBlockedCounter(shortUrl.getId());
 
         ClickLog clickLog = ClickLog.builder()
                 .shortUrl(shortUrl)
