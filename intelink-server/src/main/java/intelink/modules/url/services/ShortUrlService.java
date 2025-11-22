@@ -161,7 +161,7 @@ public class ShortUrlService {
     }
 
     @Transactional
-    public void incrementBlockedCounter(Long shortUrlId) {
-        shortUrlRepository.incrementBlockedCounter(shortUrlId);
+    public void incrementBlockedCounters(Long shortUrlId) {
+        shortUrlRepository.incrementBlockedCounters(shortUrlId);
     }
 }

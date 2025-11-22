@@ -22,5 +22,5 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, UUID> {
 
     @Modifying
     @Query("UPDATE ShortUrl s SET s.totalClicks = s.totalClicks + 1, s.blockedClicks = s.blockedClicks + 1 WHERE s.id = :id")
-    void incrementBlockedCounter(@Param("id") Long id);
+    void incrementBlockedCounters(@Param("id") Long id);
 }

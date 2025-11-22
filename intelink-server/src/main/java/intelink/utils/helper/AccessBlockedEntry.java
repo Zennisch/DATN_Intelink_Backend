@@ -1,4 +1,4 @@
-package intelink.utils;
+package intelink.utils.helper;
 
 import intelink.models.enums.AccessControlType;
 

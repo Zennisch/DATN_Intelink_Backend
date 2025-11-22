@@ -7,7 +7,7 @@ import intelink.models.enums.AccessControlType;
 import intelink.models.enums.ClickStatus;
 import intelink.modules.url.services.ShortUrlAccessControlService;
 import intelink.modules.url.services.ShortUrlService;
-import intelink.utils.AccessBlockedEntry;
+import intelink.utils.helper.AccessBlockedEntry;
 import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.GeoLiteUtil;
 import intelink.utils.IpUtil;
@@ -124,7 +124,7 @@ public class RedirectService {
             String reason = reasonBuilder.toString();
 
             log.warn("[RedirectService.handleRedirect] Access denied for Short URL: {}. Reasons: {}", shortCode, reason);
-            clickLogService.recordClick(shortUrl, request, ClickStatus.BLOCKED, reason);
+            clickLogService.recordClick(shortUrl, ClickStatus.BLOCKED, reason, request);
             return RedirectResult.accessDenied(shortCode);
         }
 
@@ -142,7 +142,7 @@ public class RedirectService {
         }
 
         // 5. Record click log and redirect to original URL
-        clickLogService.recordClick(shortUrl, request, ClickStatus.ALLOWED, null);
+        clickLogService.recordClick(shortUrl, ClickStatus.ALLOWED, null, request);
         return RedirectResult.success(shortUrl.getOriginalUrl());
     }
 
