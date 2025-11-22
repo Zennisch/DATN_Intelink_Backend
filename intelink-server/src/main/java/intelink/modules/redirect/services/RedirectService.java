@@ -61,7 +61,7 @@ public class RedirectService {
     }
 
     @Transactional
-    @RateLimiter(name = "redirect", fallbackMethod = "handleRateLimitExceeded")
+//    @RateLimiter(name = "redirect", fallbackMethod = "handleRateLimitExceeded")
     public RedirectResult handleRedirect(String shortCode, String password, HttpServletRequest request) {
         // 1. Find short URL by code
         Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCode(shortCode);

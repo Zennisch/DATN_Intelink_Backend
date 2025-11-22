@@ -11,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 
@@ -29,8 +26,8 @@ public class ClickStatService {
     public void recordClickStats(ShortUrl shortUrl, ClickStatus status) {
         Instant now = Instant.now();
         for (Granularity granularity : Granularity.values()) {
-            Instant bucketStart = getBucketStat(now, granularity);
-            Instant bucketEnd = getBucketEnd(bucketStart, granularity);
+            Instant bucketStart = getBucketStat(now, granularity, ZoneOffset.UTC);
+            Instant bucketEnd = getBucketEnd(bucketStart, granularity, ZoneOffset.UTC);
             ClickStat clickStat = clickStatRepository
                     .findByShortUrlAndGranularityAndBucketStart(shortUrl, granularity, bucketStart)
                     .orElseGet(() -> {
@@ -51,9 +48,8 @@ public class ClickStatService {
         }
     }
 
-    private Instant getBucketStat(Instant instant, Granularity granularity) {
-        ZoneId zone = ZoneId.systemDefault();
-        ZonedDateTime zdt = instant.atZone(zone);
+    private Instant getBucketStat(Instant instant, Granularity granularity, ZoneId zoneId) {
+        ZonedDateTime zdt = instant.atZone(zoneId);
         ZonedDateTime start;
         switch (granularity) {
             case HOURLY -> start = zdt.truncatedTo(ChronoUnit.HOURS);
@@ -66,9 +62,8 @@ public class ClickStatService {
         return start.toInstant();
     }
 
-    private Instant getBucketEnd(Instant instant, Granularity granularity) {
-        ZoneId zone = ZoneId.systemDefault();
-        ZonedDateTime start = getBucketStat(instant, granularity).atZone(zone);
+    private Instant getBucketEnd(Instant instant, Granularity granularity, ZoneId zoneId) {
+        ZonedDateTime start = getBucketStat(instant, granularity, zoneId).atZone(zoneId);
         ZonedDateTime end;
         switch (granularity) {
             case HOURLY -> end = start.plusHours(1);
