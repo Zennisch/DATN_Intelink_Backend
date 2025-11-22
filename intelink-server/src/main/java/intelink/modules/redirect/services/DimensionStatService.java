@@ -2,13 +2,16 @@ package intelink.modules.redirect.services;
 
 import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;
-import intelink.models.enums.DimensionType;
+import intelink.models.enums.ClickStatus;
 import intelink.modules.redirect.repositories.DimensionStatRepository;
+import intelink.utils.helper.DimensionEntry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,12 +20,32 @@ public class DimensionStatService {
 
     private final DimensionStatRepository dimensionStatRepository;
 
-    public DimensionStat save(DimensionStat dimensionStat) {
-        return dimensionStatRepository.save(dimensionStat);
-    }
+    @Transactional
+    public void recordDimensionStats(ShortUrl shortUrl, List<DimensionEntry> dimensionEntries, ClickStatus status) {
+        List<DimensionStat> dimensionStats = new ArrayList<>();
+        dimensionEntries.forEach(entry -> {
+            if (entry.value() == null || entry.value().isBlank()) {
+                log.debug("[ClickLogService.recordDimensionStats] Skipping empty dimension value for ShortUrl ID {}: {}", shortUrl.getId(), entry.type());
+                return;
+            }
+            DimensionStat dimensionStat = dimensionStatRepository
+                    .findByShortUrlAndTypeAndValue(shortUrl, entry.type(), entry.value())
+                    .orElseGet(() -> DimensionStat.builder()
+                            .shortUrl(shortUrl)
+                            .type(entry.type())
+                            .value(entry.value())
+                            .build());
+            if (status == ClickStatus.ALLOWED) {
+                dimensionStatRepository.increaseAllowedCounters(dimensionStat.getId());
+            } else if (status == ClickStatus.BLOCKED) {
+                dimensionStatRepository.increaseBlockedCounters(dimensionStat.getId());
+            }
+            dimensionStats.add(dimensionStat);
+        });
 
-    public Optional<DimensionStat> findByShortUrlAndTypeAndValue(ShortUrl shortUrl, DimensionType type, String value) {
-        return dimensionStatRepository.findByShortUrlAndTypeAndValue(shortUrl, type, value);
+        if (!dimensionStats.isEmpty()) {
+            dimensionStatRepository.saveAll(dimensionStats);
+        }
     }
 
 }

@@ -157,11 +157,11 @@ public class ShortUrlService {
 
     @Transactional
     public void incrementAllowedCounters(Long shortUrlId, Integer uniqueIncrement) {
-        shortUrlRepository.incrementAllowedCounters(shortUrlId, uniqueIncrement);
+        shortUrlRepository.increaseAllowedCounters(shortUrlId, uniqueIncrement);
     }
 
     @Transactional
     public void incrementBlockedCounters(Long shortUrlId) {
-        shortUrlRepository.incrementBlockedCounters(shortUrlId);
+        shortUrlRepository.increaseBlockedCounters(shortUrlId);
     }
 }

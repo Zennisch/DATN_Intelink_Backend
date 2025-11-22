@@ -1,7 +1,6 @@
 package intelink.modules.redirect.services;
 
 import intelink.models.ClickLog;
-import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;
 import intelink.models.enums.ClickStatus;
 import intelink.models.enums.DimensionType;
@@ -56,7 +55,7 @@ public class ClickLogService {
 
             UserAgentInfo userAgentInfo = UserAgentUtil.parseUserAgent(userAgent);
             List<DimensionEntry> dimensionEntries = getDimensionEntries(userAgentInfo, countryCode, city);
-            recordDimensionStats(shortUrl, dimensionEntries, status);
+            dimensionStatService.recordDimensionStats(shortUrl, dimensionEntries, status);
 
 
             ClickLog clickLog = ClickLog.builder()
@@ -86,30 +85,5 @@ public class ClickLogService {
                 new DimensionEntry(DimensionType.OS, os),
                 new DimensionEntry(DimensionType.DEVICE_TYPE, deviceType
                 ));
-    }
-
-    @Transactional
-    public void recordDimensionStats(ShortUrl shortUrl, List<DimensionEntry> dimensionEntries, ClickStatus status) {
-        dimensionEntries.forEach(entry -> {
-            if (entry.value() == null || entry.value().isBlank()) {
-                log.debug("[ClickLogService.recordDimensionStats] Skipping empty dimension value for ShortUrl ID {}: {}", shortUrl.getId(), entry.type());
-                return;
-            }
-            DimensionStat dimensionStat = dimensionStatService
-                    .findByShortUrlAndTypeAndValue(shortUrl, entry.type(), entry.value())
-                    .orElseGet(() -> DimensionStat.builder()
-                            .shortUrl(shortUrl)
-                            .type(entry.type())
-                            .value(entry.value())
-                            .build());
-            if (status == ClickStatus.ALLOWED) {
-                dimensionStat.setTotalClicks(dimensionStat.getTotalClicks() + 1);
-                dimensionStat.setAllowedClicks(dimensionStat.getAllowedClicks() + 1);
-            } else if (status == ClickStatus.BLOCKED) {
-                dimensionStat.setTotalClicks(dimensionStat.getTotalClicks() + 1);
-                dimensionStat.setBlockedClicks(dimensionStat.getBlockedClicks() + 1);
-            }
-            dimensionStatService.save(dimensionStat);
-        });
     }
 }
