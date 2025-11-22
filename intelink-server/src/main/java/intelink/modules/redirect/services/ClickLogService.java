@@ -6,6 +6,7 @@ import intelink.models.ShortUrl;
 import intelink.models.enums.ClickStatus;
 import intelink.models.enums.DimensionType;
 import intelink.models.enums.Granularity;
+import intelink.models.enums.IPVersion;
 import intelink.modules.redirect.repositories.ClickLogRepository;
 import intelink.modules.url.services.ShortUrlService;
 import intelink.utils.GeoLiteUtil;
@@ -44,6 +45,7 @@ public class ClickLogService {
     public CompletableFuture<Void> recordClick(ShortUrl shortUrl, ClickStatus status, String reason, HttpServletRequest request) {
         try {
             IpInfo ipInfo = IpUtil.process(request);
+            IPVersion ipVersion = ipInfo.ipVersion();
             String ipAddress = ipInfo.ipAddress();
             String userAgent = request.getHeader("User-Agent");
             String referrer = request.getHeader("Referer");
@@ -66,6 +68,7 @@ public class ClickLogService {
 
             ClickLog clickLog = ClickLog.builder()
                     .shortUrl(shortUrl)
+                    .ipVersion(ipVersion)
                     .ipAddress(ipAddress)
                     .userAgent(userAgent)
                     .referrer(referrer)

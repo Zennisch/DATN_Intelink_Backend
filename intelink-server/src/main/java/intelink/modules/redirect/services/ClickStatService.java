@@ -1,5 +1,6 @@
 package intelink.modules.redirect.services;
 
+import intelink.models.ClickLog;
 import intelink.models.ClickStat;
 import intelink.models.ShortUrl;
 import intelink.models.enums.ClickStatus;
@@ -12,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 
@@ -31,12 +34,13 @@ public class ClickStatService {
             ClickStat clickStat = clickStatRepository
                     .findByShortUrlAndGranularityAndBucketStart(shortUrl, granularity, bucketStart)
                     .orElseGet(() -> {
-                        ClickStat newStat = new ClickStat();
-                        newStat.setShortUrl(shortUrl);
-                        newStat.setGranularity(granularity);
-                        newStat.setBucketStart(bucketStart);
-                        newStat.setBucketEnd(bucketEnd);
-                        return newStat;
+                        ClickStat c = ClickStat.builder()
+                                .shortUrl(shortUrl)
+                                .granularity(granularity)
+                                .bucketStart(bucketStart)
+                                .bucketEnd(bucketEnd)
+                                .build();
+                        return clickStatRepository.save(c);
                     });
 
             if (status == ClickStatus.ALLOWED) {
@@ -48,31 +52,33 @@ public class ClickStatService {
     }
 
     private Instant getBucketStat(Instant instant, Granularity granularity) {
+        ZoneId zone = ZoneId.systemDefault();
+        ZonedDateTime zdt = instant.atZone(zone);
+        ZonedDateTime start;
         switch (granularity) {
-            case HOURLY -> instant.truncatedTo(ChronoUnit.HOURS);
-            case DAILY -> instant.truncatedTo(ChronoUnit.DAYS);
-            case WEEKLY ->
-                    instant.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
-            case MONTHLY -> instant.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
-            case YEARLY -> instant.with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
+            case HOURLY -> start = zdt.truncatedTo(ChronoUnit.HOURS);
+            case DAILY -> start = zdt.truncatedTo(ChronoUnit.DAYS);
+            case WEEKLY -> start = zdt.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
+            case MONTHLY -> start = zdt.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
+            case YEARLY -> start = zdt.with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
             default -> throw new IllegalArgumentException("Unsupported granularity: " + granularity);
         }
-        return instant;
+        return start.toInstant();
     }
 
     private Instant getBucketEnd(Instant instant, Granularity granularity) {
+        ZoneId zone = ZoneId.systemDefault();
+        ZonedDateTime start = getBucketStat(instant, granularity).atZone(zone);
+        ZonedDateTime end;
         switch (granularity) {
-            case HOURLY -> instant.plus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
-            case DAILY -> instant.plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
-            case WEEKLY ->
-                    instant.plus(1, ChronoUnit.WEEKS).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
-            case MONTHLY ->
-                    instant.plus(1, ChronoUnit.MONTHS).with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
-            case YEARLY ->
-                    instant.plus(1, ChronoUnit.YEARS).with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
+            case HOURLY -> end = start.plusHours(1);
+            case DAILY -> end = start.plusDays(1);
+            case WEEKLY -> end = start.plusWeeks(1);
+            case MONTHLY -> end = start.plusMonths(1);
+            case YEARLY -> end = start.plusYears(1);
             default -> throw new IllegalArgumentException("Unsupported granularity: " + granularity);
         }
-        return instant;
+        return end.toInstant();
     }
 
 }

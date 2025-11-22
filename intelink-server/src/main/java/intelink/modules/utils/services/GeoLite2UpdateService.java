@@ -30,7 +30,7 @@ public class GeoLite2UpdateService {
     @Value("${app.geolite2.database.path}")
     private String databasePath;
 
-    @Scheduled(initialDelay = 0, fixedRateString = "${app.geolite2.update.schedule.fixed-rate}")
+//    @Scheduled(initialDelay = 0, fixedRateString = "${app.geolite2.update.schedule.fixed-rate}")
     public void updateGeoLite2Database() {
         if (licenseKey == null || licenseKey.trim().isEmpty()) {
             log.warn("GeoLite2 license key is not configured. Skipping database update.");
