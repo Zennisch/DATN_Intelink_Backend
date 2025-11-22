@@ -2,6 +2,7 @@ package intelink.modules.utils.services;
 
 import com.maxmind.geoip2.DatabaseReader;
 import intelink.utils.GeoLiteUtil;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -29,9 +30,29 @@ public class GeoLite2UpdateService {
     private String licenseKey;
     @Value("${app.geolite2.database.path}")
     private String databasePath;
+    @Value("${app.geolite2.update.enabled}")
+    private boolean updateEnabled;
 
     @Scheduled(initialDelay = 0, fixedRateString = "${app.geolite2.update.schedule.fixed-rate}")
     public void updateGeoLite2Database() {
+        if (!updateEnabled) {
+            log.info("GeoLite2 updater is disabled. Skipping download and reload.");
+            Path dbPath = Paths.get(databasePath);
+            log.info("Attempting to load existing GeoLite2 database from: {}", dbPath.toAbsolutePath());
+            if (Files.exists(dbPath)) {
+                try {
+                    byte[] mmdbData = Files.readAllBytes(dbPath);
+                    reloadDatabaseReader(mmdbData);
+                    log.info("Loaded existing GeoLite2 database from: {}", dbPath.toAbsolutePath());
+                } catch (Exception e) {
+                    log.error("Failed to load existing GeoLite2 database: {}", e.getMessage(), e);
+                }
+            } else {
+                log.warn("GeoLite2 database file not found at: {}. If updates are disabled, no database will be available.", dbPath.toAbsolutePath());
+            }
+            return;
+        }
+
         if (licenseKey == null || licenseKey.trim().isEmpty()) {
             log.warn("GeoLite2 license key is not configured. Skipping database update.");
             return;
