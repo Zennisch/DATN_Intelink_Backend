@@ -77,7 +77,7 @@ public class User {
     private String profileName;
 
     @Column(name = "profile_picture_url", length = 256)
-    private String profilePictureURL;
+    private String profilePictureUrl;
 
     @Column(name = "total_short_urls", nullable = false)
     @Builder.Default

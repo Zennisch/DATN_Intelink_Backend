@@ -55,8 +55,8 @@ public class Subscription {
     @Builder.Default
     private Double creditUsed = 0.0;
 
-    @Column(name = "pro_rated_value")
-    private Double proRatedValue;
+    @Column(name = "prorated_value")
+    private Double proratedValue;
 
     @Column(name = "activated_at")
     private Instant activatedAt;
