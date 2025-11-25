@@ -4,7 +4,7 @@ import intelink.dto.auth.*;
 import intelink.models.User;
 import intelink.models.enums.UserRole;
 import intelink.modules.auth.services.OAuthAccountService;
-import intelink.modules.auth.services.UserService;
+import intelink.modules.auth.services.AuthService;
 import intelink.utils.helper.AuthToken;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.mail.MessagingException;
@@ -23,13 +23,13 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "bearerAuth")
 public class AuthController {
 
-    private final UserService userService;
+    private final AuthService authService;
     private final OAuthAccountService oAuthAccountService;
 
     // ========== Register
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) throws MessagingException {
-        User user = userService.register(request, UserRole.USER);
+        User user = authService.register(request, UserRole.USER);
         String msg = "Registration successful. Please check your email to verify your account.";
         RegisterResponse resp = new RegisterResponse(true, msg, user.getEmail(), user.getVerified());
         return ResponseEntity.ok(resp);
@@ -38,7 +38,7 @@ public class AuthController {
     // ========== Verify Email
     @PostMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
-        userService.verifyEmail(token);
+        authService.verifyEmail(token);
         String msg = "Email verified successfully";
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
@@ -48,7 +48,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) throws MessagingException {
         String email = request.email();
-        userService.forgotPassword(email);
+        authService.forgotPassword(email);
         String msg = "The password reset link has been sent to " + email;
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
@@ -60,7 +60,7 @@ public class AuthController {
             @RequestParam("token") String token,
             @Valid @RequestBody ResetPasswordRequest request
     ) {
-        userService.resetPassword(token, request);
+        authService.resetPassword(token, request);
         String msg = "Password reset successfully. You can now log in with your new password.";
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
@@ -69,7 +69,7 @@ public class AuthController {
     // ========== Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        AuthToken obj = userService.login(request);
+        AuthToken obj = authService.login(request);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
@@ -77,8 +77,8 @@ public class AuthController {
     // ========== Refresh Token
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userService.getCurrentUser(userDetails);
-        AuthToken obj = userService.refreshToken(user);
+        User user = authService.getCurrentUser(userDetails);
+        AuthToken obj = authService.refreshToken(user);
         AuthTokenResponse resp = AuthTokenResponse.fromEntity(obj);
         return ResponseEntity.ok(resp);
     }
@@ -86,8 +86,8 @@ public class AuthController {
     // ========== Logout
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userService.getCurrentUser(userDetails);
-        userService.logout(user);
+        User user = authService.getCurrentUser(userDetails);
+        authService.logout(user);
         String msg = "Logged out successfully";
         AuthInfoResponse resp = new AuthInfoResponse(true, msg);
         return ResponseEntity.ok(resp);
@@ -96,8 +96,8 @@ public class AuthController {
     // ========== Get User Profile
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userService.getCurrentUser(userDetails);
-        UserProfileResponse resp = userService.getProfile(user);
+        User user = authService.getCurrentUser(userDetails);
+        UserProfileResponse resp = authService.getProfile(user);
         return ResponseEntity.ok(resp);
     }
 

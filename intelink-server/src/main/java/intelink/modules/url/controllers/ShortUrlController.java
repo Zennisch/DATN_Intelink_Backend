@@ -5,7 +5,7 @@ import intelink.dto.url.CreateShortUrlResponse;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
 import intelink.models.User;
-import intelink.modules.auth.services.UserService;
+import intelink.modules.auth.services.AuthService;
 import intelink.modules.url.services.ShortUrlAccessControlService;
 import intelink.modules.url.services.ShortUrlService;
 import jakarta.validation.Valid;
@@ -29,14 +29,14 @@ public class ShortUrlController {
 
     private final ShortUrlService shortUrlService;
     private final ShortUrlAccessControlService shortUrlAccessControlService;
-    private final UserService userService;
+    private final AuthService authService;
 
     @Value("${app.url.template.access-url}")
     private String accessUrlTemplate;
 
     @PostMapping
     public ResponseEntity<?> createShortUrl(@Valid @RequestBody CreateShortUrlRequest request, @AuthenticationPrincipal UserDetails userDetails) throws IllegalBlockSizeException, BadPaddingException {
-        User user = userService.getCurrentUser(userDetails);
+        User user = authService.getCurrentUser(userDetails);
         ShortUrl shortUrl = shortUrlService.createShortUrl(user, request);
         List<ShortUrlAccessControl> shortUrlAccessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
         CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, shortUrlAccessControls, accessUrlTemplate);

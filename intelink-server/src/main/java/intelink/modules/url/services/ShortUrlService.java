@@ -6,7 +6,7 @@ import intelink.models.ShortUrlAccessControl;
 import intelink.models.User;
 import intelink.models.enums.AccessControlMode;
 import intelink.models.enums.AccessControlType;
-import intelink.modules.auth.services.UserService;
+import intelink.modules.auth.services.AuthService;
 import intelink.modules.url.repositories.ShortUrlRepository;
 import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.FPEUtil;
@@ -31,7 +31,7 @@ import java.util.Optional;
 public class ShortUrlService {
 
     private final ShortUrlRepository shortUrlRepository;
-    private final UserService userService;
+    private final AuthService authService;
     private final ShortUrlAccessControlService shortUrlAccessControlService;
     private final PasswordEncoder passwordEncoder;
 
@@ -137,7 +137,7 @@ public class ShortUrlService {
         shortUrlRepository.save(shortUrl);
 
         // 7. Update user's total short URLs count
-        userService.increaseTotalShortUrls(user.getId());
+        authService.increaseTotalShortUrls(user.getId());
         log.info("[ShortUrlService.create] Short URL created with code: {}", shortCode);
 
         return shortUrl;
