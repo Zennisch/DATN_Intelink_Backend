@@ -9,12 +9,13 @@ import intelink.models.enums.AccessControlType;
 import intelink.modules.auth.services.AuthService;
 import intelink.modules.url.repositories.ShortUrlRepository;
 import intelink.utils.AccessControlValidationUtil;
-import intelink.utils.FPEUtil;
+import intelink.utils.FPEGenerator;
 import intelink.utils.helper.Cipher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,45 +35,44 @@ public class ShortUrlService {
     private final AuthService authService;
     private final ShortUrlAccessControlService shortUrlAccessControlService;
     private final PasswordEncoder passwordEncoder;
+    private final FPEGenerator fpeGenerator;
 
     private final Integer SHORT_CODE_LENGTH = 10;
-
-    private String validateCustomCode(String customCode) {
-        if (!StringUtils.hasText(customCode)) {
-            throw new IllegalArgumentException("Custom code cannot be empty");
-        }
-        if (customCode.length() < 4 || customCode.length() > 16) {
-            throw new IllegalArgumentException("Custom code must be between 4 and 20 characters");
-        }
-        if (!customCode.matches("^[a-zA-Z0-9_-]+$")) {
-            throw new IllegalArgumentException("Custom code can only contain letters, numbers, hyphens, and underscores");
-        }
-        return customCode;
-    }
-
-    private String generateShortCode(Long userId) throws IllegalBlockSizeException, BadPaddingException {
-        final int maxAttempts = 5;
-
-        for (int attempts = 0; attempts < maxAttempts; attempts++) {
-            Cipher cipher = FPEUtil.generate(userId, SHORT_CODE_LENGTH);
-            String candidate = cipher.text();
-            if (!shortUrlRepository.existsByShortCode(candidate)) {
-                return candidate;
-            }
-        }
-
-        throw new IllegalStateException("Failed to generate a unique short code after " + maxAttempts + " attempts");
-    }
+    private final Integer MAX_SHORT_CODE_GENERATION_ATTEMPTS = 20;
 
     @Transactional
     public ShortUrl createShortUrl(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
         // 1. Determine short code
-        String shortCode;
+        String shortCode = null;
         if (request.customCode() != null && !request.customCode().isEmpty()) {
-            shortCode = validateCustomCode(request.customCode());
+            String customCode = request.customCode();
+            if (!StringUtils.hasText(customCode)) {
+                throw new IllegalArgumentException("Custom code cannot be empty");
+            }
+            if (customCode.length() < 4 || customCode.length() > 16) {
+                throw new IllegalArgumentException("Custom code must be between 4 and 16 characters long");
+            }
+            if (!customCode.matches("^[a-zA-Z0-9_-]+$")) {
+                throw new IllegalArgumentException("Custom code can only contain letters, numbers, hyphens, and underscores");
+            }
+
+            shortCode = customCode;
         } else {
-            shortCode = generateShortCode(user.getId());
+            for (int attempts = 0; attempts < MAX_SHORT_CODE_GENERATION_ATTEMPTS; attempts++) {
+                Cipher cipher = fpeGenerator.generate(user.getId(), SHORT_CODE_LENGTH);
+                String candidate = cipher.text();
+                if (!shortUrlRepository.existsByShortCode(candidate)) {
+                    shortCode = candidate;
+                    break;
+                }
+            }
         }
+
+        // 1.1. Validate short code uniqueness
+        if (shortCode == null) {
+            throw new IllegalStateException("Failed to generate a unique short code after " + MAX_SHORT_CODE_GENERATION_ATTEMPTS + " attempts");
+        }
+
         if (shortUrlRepository.existsByShortCode(shortCode)) {
             throw new IllegalArgumentException("Custom code already exists");
         }
@@ -143,12 +143,6 @@ public class ShortUrlService {
         return shortUrl;
     }
 
-    @Transactional
-    @CacheEvict(value = "shortUrls", key = "#shortUrl.shortCode")
-    public ShortUrl save(ShortUrl shortUrl) {
-        return shortUrlRepository.save(shortUrl);
-    }
-
     @Transactional(readOnly = true)
     @Cacheable(value = "shortUrls", key = "#shortCode")
     public Optional<ShortUrl> findByShortCode(String shortCode) {
@@ -163,5 +157,10 @@ public class ShortUrlService {
     @Transactional
     public void incrementBlockedCounters(Long shortUrlId) {
         shortUrlRepository.increaseBlockedCounters(shortUrlId);
+    }
+
+    @Transactional
+    public Page<ShortUrl> getShortUrlsByUser(User user, Pageable pageable) {
+        return null;
     }
 }

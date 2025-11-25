@@ -12,6 +12,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -49,6 +52,9 @@ public class ShortUrlController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
+        User user = authService.getCurrentUser(userDetails);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ShortUrl> shortUrlPage = shortUrlService.getShortUrlsByUser(user, pageable);
         return ResponseEntity.ok(null);
     }
 
