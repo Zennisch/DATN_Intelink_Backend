@@ -42,9 +42,15 @@ public class ShortUrlService {
 
     @Transactional
     public ShortUrl createShortUrl(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
-        // 1. Determine short code
+        // 1. Calculate expiry date (7 days default)
+        Instant expiresAt = request.availableDays() != null
+                ? Instant.now().plusSeconds(request.availableDays() * 24 * 60 * 60)
+                : Instant.now().plusSeconds(7 * 24 * 60 * 60);
+
+        // 2. Determine short code
         String shortCode = null;
         byte[] shortCodeTweak = null;
+        ShortUrl shortUrl = null;
 
         if (request.customCode() != null && !request.customCode().isEmpty()) {
             String customCode = request.customCode();
@@ -59,18 +65,30 @@ public class ShortUrlService {
             }
 
             shortCode = customCode;
+            shortUrl = ShortUrl.builder()
+                    .originalUrl(request.originalUrl())
+                    .user(user)
+                    .build();
         } else {
             for (int attempts = 0; attempts < MAX_SHORT_CODE_GENERATION_ATTEMPTS; attempts++) {
-                Cipher cipher = fpeGenerator.generate(user.getId(), SHORT_CODE_LENGTH);
+                shortUrl = ShortUrl.builder()
+                        .originalUrl(request.originalUrl())
+                        .user(user)
+                        .build();
+                shortUrlRepository.save(shortUrl); // Save to get an ID
+
+                Cipher cipher = fpeGenerator.generate(shortUrl.getId(), SHORT_CODE_LENGTH);
                 if (!shortUrlRepository.existsByShortCode(cipher.text())) {
                     shortCode = cipher.text();
                     shortCodeTweak = cipher.tweak();
                     break;
+                } else {
+                    shortUrlRepository.delete(shortUrl); // Delete if collision occurs
                 }
             }
         }
 
-        // 1.1. Validate short code uniqueness
+        // 3. Validate short code uniqueness
         if (shortCode == null) {
             throw new IllegalStateException("Failed to generate a unique short code after " + MAX_SHORT_CODE_GENERATION_ATTEMPTS + " attempts");
         }
@@ -79,26 +97,17 @@ public class ShortUrlService {
             throw new IllegalArgumentException("Custom code already exists");
         }
 
-        // 2. Calculate expiry date (7 days default)
-        Instant expiresAt = request.availableDays() != null
-                ? Instant.now().plusSeconds(request.availableDays() * 24 * 60 * 60)
-                : Instant.now().plusSeconds(7 * 24 * 60 * 60);
-
-        // 3. Create and save short URL
-        ShortUrl shortUrl = ShortUrl.builder()
-                .shortCode(shortCode)
-                .shortCodeTweak(shortCodeTweak)
-                .originalUrl(request.originalUrl())
-                .title(request.title())
-                .description(request.description())
-                .enabled(true)
-                .maxUsage(request.maxUsage())
-                .expiresAt(expiresAt)
-                .user(user)
-                .build();
+        // 4. Create and save short URL
+        shortUrl.setShortCode(shortCode);
+        shortUrl.setShortCodeTweak(shortCodeTweak);
+        shortUrl.setTitle(request.title());
+        shortUrl.setDescription(request.description());
+        shortUrl.setEnabled(true);
+        shortUrl.setMaxUsage(request.maxUsage());
+        shortUrl.setExpiresAt(expiresAt);
         shortUrlRepository.save(shortUrl);
 
-        // 4. Encode password if provided
+        // 5. Encode password if provided
         if (request.password() != null && !request.password().isEmpty()) {
             String encodedPassword = passwordEncoder.encode(request.password());
             ShortUrlAccessControl passwordAccessControl = ShortUrlAccessControl.builder()
@@ -109,7 +118,7 @@ public class ShortUrlService {
             shortUrlAccessControlService.save(passwordAccessControl);
         }
 
-        // 5. Set other access control rules
+        // 6. Set other access control rules
         if (request.accessControlMode() != null && request.accessControlMode() != AccessControlMode.NONE) {
             if (request.accessControlCIDRs() != null) {
                 for (String cidr : request.accessControlCIDRs()) {
@@ -136,10 +145,10 @@ public class ShortUrlService {
             shortUrl.setAccessControlMode(request.accessControlMode());
         }
 
-        // 6. Save the short URL
+        // 7. Save the short URL
         shortUrlRepository.save(shortUrl);
 
-        // 7. Update user's total short URLs count
+        // 8. Update user's total short URLs count
         authService.increaseTotalShortUrls(user.getId());
         log.info("[ShortUrlService.create] Short URL created with code: {}", shortCode);
 

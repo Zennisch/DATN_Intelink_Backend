@@ -17,29 +17,26 @@ public class FPEGenerator {
     private String alphabet;
     @Value("${app.fpe.key}")
     private String fpeKey;
+    @Value("${app.fpe.tweak}")
+    private String fpeTweak;
 
     public Cipher generate(Long number, Integer length) throws IllegalBlockSizeException, BadPaddingException {
         String format = "%" + length + "s";
         String plainText = String.format(format, number).replace(' ', '0');
-        byte[] tweak = generateTweak(8);
 
         byte[] keyBytes = fpeKey.getBytes();
-        FF3Cipher cipher = new FF3Cipher(keyBytes, tweak, alphabet);
+        byte[] tweakBytes = fpeTweak.getBytes();
+
+        FF3Cipher cipher = new FF3Cipher(keyBytes, tweakBytes, alphabet);
         String cypherText = cipher.encrypt(plainText);
-        return new Cipher(cypherText, tweak);
+        return new Cipher(cypherText, tweakBytes);
     }
 
-    public Long resolve(String cypherText, byte[] tweak) throws IllegalBlockSizeException, BadPaddingException {
+    public Long resolve(String cypherText, byte[] tweakBytes) throws IllegalBlockSizeException, BadPaddingException {
         byte[] keyBytes = fpeKey.getBytes();
-        FF3Cipher cipher = new FF3Cipher(keyBytes, tweak, alphabet);
+        FF3Cipher cipher = new FF3Cipher(keyBytes, tweakBytes, alphabet);
         String plainText = cipher.decrypt(cypherText);
         return Long.parseLong(plainText.replaceFirst("^0+", ""));
-    }
-
-    private static byte[] generateTweak(int length) {
-        byte[] bytes = new byte[length];
-        secureRandom.nextBytes(bytes);
-        return bytes;
     }
 
 }

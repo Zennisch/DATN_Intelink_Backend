@@ -61,7 +61,7 @@ public class ShortUrl {
     @Column(name = "original_url", nullable = false, length = 2048)
     private String originalUrl;
 
-    @Column(name = "short_code", nullable = false, unique = true, length = 16)
+    @Column(name = "short_code", length = 16)
     private String shortCode;
 
     @Lob
