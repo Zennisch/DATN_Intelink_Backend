@@ -32,8 +32,9 @@ public class FPEGenerator {
         return new Cipher(cypherText, tweakBytes);
     }
 
-    public Long resolve(String cypherText, byte[] tweakBytes) throws IllegalBlockSizeException, BadPaddingException {
+    public Long resolve(String cypherText) throws IllegalBlockSizeException, BadPaddingException {
         byte[] keyBytes = fpeKey.getBytes();
+        byte[] tweakBytes = fpeTweak.getBytes();
         FF3Cipher cipher = new FF3Cipher(keyBytes, tweakBytes, alphabet);
         String plainText = cipher.decrypt(cypherText);
         return Long.parseLong(plainText.replaceFirst("^0+", ""));

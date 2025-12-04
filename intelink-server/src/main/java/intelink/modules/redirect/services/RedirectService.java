@@ -7,6 +7,7 @@ import intelink.models.enums.AccessControlType;
 import intelink.models.enums.ClickStatus;
 import intelink.modules.url.services.ShortUrlAccessControlService;
 import intelink.modules.url.services.ShortUrlService;
+import intelink.utils.FPEGenerator;
 import intelink.utils.helper.AccessBlockedEntry;
 import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.GeoLiteUtil;
@@ -22,6 +23,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +39,7 @@ public class RedirectService {
     private final ShortUrlAccessControlService shortUrlAccessControlService;
     private final PasswordEncoder passwordEncoder;
     private final ClickLogService clickLogService;
+    private final FPEGenerator fpeGenerator;
 
     @Value("${app.url.template.password-unlock}")
     private String passwordUnlockUrlTemplate;
@@ -62,9 +66,10 @@ public class RedirectService {
 
     @Transactional
 //    @RateLimiter(name = "redirect", fallbackMethod = "handleRateLimitExceeded")
-    public RedirectResult handleRedirect(String shortCode, String password, HttpServletRequest request) {
+    public RedirectResult handleRedirect(String shortCode, String password, HttpServletRequest request) throws IllegalBlockSizeException, BadPaddingException {
         // 1. Find short URL by code
-        Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCode(shortCode);
+        Long shortUrlId = fpeGenerator.resolve(shortCode);
+        Optional<ShortUrl> shortUrlOpt = shortUrlService.findById(shortUrlId);
         if (shortUrlOpt.isEmpty()) {
             log.warn("[RedirectService.handleRedirect] Short URL not found: {}", shortCode);
             return RedirectResult.notFound(shortCode);

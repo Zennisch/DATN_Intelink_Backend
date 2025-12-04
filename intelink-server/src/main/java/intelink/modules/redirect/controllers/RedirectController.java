@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -23,7 +26,7 @@ public class RedirectController {
             @PathVariable String shortCode,
             @RequestParam(required = false) String password,
             HttpServletRequest request
-    ) {
+    ) throws IllegalBlockSizeException, BadPaddingException {
         RedirectResult result = redirectService.handleRedirect(shortCode, password, request);
         return ResponseEntity.ok(result);
     }
