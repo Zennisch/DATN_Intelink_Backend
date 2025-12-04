@@ -41,6 +41,23 @@ public class ShortUrlService {
     private final Integer MAX_SHORT_CODE_GENERATION_ATTEMPTS = 20;
 
     @Transactional
+    public String validateCustomCode(String customCode) {
+        if (!StringUtils.hasText(customCode)) {
+            throw new IllegalArgumentException("Custom code cannot be empty");
+        }
+        if (customCode.length() < 4 || customCode.length() > 16) {
+            throw new IllegalArgumentException("Custom code must be between 4 and 16 characters long");
+        }
+        if (!customCode.matches("^[a-zA-Z0-9_-]+$")) {
+            throw new IllegalArgumentException("Custom code can only contain letters, numbers, hyphens, and underscores");
+        }
+        if (shortUrlRepository.existsByShortCode(customCode)) {
+            throw new IllegalArgumentException("Custom code already exists");
+        }
+        return customCode;
+    }
+
+    @Transactional
     public ShortUrl createShortUrl(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
         // 1. Calculate expiry date (7 days default)
         Instant expiresAt = request.availableDays() != null
@@ -48,47 +65,26 @@ public class ShortUrlService {
                 : Instant.now().plusSeconds(7 * 24 * 60 * 60);
 
         // 2. Determine short code
-        String shortCode = null;
+        String shortCode;
         byte[] shortCodeTweak = null;
-        ShortUrl shortUrl = null;
+        ShortUrl shortUrl;
 
         if (request.customCode() != null && !request.customCode().isEmpty()) {
-            String customCode = request.customCode();
-            if (!StringUtils.hasText(customCode)) {
-                throw new IllegalArgumentException("Custom code cannot be empty");
-            }
-            if (customCode.length() < 4 || customCode.length() > 16) {
-                throw new IllegalArgumentException("Custom code must be between 4 and 16 characters long");
-            }
-            if (!customCode.matches("^[a-zA-Z0-9_-]+$")) {
-                throw new IllegalArgumentException("Custom code can only contain letters, numbers, hyphens, and underscores");
-            }
-            if (shortUrlRepository.existsByShortCode(customCode)) {
-                throw new IllegalArgumentException("Custom code already exists");
-            }
-
-            shortCode = customCode;
+            shortCode = validateCustomCode(request.customCode());
             shortUrl = ShortUrl.builder()
                     .originalUrl(request.originalUrl())
                     .user(user)
                     .build();
         } else {
-            for (int attempts = 0; attempts < MAX_SHORT_CODE_GENERATION_ATTEMPTS; attempts++) {
-                shortUrl = ShortUrl.builder()
-                        .originalUrl(request.originalUrl())
-                        .user(user)
-                        .build();
-                shortUrlRepository.save(shortUrl); // Save to get an ID
+            shortUrl = ShortUrl.builder()
+                    .originalUrl(request.originalUrl())
+                    .user(user)
+                    .build();
+            shortUrlRepository.save(shortUrl); // Save to get an ID
 
-                Cipher cipher = fpeGenerator.generate(shortUrl.getId(), SHORT_CODE_LENGTH);
-                if (!shortUrlRepository.existsByShortCode(cipher.text())) {
-                    shortCode = cipher.text();
-                    shortCodeTweak = cipher.tweak();
-                    break;
-                } else {
-                    shortUrlRepository.delete(shortUrl); // Delete if collision occurs
-                }
-            }
+            Cipher cipher = fpeGenerator.generate(shortUrl.getId(), SHORT_CODE_LENGTH);
+            shortCode = cipher.text();
+            shortCodeTweak = cipher.tweak();
         }
 
         // 3. Validate short code uniqueness
