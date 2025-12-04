@@ -63,6 +63,9 @@ public class ShortUrlService {
             if (!customCode.matches("^[a-zA-Z0-9_-]+$")) {
                 throw new IllegalArgumentException("Custom code can only contain letters, numbers, hyphens, and underscores");
             }
+            if (shortUrlRepository.existsByShortCode(customCode)) {
+                throw new IllegalArgumentException("Custom code already exists");
+            }
 
             shortCode = customCode;
             shortUrl = ShortUrl.builder()
@@ -91,10 +94,6 @@ public class ShortUrlService {
         // 3. Validate short code uniqueness
         if (shortCode == null) {
             throw new IllegalStateException("Failed to generate a unique short code after " + MAX_SHORT_CODE_GENERATION_ATTEMPTS + " attempts");
-        }
-
-        if (shortUrlRepository.existsByShortCode(shortCode)) {
-            throw new IllegalArgumentException("Custom code already exists");
         }
 
         // 4. Create and save short URL
