@@ -44,6 +44,8 @@ public class ShortUrlService {
     public ShortUrl createShortUrl(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
         // 1. Determine short code
         String shortCode = null;
+        byte[] shortCodeTweak = null;
+
         if (request.customCode() != null && !request.customCode().isEmpty()) {
             String customCode = request.customCode();
             if (!StringUtils.hasText(customCode)) {
@@ -60,9 +62,9 @@ public class ShortUrlService {
         } else {
             for (int attempts = 0; attempts < MAX_SHORT_CODE_GENERATION_ATTEMPTS; attempts++) {
                 Cipher cipher = fpeGenerator.generate(user.getId(), SHORT_CODE_LENGTH);
-                String candidate = cipher.text();
-                if (!shortUrlRepository.existsByShortCode(candidate)) {
-                    shortCode = candidate;
+                if (!shortUrlRepository.existsByShortCode(cipher.text())) {
+                    shortCode = cipher.text();
+                    shortCodeTweak = cipher.tweak();
                     break;
                 }
             }
@@ -85,6 +87,7 @@ public class ShortUrlService {
         // 3. Create and save short URL
         ShortUrl shortUrl = ShortUrl.builder()
                 .shortCode(shortCode)
+                .shortCodeTweak(shortCodeTweak)
                 .originalUrl(request.originalUrl())
                 .title(request.title())
                 .description(request.description())

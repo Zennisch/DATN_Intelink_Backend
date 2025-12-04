@@ -64,6 +64,10 @@ public class ShortUrl {
     @Column(name = "short_code", nullable = false, unique = true, length = 16)
     private String shortCode;
 
+    @Lob
+    @Column(name = "short_code_tweak")
+    private byte[] shortCodeTweak;
+
     @Column(name = "enabled", nullable = false)
     @Builder.Default
     private Boolean enabled = true;
