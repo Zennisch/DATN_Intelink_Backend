@@ -242,7 +242,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(User user) {
-        return new UserProfileResponse(user);
+        return UserProfileResponse.fromEntity(user);
     }
 
     @Transactional(readOnly = true)
