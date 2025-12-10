@@ -30,12 +30,10 @@ public class ShortUrlAccessControlService {
         return shortUrlAccessControlRepository.findByShortUrl(shortUrl);
     }
 
-    @Transactional(readOnly = true)
     public Optional<ShortUrlAccessControl> findByShortUrlAndType(ShortUrl shortUrl, AccessControlType accessControlType) {
         return shortUrlAccessControlRepository.findByShortUrlAndType(shortUrl, accessControlType);
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "shortUrlAccessControlsByType", key = "#shortUrl.id + '_' + #accessControlType")
     public List<ShortUrlAccessControl> findAllByShortUrlAndType(ShortUrl shortUrl, AccessControlType accessControlType) {
         return shortUrlAccessControlRepository.findAllByShortUrlAndType(shortUrl, accessControlType);

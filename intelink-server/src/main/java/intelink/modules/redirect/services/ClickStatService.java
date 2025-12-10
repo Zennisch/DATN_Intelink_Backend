@@ -1,7 +1,5 @@
 package intelink.modules.redirect.services;
 
-import intelink.models.ClickLog;
-import intelink.models.ClickStat;
 import intelink.models.ShortUrl;
 import intelink.models.enums.ClickStatus;
 import intelink.models.enums.Granularity;
@@ -25,25 +23,21 @@ public class ClickStatService {
     @Transactional
     public void recordClickStats(ShortUrl shortUrl, ClickStatus status) {
         Instant now = Instant.now();
+        int isAllowed = (status == ClickStatus.ALLOWED) ? 1 : 0;
         for (Granularity granularity : Granularity.values()) {
             Instant bucketStart = getBucketStat(now, granularity, ZoneOffset.UTC);
             Instant bucketEnd = getBucketEnd(bucketStart, granularity, ZoneOffset.UTC);
-            ClickStat clickStat = clickStatRepository
-                    .findByShortUrlAndGranularityAndBucketStart(shortUrl, granularity, bucketStart)
-                    .orElseGet(() -> {
-                        ClickStat c = ClickStat.builder()
-                                .shortUrl(shortUrl)
-                                .granularity(granularity)
-                                .bucketStart(bucketStart)
-                                .bucketEnd(bucketEnd)
-                                .build();
-                        return clickStatRepository.save(c);
-                    });
-
-            if (status == ClickStatus.ALLOWED) {
-                clickStatRepository.increaseAllowedCounters(clickStat.getId());
-            } else if (status == ClickStatus.BLOCKED) {
-                clickStatRepository.increaseBlockedCounters(clickStat.getId());
+            try {
+                // Use atomic MERGE operation to avoid deadlock
+                clickStatRepository.upsertAndIncrement(
+                    shortUrl.getId(),
+                    granularity.name(),
+                    bucketStart,
+                    bucketEnd,
+                    isAllowed
+                );
+            } catch (Exception e) {
+                log.error("[ClickStatService.recordClickStats] Error upserting click stat for ShortUrl ID {}: {}", shortUrl.getId(), e.getMessage());
             }
         }
     }

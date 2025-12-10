@@ -7,21 +7,19 @@ import intelink.models.enums.AccessControlType;
 import intelink.models.enums.ClickStatus;
 import intelink.modules.url.services.ShortUrlAccessControlService;
 import intelink.modules.url.services.ShortUrlService;
-import intelink.utils.FPEGenerator;
-import intelink.utils.helper.AccessBlockedEntry;
 import intelink.utils.AccessControlValidationUtil;
+import intelink.utils.FPEGenerator;
 import intelink.utils.GeoLiteUtil;
 import intelink.utils.IpUtil;
+import intelink.utils.helper.AccessBlockedEntry;
 import intelink.utils.helper.IpInfo;
 import intelink.utils.helper.RedirectResult;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -64,7 +62,6 @@ public class RedirectService {
         return true;
     }
 
-    @Transactional
 //    @RateLimiter(name = "redirect", fallbackMethod = "handleRateLimitExceeded")
     public RedirectResult handleRedirect(String shortCode, String password, HttpServletRequest request) throws IllegalBlockSizeException, BadPaddingException {
         // 1. Find short URL by code

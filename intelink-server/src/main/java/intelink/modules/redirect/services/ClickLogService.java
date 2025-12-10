@@ -1,11 +1,9 @@
 package intelink.modules.redirect.services;
 
 import intelink.models.ClickLog;
-import intelink.models.ClickStat;
 import intelink.models.ShortUrl;
 import intelink.models.enums.ClickStatus;
 import intelink.models.enums.DimensionType;
-import intelink.models.enums.Granularity;
 import intelink.models.enums.IPVersion;
 import intelink.modules.redirect.repositories.ClickLogRepository;
 import intelink.modules.url.services.ShortUrlService;
@@ -20,13 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -41,7 +34,7 @@ public class ClickLogService {
     private final ClickStatService clickStatService;
 
     @Async("clickLogExecutor")
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public CompletableFuture<Void> recordClick(ShortUrl shortUrl, ClickStatus status, String reason, HttpServletRequest request) {
         try {
             IpInfo ipInfo = IpUtil.process(request);
@@ -53,6 +46,7 @@ public class ClickLogService {
             String countryCode = GeoLiteUtil.getCountryIsoFromIp(ipAddress);
             String city = GeoLiteUtil.getCityFromIp(ipAddress);
 
+            // Update counters in separate transaction to minimize lock time
             switch (status) {
                 case ALLOWED -> {
                     boolean isUniqueClick = !clickLogRepository.existsByShortUrlAndIpAddressAndUserAgent(shortUrl, ipAddress, userAgent);

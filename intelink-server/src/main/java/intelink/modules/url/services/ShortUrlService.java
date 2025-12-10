@@ -189,7 +189,6 @@ public class ShortUrlService {
         return shortUrlRepository.findByShortCode(shortCode);
     }
 
-    @Transactional(readOnly = true)
     @Cacheable(value = "shortUrlsById", key = "#id")
     public Optional<ShortUrl> findById(Long id) {
         return shortUrlRepository.findById(id);
