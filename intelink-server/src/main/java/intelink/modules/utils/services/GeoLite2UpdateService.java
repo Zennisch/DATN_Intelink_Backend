@@ -2,7 +2,6 @@ package intelink.modules.utils.services;
 
 import com.maxmind.geoip2.DatabaseReader;
 import intelink.utils.GeoLiteUtil;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
