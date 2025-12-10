@@ -38,7 +38,6 @@ public class ShortUrlService {
     private final FPEGenerator fpeGenerator;
 
     private final Integer SHORT_CODE_LENGTH = 10;
-    private final Integer MAX_SHORT_CODE_GENERATION_ATTEMPTS = 20;
 
     @Transactional
     public String validateCustomCode(String customCode) {
@@ -57,14 +56,44 @@ public class ShortUrlService {
         return customCode;
     }
 
-    @Transactional
+    /**
+     * Main orchestration method - NO @Transactional to allow independent transactions
+     * This reduces deadlock risk by minimizing lock duration and separating concerns
+     */
     public ShortUrl createShortUrl(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
         // 1. Calculate expiry date (7 days default)
         Instant expiresAt = request.availableDays() != null
                 ? Instant.now().plusSeconds(request.availableDays() * 24 * 60 * 60)
                 : Instant.now().plusSeconds(7 * 24 * 60 * 60);
 
-        // 2. Determine short code
+        // 2. Transaction 1: Create and save the base ShortUrl entity
+        ShortUrl shortUrl = createBaseShortUrl(user, request, expiresAt);
+
+        // 3. Transaction 2: Save password access control (if provided)
+        if (request.password() != null && !request.password().isEmpty()) {
+            savePasswordAccessControl(shortUrl, request.password());
+        }
+
+        // 4. Transaction 3: Save CIDR and Geography access controls (if provided)
+        if (request.accessControlMode() != null && request.accessControlMode() != AccessControlMode.NONE) {
+            saveAccessControls(shortUrl, request);
+            updateAccessControlMode(shortUrl.getId(), request.accessControlMode());
+        }
+
+        // 5. Transaction 4: Update user's total short URLs count (separate transaction)
+        authService.increaseTotalShortUrls(user.getId());
+
+        log.info("[ShortUrlService.create] Short URL created with code: {}", shortUrl.getShortCode());
+        return shortUrl;
+    }
+
+    /**
+     * Transaction 1: Create and persist the base ShortUrl entity
+     * Minimizes lock time by only handling ShortUrl table
+     */
+    @Transactional
+    protected ShortUrl createBaseShortUrl(User user, CreateShortUrlRequest request, Instant expiresAt)
+            throws IllegalBlockSizeException, BadPaddingException {
         String shortCode;
         byte[] shortCodeTweak = null;
         ShortUrl shortUrl;
@@ -74,80 +103,84 @@ public class ShortUrlService {
             shortUrl = ShortUrl.builder()
                     .originalUrl(request.originalUrl())
                     .user(user)
+                    .shortCode(shortCode)
+                    .title(request.title())
+                    .description(request.description())
+                    .enabled(true)
+                    .maxUsage(request.maxUsage())
+                    .expiresAt(expiresAt)
                     .build();
         } else {
             shortUrl = ShortUrl.builder()
                     .originalUrl(request.originalUrl())
                     .user(user)
+                    .title(request.title())
+                    .description(request.description())
+                    .enabled(true)
+                    .maxUsage(request.maxUsage())
+                    .expiresAt(expiresAt)
                     .build();
-            shortUrlRepository.save(shortUrl); // Save to get an ID
+            shortUrlRepository.save(shortUrl);
 
+            // Generate short code using FPE
             Cipher cipher = fpeGenerator.generate(shortUrl.getId(), SHORT_CODE_LENGTH);
             shortCode = cipher.text();
             shortCodeTweak = cipher.tweak();
-        }
 
-        // 3. Validate short code uniqueness
-        if (shortCode == null) {
-            throw new IllegalStateException("Failed to generate a unique short code after " + MAX_SHORT_CODE_GENERATION_ATTEMPTS + " attempts");
-        }
-
-        // 4. Create and save short URL
-        shortUrl.setShortCode(shortCode);
-        shortUrl.setShortCodeTweak(shortCodeTweak);
-        shortUrl.setTitle(request.title());
-        shortUrl.setDescription(request.description());
-        shortUrl.setEnabled(true);
-        shortUrl.setMaxUsage(request.maxUsage());
-        shortUrl.setExpiresAt(expiresAt);
-        shortUrlRepository.save(shortUrl);
-
-        // 5. Encode password if provided
-        if (request.password() != null && !request.password().isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(request.password());
-            ShortUrlAccessControl passwordAccessControl = ShortUrlAccessControl.builder()
-                    .shortUrl(shortUrl)
-                    .type(AccessControlType.PASSWORD_PROTECTED)
-                    .value(encodedPassword)
-                    .build();
-            shortUrlAccessControlService.save(passwordAccessControl);
-        }
-
-        // 6. Set other access control rules
-        if (request.accessControlMode() != null && request.accessControlMode() != AccessControlMode.NONE) {
-            if (request.accessControlCIDRs() != null) {
-                for (String cidr : request.accessControlCIDRs()) {
-                    AccessControlValidationUtil.validateCIDR(cidr);
-                    ShortUrlAccessControl cidrAccessControl = ShortUrlAccessControl.builder()
-                            .shortUrl(shortUrl)
-                            .type(AccessControlType.CIDR)
-                            .value(cidr)
-                            .build();
-                    shortUrlAccessControlService.save(cidrAccessControl);
-                }
+            if (shortCode == null) {
+                throw new IllegalStateException("Failed to generate a unique short code");
             }
-            if (request.accessControlGeographies() != null) {
-                for (String geography : request.accessControlGeographies()) {
-                    AccessControlValidationUtil.validateGeography(geography);
-                    ShortUrlAccessControl geoAccessControl = ShortUrlAccessControl.builder()
-                            .shortUrl(shortUrl)
-                            .type(AccessControlType.GEOGRAPHY)
-                            .value(geography)
-                            .build();
-                    shortUrlAccessControlService.save(geoAccessControl);
-                }
-            }
-            shortUrl.setAccessControlMode(request.accessControlMode());
+
+            shortUrl.setShortCode(shortCode);
+            shortUrl.setShortCodeTweak(shortCodeTweak);
         }
 
-        // 7. Save the short URL
+        return shortUrlRepository.save(shortUrl);
+    }
+
+    @Transactional
+    protected void savePasswordAccessControl(ShortUrl shortUrl, String password) {
+        String encodedPassword = passwordEncoder.encode(password);
+        ShortUrlAccessControl passwordAccessControl = ShortUrlAccessControl.builder()
+                .shortUrl(shortUrl)
+                .type(AccessControlType.PASSWORD_PROTECTED)
+                .value(encodedPassword)
+                .build();
+        shortUrlAccessControlService.save(passwordAccessControl);
+    }
+
+    @Transactional
+    protected void saveAccessControls(ShortUrl shortUrl, CreateShortUrlRequest request) {
+        if (request.accessControlCIDRs() != null) {
+            for (String cidr : request.accessControlCIDRs()) {
+                AccessControlValidationUtil.validateCIDR(cidr);
+                ShortUrlAccessControl cidrAccessControl = ShortUrlAccessControl.builder()
+                        .shortUrl(shortUrl)
+                        .type(AccessControlType.CIDR)
+                        .value(cidr)
+                        .build();
+                shortUrlAccessControlService.save(cidrAccessControl);
+            }
+        }
+        if (request.accessControlGeographies() != null) {
+            for (String geography : request.accessControlGeographies()) {
+                AccessControlValidationUtil.validateGeography(geography);
+                ShortUrlAccessControl geoAccessControl = ShortUrlAccessControl.builder()
+                        .shortUrl(shortUrl)
+                        .type(AccessControlType.GEOGRAPHY)
+                        .value(geography)
+                        .build();
+                shortUrlAccessControlService.save(geoAccessControl);
+            }
+        }
+    }
+
+    @Transactional
+    protected void updateAccessControlMode(Long shortUrlId, AccessControlMode mode) {
+        ShortUrl shortUrl = shortUrlRepository.findById(shortUrlId)
+                .orElseThrow(() -> new IllegalStateException("ShortUrl not found"));
+        shortUrl.setAccessControlMode(mode);
         shortUrlRepository.save(shortUrl);
-
-        // 8. Update user's total short URLs count
-        authService.increaseTotalShortUrls(user.getId());
-        log.info("[ShortUrlService.create] Short URL created with code: {}", shortCode);
-
-        return shortUrl;
     }
 
     @Transactional(readOnly = true)
