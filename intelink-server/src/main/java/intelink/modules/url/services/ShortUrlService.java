@@ -3,10 +3,13 @@ package intelink.modules.url.services;
 import intelink.dto.url.CreateShortUrlRequest;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
+import intelink.models.Subscription;
+import intelink.models.SubscriptionPlan;
 import intelink.models.User;
 import intelink.models.enums.AccessControlMode;
 import intelink.models.enums.AccessControlType;
 import intelink.modules.auth.services.AuthService;
+import intelink.modules.subscription.services.SubscriptionService;
 import intelink.modules.url.repositories.ShortUrlRepository;
 import intelink.utils.AccessControlValidationUtil;
 import intelink.utils.FPEGenerator;
@@ -33,11 +36,52 @@ public class ShortUrlService {
 
     private final ShortUrlRepository shortUrlRepository;
     private final AuthService authService;
+    private final SubscriptionService subscriptionService;
     private final ShortUrlAccessControlService shortUrlAccessControlService;
     private final PasswordEncoder passwordEncoder;
     private final FPEGenerator fpeGenerator;
 
     private final Integer SHORT_CODE_LENGTH = 10;
+
+    /**
+     * Validate user's subscription limits before creating short URL
+     */
+    private void validateSubscriptionLimits(User user, CreateShortUrlRequest request) {
+        // Get active subscription
+        Subscription subscription = subscriptionService.getActiveSubscriptionByUser(user)
+                .orElseThrow(() -> new IllegalStateException("No active subscription found. Please subscribe to a plan."));
+        
+        SubscriptionPlan plan = subscription.getSubscriptionPlan();
+        
+        // 1. Check total short URLs limit
+        long currentShortUrlCount = shortUrlRepository.countByUserAndDeletedAtIsNull(user);
+        if (currentShortUrlCount >= plan.getMaxShortUrls()) {
+            throw new IllegalArgumentException(
+                    String.format("You have reached the maximum number of short URLs (%d) for your %s plan. Please upgrade to create more.",
+                            plan.getMaxShortUrls(), plan.getType().name()));
+        }
+        
+        // 2. Check custom code permission
+        if (request.customCode() != null && !request.customCode().isEmpty()) {
+            if (!plan.getShortCodeCustomizationEnabled()) {
+                throw new IllegalArgumentException(
+                        String.format("Custom short codes are not available in your %s plan. Please upgrade to use this feature.",
+                                plan.getType().name()));
+            }
+        }
+        
+        // 3. Validate maxUsage against plan limit
+        if (request.maxUsage() != null) {
+            if (request.maxUsage() > plan.getMaxUsagePerUrl()) {
+                throw new IllegalArgumentException(
+                        String.format("Maximum usage per URL cannot exceed %d for your %s plan. Requested: %d",
+                                plan.getMaxUsagePerUrl(), plan.getType().name(), request.maxUsage()));
+            }
+        }
+        
+        log.info("[ShortUrlService.validateSubscriptionLimits] User {} validated. Current: {}/{} URLs, Plan: {}",
+                user.getId(), currentShortUrlCount, plan.getMaxShortUrls(), plan.getType().name());
+    }
 
     @Transactional
     public String validateCustomCode(String customCode) {
@@ -61,6 +105,9 @@ public class ShortUrlService {
      * This reduces deadlock risk by minimizing lock duration and separating concerns
      */
     public ShortUrl createShortUrl(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
+        // 0. Validate subscription limits
+        validateSubscriptionLimits(user, request);
+        
         // 1. Calculate expiry date (7 days default)
         Instant expiresAt = request.availableDays() != null
                 ? Instant.now().plusSeconds(request.availableDays() * 24 * 60 * 60)

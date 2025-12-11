@@ -23,6 +23,8 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, UUID> {
 
     Page<ShortUrl> findByUserAndDeletedAtIsNull(User user, Pageable pageable);
 
+    long countByUserAndDeletedAtIsNull(User user);
+
     @Query("SELECT s FROM ShortUrl s WHERE s.user = :user AND s.deletedAt IS NULL " +
             "AND (LOWER(s.title) LIKE LOWER(CONCAT('%', :query, '%')) " +
             "OR LOWER(s.originalUrl) LIKE LOWER(CONCAT('%', :query, '%')) " +
