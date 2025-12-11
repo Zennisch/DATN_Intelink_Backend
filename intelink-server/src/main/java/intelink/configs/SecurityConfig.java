@@ -105,8 +105,9 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/{shortCode}").permitAll()
                         .requestMatchers(HttpMethod.POST, "/{shortCode}/unlock").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/url").permitAll()
 
-                        .requestMatchers("/api/v1/urls/**").hasAnyRole(ADMIN, USER)
+                        .requestMatchers("/api/v1/url/**").hasAnyRole(ADMIN, USER)
                         .requestMatchers("/api/v1/statistics/**").hasAnyRole(ADMIN, USER)
 
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)

@@ -39,8 +39,13 @@ public class ShortUrlController {
     private String accessUrlTemplate;
 
     @PostMapping
-    public ResponseEntity<?> createShortUrl(@Valid @RequestBody CreateShortUrlRequest request, @AuthenticationPrincipal UserDetails userDetails) throws IllegalBlockSizeException, BadPaddingException {
-        User user = authService.getCurrentUser(userDetails);
+    public ResponseEntity<?> createShortUrl(
+            @Valid @RequestBody CreateShortUrlRequest request, 
+            @AuthenticationPrincipal UserDetails userDetails) throws IllegalBlockSizeException, BadPaddingException {
+        
+        // Handle both authenticated and anonymous users
+        User user = userDetails != null ? authService.getCurrentUser(userDetails) : null;
+        
         ShortUrl shortUrl = shortUrlService.createShortUrl(user, request);
         List<ShortUrlAccessControl> shortUrlAccessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
         CreateShortUrlResponse response = CreateShortUrlResponse.fromEntity(shortUrl, shortUrlAccessControls, accessUrlTemplate);

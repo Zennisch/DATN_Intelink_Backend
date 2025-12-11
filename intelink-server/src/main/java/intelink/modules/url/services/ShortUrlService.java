@@ -42,6 +42,53 @@ public class ShortUrlService {
     private final FPEGenerator fpeGenerator;
 
     private final Integer SHORT_CODE_LENGTH = 10;
+    private final Integer GUEST_MAX_URL_EXPIRY_DAYS = 1; // Guest URLs expire in 1 day
+    private final Integer GUEST_MAX_USAGE_PER_URL = 10; // Guest URLs limited to 10 clicks
+
+    /**
+     * Validate guest user limitations (stricter than subscription limits)
+     */
+    private void validateGuestLimits(CreateShortUrlRequest request) {
+        // 1. No custom codes allowed for guests
+        if (request.customCode() != null && !request.customCode().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Custom short codes are not available for guest users. Please sign up to use this feature.");
+        }
+        
+        // 2. No password protection for guests
+        if (request.password() != null && !request.password().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Password protection is not available for guest users. Please sign up to use this feature.");
+        }
+        
+        // 3. No access control for guests
+        if (request.accessControlMode() != null && request.accessControlMode() != AccessControlMode.NONE) {
+            throw new IllegalArgumentException(
+                    "Access control is not available for guest users. Please sign up to use this feature.");
+        }
+        
+        if ((request.accessControlCIDRs() != null && !request.accessControlCIDRs().isEmpty()) ||
+            (request.accessControlGeographies() != null && !request.accessControlGeographies().isEmpty())) {
+            throw new IllegalArgumentException(
+                    "Access control is not available for guest users. Please sign up to use this feature.");
+        }
+        
+        // 4. Limit expiry time to 1 day max
+        if (request.availableDays() != null && request.availableDays() > GUEST_MAX_URL_EXPIRY_DAYS) {
+            throw new IllegalArgumentException(
+                    String.format("Guest users can only create short URLs valid for up to %d day(s). Please sign up for longer validity.",
+                            GUEST_MAX_URL_EXPIRY_DAYS));
+        }
+        
+        // 5. Limit max usage
+        if (request.maxUsage() != null && request.maxUsage() > GUEST_MAX_USAGE_PER_URL) {
+            throw new IllegalArgumentException(
+                    String.format("Guest users can set maximum usage up to %d clicks. Please sign up for higher limits.",
+                            GUEST_MAX_USAGE_PER_URL));
+        }
+        
+        log.info("[ShortUrlService.validateGuestLimits] Guest user validation passed");
+    }
 
     /**
      * Validate user's subscription limits before creating short URL
@@ -103,34 +150,54 @@ public class ShortUrlService {
     /**
      * Main orchestration method - NO @Transactional to allow independent transactions
      * This reduces deadlock risk by minimizing lock duration and separating concerns
+     * Supports both authenticated users (with subscription) and guest users (with strict limits)
      */
     public ShortUrl createShortUrl(User user, CreateShortUrlRequest request) throws IllegalBlockSizeException, BadPaddingException {
-        // 0. Validate subscription limits
-        validateSubscriptionLimits(user, request);
+        // 0. Validate based on user type
+        if (user != null) {
+            // Authenticated user - validate subscription limits
+            validateSubscriptionLimits(user, request);
+        } else {
+            // Guest user - validate guest limits (stricter)
+            validateGuestLimits(request);
+        }
         
-        // 1. Calculate expiry date (7 days default)
-        Instant expiresAt = request.availableDays() != null
-                ? Instant.now().plusSeconds(request.availableDays() * 24 * 60 * 60)
-                : Instant.now().plusSeconds(7 * 24 * 60 * 60);
+        // 1. Calculate expiry date
+        Instant expiresAt;
+        if (user != null) {
+            // Authenticated: 7 days default or user-specified
+            expiresAt = request.availableDays() != null
+                    ? Instant.now().plusSeconds(request.availableDays() * 24 * 60 * 60)
+                    : Instant.now().plusSeconds(7 * 24 * 60 * 60);
+        } else {
+            // Guest: 1 day max
+            int guestDays = (request.availableDays() != null && request.availableDays() <= GUEST_MAX_URL_EXPIRY_DAYS)
+                    ? request.availableDays()
+                    : GUEST_MAX_URL_EXPIRY_DAYS;
+            expiresAt = Instant.now().plusSeconds(guestDays * 24 * 60 * 60);
+        }
 
         // 2. Transaction 1: Create and save the base ShortUrl entity
         ShortUrl shortUrl = createBaseShortUrl(user, request, expiresAt);
 
-        // 3. Transaction 2: Save password access control (if provided)
-        if (request.password() != null && !request.password().isEmpty()) {
+        // 3. Transaction 2: Save password access control (if provided and user is authenticated)
+        if (user != null && request.password() != null && !request.password().isEmpty()) {
             savePasswordAccessControl(shortUrl, request.password());
         }
 
-        // 4. Transaction 3: Save CIDR and Geography access controls (if provided)
-        if (request.accessControlMode() != null && request.accessControlMode() != AccessControlMode.NONE) {
+        // 4. Transaction 3: Save CIDR and Geography access controls (if provided and user is authenticated)
+        if (user != null && request.accessControlMode() != null && request.accessControlMode() != AccessControlMode.NONE) {
             saveAccessControls(shortUrl, request);
             updateAccessControlMode(shortUrl.getId(), request.accessControlMode());
         }
 
-        // 5. Transaction 4: Update user's total short URLs count (separate transaction)
-        authService.increaseTotalShortUrls(user.getId());
+        // 5. Transaction 4: Update user's total short URLs count (only for authenticated users)
+        if (user != null) {
+            authService.increaseTotalShortUrls(user.getId());
+        }
 
-        log.info("[ShortUrlService.create] Short URL created with code: {}", shortUrl.getShortCode());
+        log.info("[ShortUrlService.create] Short URL created with code: {} (User: {})", 
+                shortUrl.getShortCode(), user != null ? user.getId() : "GUEST");
         return shortUrl;
     }
 
