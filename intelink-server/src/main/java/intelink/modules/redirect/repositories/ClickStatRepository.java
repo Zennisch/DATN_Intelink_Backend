@@ -57,4 +57,13 @@ public interface ClickStatRepository extends JpaRepository<ClickStat, UUID> {
             @Param("granularity") Granularity granularity,
             @Param("from") Instant from,
             @Param("to") Instant to);
+
+    @Query("SELECT c FROM ClickStat c WHERE c.shortUrl = :shortUrl AND c.granularity = :granularity " +
+           "AND c.bucketStart >= :from AND c.bucketStart < :to ORDER BY c.allowedClicks DESC")
+    java.util.List<ClickStat> findTopByShortUrlAndGranularityAndBucketStartBetween(
+            @Param("shortUrl") ShortUrl shortUrl,
+            @Param("granularity") Granularity granularity,
+            @Param("from") Instant from,
+            @Param("to") Instant to,
+            org.springframework.data.domain.Pageable pageable);
 }

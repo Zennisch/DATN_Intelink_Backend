@@ -5,10 +5,10 @@ import lombok.Data;
 
 @Data
 @Builder
-public class TimeSeriesStatItemResponse {
-    private String bucketStart;
-    private String bucketEnd;
+public class GeographyStatItemResponse {
+    private String name;
     private Long clicks;
+    private Double percentage;
     private Long allowedClicks;
     private Long blockedClicks;
 }

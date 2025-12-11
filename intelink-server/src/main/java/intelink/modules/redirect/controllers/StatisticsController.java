@@ -1,6 +1,8 @@
 package intelink.modules.redirect.controllers;
 
 import intelink.dto.statistics.DimensionStatResponse;
+import intelink.dto.statistics.GeographyStatResponse;
+import intelink.dto.statistics.PeakTimeStatResponse;
 import intelink.dto.statistics.TimeSeriesStatResponse;
 import intelink.models.User;
 import intelink.models.enums.DimensionType;
@@ -59,7 +61,7 @@ public class StatisticsController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = authService.getCurrentUser(userDetails);
-        DimensionStatResponse response = statisticsService.getDimensionStats(user, shortCode, DimensionType.COUNTRY);
+        GeographyStatResponse response = statisticsService.getGeographyStats(user, shortCode, DimensionType.COUNTRY);
         return ResponseEntity.ok(response);
     }
 
@@ -69,7 +71,7 @@ public class StatisticsController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = authService.getCurrentUser(userDetails);
-        DimensionStatResponse response = statisticsService.getDimensionStats(user, shortCode, DimensionType.CITY);
+        GeographyStatResponse response = statisticsService.getGeographyStats(user, shortCode, DimensionType.CITY);
         return ResponseEntity.ok(response);
     }
 
@@ -85,6 +87,22 @@ public class StatisticsController {
         User user = authService.getCurrentUser(userDetails);
         TimeSeriesStatResponse response = statisticsService.getTimeSeriesStats(
                 user, shortCode, granularity, from, to, timezone);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{shortCode}/peak-times")
+    public ResponseEntity<?> getPeakTimeStats(
+            @PathVariable String shortCode,
+            @RequestParam(required = false) Granularity granularity,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String timezone,
+            @RequestParam(required = false, defaultValue = "10") Integer limit,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        PeakTimeStatResponse response = statisticsService.getPeakTimeStats(
+                user, shortCode, granularity, from, to, timezone, limit);
         return ResponseEntity.ok(response);
     }
 
