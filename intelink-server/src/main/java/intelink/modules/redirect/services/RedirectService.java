@@ -64,9 +64,20 @@ public class RedirectService {
 
 //    @RateLimiter(name = "redirect", fallbackMethod = "handleRateLimitExceeded")
     public RedirectResult handleRedirect(String shortCode, String password, HttpServletRequest request) throws IllegalBlockSizeException, BadPaddingException {
-        // 1. Find short URL by code
-        Long shortUrlId = fpeGenerator.resolve(shortCode);
-        Optional<ShortUrl> shortUrlOpt = shortUrlService.findById(shortUrlId);
+        // 1. Find short URL by code (try custom code first, then FPE-encrypted)
+        Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCode(shortCode);
+        
+        if (shortUrlOpt.isEmpty()) {
+            // Not found as custom code, try to resolve as FPE-encrypted code
+            try {
+                Long shortUrlId = fpeGenerator.resolve(shortCode);
+                shortUrlOpt = shortUrlService.findById(shortUrlId);
+            } catch (Exception e) {
+                // Invalid FPE code or decryption failed
+                log.warn("[RedirectService.handleRedirect] Failed to decrypt short code: {}", shortCode);
+            }
+        }
+        
         if (shortUrlOpt.isEmpty()) {
             log.warn("[RedirectService.handleRedirect] Short URL not found: {}", shortCode);
             return RedirectResult.notFound(shortCode);
