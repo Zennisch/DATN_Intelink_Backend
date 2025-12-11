@@ -4,6 +4,7 @@ import intelink.dto.PagedResponse;
 import intelink.dto.url.*;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
+import intelink.models.ShortUrlAnalysisResult;
 import intelink.models.User;
 import intelink.modules.auth.services.AuthService;
 import intelink.modules.url.services.ShortUrlAccessControlService;
@@ -64,7 +65,8 @@ public class ShortUrlController {
         
         Page<ShortUrlResponse> responsePage = shortUrlPage.map(shortUrl -> {
             List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
-            return ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+            List<ShortUrlAnalysisResult> analysisResults = shortUrlService.getAnalysisResults(shortUrl);
+            return ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate, analysisResults);
         });
         
         PagedResponse<ShortUrlResponse> response = PagedResponse.from(responsePage);
@@ -89,7 +91,8 @@ public class ShortUrlController {
         
         Page<ShortUrlResponse> responsePage = shortUrlPage.map(shortUrl -> {
             List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
-            return ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+            List<ShortUrlAnalysisResult> analysisResults = shortUrlService.getAnalysisResults(shortUrl);
+            return ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate, analysisResults);
         });
         
         PagedResponse<ShortUrlResponse> response = PagedResponse.from(responsePage);
@@ -101,7 +104,8 @@ public class ShortUrlController {
         User user = authService.getCurrentUser(userDetails);
         ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
         List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
-        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        List<ShortUrlAnalysisResult> analysisResults = shortUrlService.getAnalysisResults(shortUrl);
+        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate, analysisResults);
         return ResponseEntity.ok(response);
     }
 
@@ -114,7 +118,8 @@ public class ShortUrlController {
         User user = authService.getCurrentUser(userDetails);
         ShortUrl shortUrl = shortUrlService.updateShortUrl(user, shortCode, request);
         List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
-        UpdateShortUrlResponse response = UpdateShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        List<ShortUrlAnalysisResult> analysisResults = shortUrlService.getAnalysisResults(shortUrl);
+        UpdateShortUrlResponse response = UpdateShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate, analysisResults);
         return ResponseEntity.ok(response);
     }
 
@@ -136,7 +141,8 @@ public class ShortUrlController {
         User user = authService.getCurrentUser(userDetails);
         ShortUrl shortUrl = shortUrlService.enableShortUrl(user, shortCode);
         List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
-        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        List<ShortUrlAnalysisResult> analysisResults = shortUrlService.getAnalysisResults(shortUrl);
+        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate, analysisResults);
         return ResponseEntity.ok(response);
     }
 
@@ -148,7 +154,8 @@ public class ShortUrlController {
         User user = authService.getCurrentUser(userDetails);
         ShortUrl shortUrl = shortUrlService.disableShortUrl(user, shortCode);
         List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
-        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        List<ShortUrlAnalysisResult> analysisResults = shortUrlService.getAnalysisResults(shortUrl);
+        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate, analysisResults);
         return ResponseEntity.ok(response);
     }
 

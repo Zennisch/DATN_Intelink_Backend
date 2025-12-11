@@ -3,6 +3,7 @@ package intelink.modules.url.services;
 import intelink.dto.url.CreateShortUrlRequest;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
+import intelink.models.ShortUrlAnalysisResult;
 import intelink.models.Subscription;
 import intelink.models.SubscriptionPlan;
 import intelink.models.User;
@@ -27,6 +28,7 @@ import org.springframework.util.StringUtils;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -38,6 +40,7 @@ public class ShortUrlService {
     private final AuthService authService;
     private final SubscriptionService subscriptionService;
     private final ShortUrlAccessControlService shortUrlAccessControlService;
+    private final ShortUrlAnalysisService shortUrlAnalysisService;
     private final PasswordEncoder passwordEncoder;
     private final FPEGenerator fpeGenerator;
 
@@ -195,6 +198,9 @@ public class ShortUrlService {
         if (user != null) {
             authService.increaseTotalShortUrls(user.getId());
         }
+
+        // 6. Async: Analyze URL for security threats (runs independently)
+        shortUrlAnalysisService.analyzeUrl(shortUrl);
 
         log.info("[ShortUrlService.create] Short URL created with code: {} (User: {})", 
                 shortUrl.getShortCode(), user != null ? user.getId() : "GUEST");
@@ -403,5 +409,10 @@ public class ShortUrlService {
                 .orElseThrow(() -> new IllegalArgumentException("Short URL not found"));
         shortUrl.setEnabled(false);
         return shortUrlRepository.save(shortUrl);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ShortUrlAnalysisResult> getAnalysisResults(ShortUrl shortUrl) {
+        return shortUrlAnalysisService.getAnalysisResults(shortUrl);
     }
 }

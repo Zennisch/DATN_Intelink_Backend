@@ -20,4 +20,15 @@ public class AsyncConfig {
         return executor;
     }
 
+    @Bean(name = "urlAnalysisExecutor")
+    public Executor urlAnalysisExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("UrlAnalysisExecutor-");
+        executor.initialize();
+        return executor;
+    }
+
 }

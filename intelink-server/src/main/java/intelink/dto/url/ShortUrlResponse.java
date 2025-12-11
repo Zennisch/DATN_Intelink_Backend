@@ -2,6 +2,7 @@ package intelink.dto.url;
 
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
+import intelink.models.ShortUrlAnalysisResult;
 import intelink.models.enums.AccessControlMode;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.Data;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -34,11 +36,21 @@ public class ShortUrlResponse {
     private Boolean hasPassword;
     private List<String> accessControlCIDRs;
     private List<String> accessControlGeographies;
+    private List<ShortUrlAnalysisResultResponse> analysisResults;
 
     public static ShortUrlResponse fromEntity(
             ShortUrl shortUrl,
             List<ShortUrlAccessControl> accessControls,
             String accessUrlTemplate
+    ) {
+        return fromEntity(shortUrl, accessControls, accessUrlTemplate, null);
+    }
+
+    public static ShortUrlResponse fromEntity(
+            ShortUrl shortUrl,
+            List<ShortUrlAccessControl> accessControls,
+            String accessUrlTemplate,
+            List<ShortUrlAnalysisResult> analysisResults
     ) {
         boolean hasPassword = false;
         List<String> cidrs = new ArrayList<>();
@@ -62,6 +74,13 @@ public class ShortUrlResponse {
 
         String fullShortUrl = accessUrlTemplate.replace("{shortCode}", shortUrl.getShortCode());
 
+        List<ShortUrlAnalysisResultResponse> analysisResponses = null;
+        if (analysisResults != null && !analysisResults.isEmpty()) {
+            analysisResponses = analysisResults.stream()
+                    .map(ShortUrlAnalysisResultResponse::fromEntity)
+                    .collect(Collectors.toList());
+        }
+
         return ShortUrlResponse.builder()
                 .id(shortUrl.getId())
                 .title(shortUrl.getTitle())
@@ -82,6 +101,7 @@ public class ShortUrlResponse {
                 .hasPassword(hasPassword)
                 .accessControlCIDRs(cidrs.isEmpty() ? null : cidrs)
                 .accessControlGeographies(geographies.isEmpty() ? null : geographies)
+                .analysisResults(analysisResponses)
                 .build();
     }
 }
