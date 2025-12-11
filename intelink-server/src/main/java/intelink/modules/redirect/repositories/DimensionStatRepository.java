@@ -44,4 +44,7 @@ public interface DimensionStatRepository extends JpaRepository<DimensionStat, UU
                            @Param("type") String type, 
                            @Param("value") String value, 
                            @Param("isAllowed") int isAllowed);
+
+    @Query("SELECT d FROM DimensionStat d WHERE d.shortUrl = :shortUrl AND d.type = :type ORDER BY d.allowedClicks DESC")
+    java.util.List<DimensionStat> findByShortUrlAndTypeOrderByAllowedClicksDesc(@Param("shortUrl") ShortUrl shortUrl, @Param("type") DimensionType type);
 }

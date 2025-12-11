@@ -49,4 +49,12 @@ public interface ClickStatRepository extends JpaRepository<ClickStat, UUID> {
                            @Param("bucketStart") Instant bucketStart,
                            @Param("bucketEnd") Instant bucketEnd,
                            @Param("isAllowed") int isAllowed);
+
+    @Query("SELECT c FROM ClickStat c WHERE c.shortUrl = :shortUrl AND c.granularity = :granularity " +
+           "AND c.bucketStart >= :from AND c.bucketStart < :to ORDER BY c.bucketStart ASC")
+    java.util.List<ClickStat> findByShortUrlAndGranularityAndBucketStartBetween(
+            @Param("shortUrl") ShortUrl shortUrl,
+            @Param("granularity") Granularity granularity,
+            @Param("from") Instant from,
+            @Param("to") Instant to);
 }
