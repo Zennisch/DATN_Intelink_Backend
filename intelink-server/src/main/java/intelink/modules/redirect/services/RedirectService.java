@@ -64,18 +64,22 @@ public class RedirectService {
 
 //    @RateLimiter(name = "redirect", fallbackMethod = "handleRateLimitExceeded")
     public RedirectResult handleRedirect(String shortCode, String password, HttpServletRequest request) throws IllegalBlockSizeException, BadPaddingException {
-        // 1. Find short URL by code (try custom code first, then FPE-encrypted)
-        Optional<ShortUrl> shortUrlOpt = shortUrlService.findByShortCode(shortCode);
-        
-        if (shortUrlOpt.isEmpty()) {
-            // Not found as custom code, try to resolve as FPE-encrypted code
-            try {
-                Long shortUrlId = fpeGenerator.resolve(shortCode);
-                shortUrlOpt = shortUrlService.findById(shortUrlId);
-            } catch (Exception e) {
-                // Invalid FPE code or decryption failed
-                log.warn("[RedirectService.handleRedirect] Failed to decrypt short code: {}", shortCode);
-            }
+        // 1. Find short URL by code
+        // Try FPE decryption first (better performance with ID-based lookup)
+        Optional<ShortUrl> shortUrlOpt = Optional.empty();
+        try {
+            // If shortCode is FPE-encrypted, decrypt will return a valid Long ID
+            // If shortCode is custom code, Long.parseLong() will throw NumberFormatException
+            Long shortUrlId = fpeGenerator.resolve(shortCode);
+            shortUrlOpt = shortUrlService.findById(shortUrlId);
+        } catch (NumberFormatException e) {
+            // shortCode is custom code (not FPE-encrypted)
+            log.debug("[RedirectService.handleRedirect] Custom code detected: {}", shortCode);
+            shortUrlOpt = shortUrlService.findByShortCode(shortCode);
+        } catch (Exception e) {
+            // Other FPE errors -> fallback to custom code lookup
+            log.debug("[RedirectService.handleRedirect] FPE decrypt failed for: {}, trying custom code lookup", shortCode);
+            shortUrlOpt = shortUrlService.findByShortCode(shortCode);
         }
         
         if (shortUrlOpt.isEmpty()) {
