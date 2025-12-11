@@ -29,13 +29,38 @@ public record UserProfileResponse(
             String activatedAt,
             String expiresAt,
             Double creditUsed,
-            Double proratedValue
+            Double proratedValue,
+            PlanDetails planDetails
+    ) {}
+
+    public record PlanDetails(
+            Long planId,
+            Double price,
+            Integer durationDays,
+            String billingInterval,
+            Integer maxShortUrls,
+            Integer maxUsagePerUrl,
+            Boolean shortCodeCustomizationEnabled,
+            Boolean statisticsEnabled,
+            Boolean apiAccessEnabled
     ) {}
 
     public static UserProfileResponse fromEntity(User user, Subscription subscription) {
         CurrentSubscription currentSub = null;
         
         if (subscription != null) {
+            PlanDetails planDetails = new PlanDetails(
+                    subscription.getSubscriptionPlan().getId(),
+                    subscription.getSubscriptionPlan().getPrice(),
+                    subscription.getSubscriptionPlan().getDuration(),
+                    subscription.getSubscriptionPlan().getBillingInterval().name(),
+                    subscription.getSubscriptionPlan().getMaxShortUrls(),
+                    subscription.getSubscriptionPlan().getMaxUsagePerUrl(),
+                    subscription.getSubscriptionPlan().getShortCodeCustomizationEnabled(),
+                    subscription.getSubscriptionPlan().getStatisticsEnabled(),
+                    subscription.getSubscriptionPlan().getApiAccessEnabled()
+            );
+            
             currentSub = new CurrentSubscription(
                     subscription.getId().toString(),
                     subscription.getSubscriptionPlan().getType().name(),
@@ -44,7 +69,8 @@ public record UserProfileResponse(
                     subscription.getActivatedAt() != null ? subscription.getActivatedAt().toString() : null,
                     subscription.getExpiresAt() != null ? subscription.getExpiresAt().toString() : null,
                     subscription.getCreditUsed(),
-                    subscription.getProratedValue()
+                    subscription.getProratedValue(),
+                    planDetails
             );
         }
         
