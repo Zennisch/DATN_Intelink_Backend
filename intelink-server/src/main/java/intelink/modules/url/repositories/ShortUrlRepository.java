@@ -1,6 +1,9 @@
 package intelink.modules.url.repositories;
 
 import intelink.models.ShortUrl;
+import intelink.models.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +18,16 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, UUID> {
     boolean existsByShortCode(String shortCode);
 
     Optional<ShortUrl> findByShortCode(String shortCode);
+
+    Optional<ShortUrl> findByShortCodeAndUser(String shortCode, User user);
+
+    Page<ShortUrl> findByUserAndDeletedAtIsNull(User user, Pageable pageable);
+
+    @Query("SELECT s FROM ShortUrl s WHERE s.user = :user AND s.deletedAt IS NULL " +
+            "AND (LOWER(s.title) LIKE LOWER(CONCAT('%', :query, '%')) " +
+            "OR LOWER(s.originalUrl) LIKE LOWER(CONCAT('%', :query, '%')) " +
+            "OR LOWER(s.shortCode) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<ShortUrl> searchByUserAndQuery(@Param("user") User user, @Param("query") String query, Pageable pageable);
 
     @Modifying
     @Query("UPDATE ShortUrl s SET s.totalClicks = s.totalClicks + 1, s.allowedClicks = s.allowedClicks + 1, s.uniqueClicks = s.uniqueClicks + :uniqueIncrement WHERE s.id = :id")

@@ -27,12 +27,4 @@ public class StatisticsController {
         return ResponseEntity.ok(null);
     }
 
-    @GetMapping("/{shortCode}/geopgraphy")
-    public ResponseEntity<?> getGeographyStats(
-            @PathVariable String shortCode,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        return ResponseEntity.ok(null);
-    }
-
 }

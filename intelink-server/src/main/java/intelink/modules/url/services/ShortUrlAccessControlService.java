@@ -39,4 +39,10 @@ public class ShortUrlAccessControlService {
         return shortUrlAccessControlRepository.findAllByShortUrlAndType(shortUrl, accessControlType);
     }
 
+    @Transactional
+    public void deleteByShortUrl(ShortUrl shortUrl) {
+        List<ShortUrlAccessControl> accessControls = shortUrlAccessControlRepository.findByShortUrl(shortUrl);
+        shortUrlAccessControlRepository.deleteAll(accessControls);
+    }
+
 }

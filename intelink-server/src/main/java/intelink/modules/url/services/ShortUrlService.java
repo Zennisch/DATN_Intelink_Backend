@@ -206,6 +206,88 @@ public class ShortUrlService {
 
     @Transactional
     public Page<ShortUrl> getShortUrlsByUser(User user, Pageable pageable) {
-        return null;
+        return shortUrlRepository.findByUserAndDeletedAtIsNull(user, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ShortUrl> searchShortUrls(User user, String query, Pageable pageable) {
+        if (query == null || query.trim().isEmpty()) {
+            return shortUrlRepository.findByUserAndDeletedAtIsNull(user, pageable);
+        }
+        return shortUrlRepository.searchByUserAndQuery(user, query.trim(), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public ShortUrl getShortUrlByShortCode(User user, String shortCode) {
+        return shortUrlRepository.findByShortCodeAndUser(shortCode, user)
+                .orElseThrow(() -> new IllegalArgumentException("Short URL not found"));
+    }
+
+    @Transactional
+    public ShortUrl updateShortUrl(User user, String shortCode, CreateShortUrlRequest request) {
+        ShortUrl shortUrl = shortUrlRepository.findByShortCodeAndUser(shortCode, user)
+                .orElseThrow(() -> new IllegalArgumentException("Short URL not found"));
+
+        // Update basic fields
+        if (request.originalUrl() != null) {
+            shortUrl.setOriginalUrl(request.originalUrl());
+        }
+        if (request.title() != null) {
+            shortUrl.setTitle(request.title());
+        }
+        if (request.description() != null) {
+            shortUrl.setDescription(request.description());
+        }
+        if (request.maxUsage() != null) {
+            shortUrl.setMaxUsage(request.maxUsage());
+        }
+        if (request.availableDays() != null) {
+            Instant expiresAt = Instant.now().plusSeconds(request.availableDays() * 24 * 60 * 60);
+            shortUrl.setExpiresAt(expiresAt);
+        }
+
+        // Update access control mode
+        if (request.accessControlMode() != null) {
+            shortUrl.setAccessControlMode(request.accessControlMode());
+        }
+
+        // Delete existing access controls
+        shortUrlAccessControlService.deleteByShortUrl(shortUrl);
+
+        // Save new password if provided
+        if (request.password() != null && !request.password().isEmpty()) {
+            savePasswordAccessControl(shortUrl, request.password());
+        }
+
+        // Save new access controls if provided
+        if (request.accessControlMode() != null && request.accessControlMode() != AccessControlMode.NONE) {
+            saveAccessControls(shortUrl, request);
+        }
+
+        return shortUrlRepository.save(shortUrl);
+    }
+
+    @Transactional
+    public void deleteShortUrl(User user, String shortCode) {
+        ShortUrl shortUrl = shortUrlRepository.findByShortCodeAndUser(shortCode, user)
+                .orElseThrow(() -> new IllegalArgumentException("Short URL not found"));
+        shortUrl.setDeletedAt(Instant.now());
+        shortUrlRepository.save(shortUrl);
+    }
+
+    @Transactional
+    public ShortUrl enableShortUrl(User user, String shortCode) {
+        ShortUrl shortUrl = shortUrlRepository.findByShortCodeAndUser(shortCode, user)
+                .orElseThrow(() -> new IllegalArgumentException("Short URL not found"));
+        shortUrl.setEnabled(true);
+        return shortUrlRepository.save(shortUrl);
+    }
+
+    @Transactional
+    public ShortUrl disableShortUrl(User user, String shortCode) {
+        ShortUrl shortUrl = shortUrlRepository.findByShortCodeAndUser(shortCode, user)
+                .orElseThrow(() -> new IllegalArgumentException("Short URL not found"));
+        shortUrl.setEnabled(false);
+        return shortUrlRepository.save(shortUrl);
     }
 }

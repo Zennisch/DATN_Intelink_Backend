@@ -1,7 +1,7 @@
 package intelink.modules.url.controllers;
 
-import intelink.dto.url.CreateShortUrlRequest;
-import intelink.dto.url.CreateShortUrlResponse;
+import intelink.dto.PagedResponse;
+import intelink.dto.url.*;
 import intelink.models.ShortUrl;
 import intelink.models.ShortUrlAccessControl;
 import intelink.models.User;
@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -53,9 +54,16 @@ public class ShortUrlController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = authService.getCurrentUser(userDetails);
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<ShortUrl> shortUrlPage = shortUrlService.getShortUrlsByUser(user, pageable);
-        return ResponseEntity.ok(null);
+        
+        Page<ShortUrlResponse> responsePage = shortUrlPage.map(shortUrl -> {
+            List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
+            return ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        });
+        
+        PagedResponse<ShortUrlResponse> response = PagedResponse.from(responsePage);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")
@@ -68,12 +76,28 @@ public class ShortUrlController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        return ResponseEntity.ok(null);
+        User user = authService.getCurrentUser(userDetails);
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        
+        Page<ShortUrl> shortUrlPage = shortUrlService.searchShortUrls(user, query, pageable);
+        
+        Page<ShortUrlResponse> responsePage = shortUrlPage.map(shortUrl -> {
+            List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
+            return ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        });
+        
+        PagedResponse<ShortUrlResponse> response = PagedResponse.from(responsePage);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{shortCode}")
     public ResponseEntity<?> getShortUrl(@PathVariable String shortCode, @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(null);
+        User user = authService.getCurrentUser(userDetails);
+        ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
+        List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
+        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{shortCode}")
@@ -82,7 +106,11 @@ public class ShortUrlController {
             @Valid @RequestBody CreateShortUrlRequest request,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        return ResponseEntity.ok(null);
+        User user = authService.getCurrentUser(userDetails);
+        ShortUrl shortUrl = shortUrlService.updateShortUrl(user, shortCode, request);
+        List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
+        UpdateShortUrlResponse response = UpdateShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{shortCode}")
@@ -90,7 +118,9 @@ public class ShortUrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        return ResponseEntity.ok(null);
+        User user = authService.getCurrentUser(userDetails);
+        shortUrlService.deleteShortUrl(user, shortCode);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{shortCode}/enable")
@@ -98,7 +128,11 @@ public class ShortUrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        return ResponseEntity.ok(null);
+        User user = authService.getCurrentUser(userDetails);
+        ShortUrl shortUrl = shortUrlService.enableShortUrl(user, shortCode);
+        List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
+        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{shortCode}/disable")
@@ -106,7 +140,11 @@ public class ShortUrlController {
             @PathVariable String shortCode,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        return ResponseEntity.ok(null);
+        User user = authService.getCurrentUser(userDetails);
+        ShortUrl shortUrl = shortUrlService.disableShortUrl(user, shortCode);
+        List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);
+        ShortUrlResponse response = ShortUrlResponse.fromEntity(shortUrl, accessControls, accessUrlTemplate);
+        return ResponseEntity.ok(response);
     }
 
 }

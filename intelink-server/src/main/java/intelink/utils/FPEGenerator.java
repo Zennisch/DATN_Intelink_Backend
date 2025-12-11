@@ -7,12 +7,10 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
-import java.security.SecureRandom;
 
 @Component
 public class FPEGenerator {
 
-    private static final SecureRandom secureRandom = new SecureRandom();
     @Value("${app.fpe.alphabet}")
     private String alphabet;
     @Value("${app.fpe.key}")
