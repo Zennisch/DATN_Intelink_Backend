@@ -6,6 +6,7 @@ import intelink.models.ShortUrlAnalysisResult;
 import intelink.models.enums.ShortUrlAnalysisEngine;
 import intelink.models.enums.ShortUrlAnalysisStatus;
 import intelink.modules.url.repositories.ShortUrlAnalysisResultRepository;
+import intelink.modules.url.repositories.ShortUrlRepository;
 import intelink.modules.utils.services.SafeBrowsingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 public class ShortUrlAnalysisService {
 
     private final ShortUrlAnalysisResultRepository analysisResultRepository;
+    private final ShortUrlRepository shortUrlRepository;
     private final SafeBrowsingService safeBrowsingService;
 
     @Async("urlAnalysisExecutor")
@@ -48,6 +50,8 @@ public class ShortUrlAnalysisService {
                 log.info("[ShortUrlAnalysisService.analyzeUrl] URL is SAFE: {}", shortUrl.getOriginalUrl());
             } else {
                 // Process each threat match
+                boolean hasCriticalThreat = false;
+                
                 for (SafeBrowsingResponse.ThreatMatch match : response.getMatches()) {
                     ShortUrlAnalysisStatus status = determineStatus(match.getThreatType());
                     
@@ -65,6 +69,19 @@ public class ShortUrlAnalysisService {
                     analysisResultRepository.save(result);
                     log.warn("[ShortUrlAnalysisService.analyzeUrl] Threat detected: {} for URL: {}", 
                             match.getThreatType(), shortUrl.getOriginalUrl());
+                    
+                    // Check if this is a critical threat
+                    if (status == ShortUrlAnalysisStatus.MALWARE || status == ShortUrlAnalysisStatus.SOCIAL_ENGINEERING) {
+                        hasCriticalThreat = true;
+                    }
+                }
+                
+                // Auto soft-delete URL if critical threat detected
+                if (hasCriticalThreat && shortUrl.getDeletedAt() == null) {
+                    shortUrl.setDeletedAt(java.time.Instant.now());
+                    shortUrlRepository.save(shortUrl);
+                    log.warn("[ShortUrlAnalysisService.analyzeUrl] Auto soft-deleted ShortUrl ID {} due to critical threat detection", 
+                            shortUrl.getId());
                 }
             }
 
