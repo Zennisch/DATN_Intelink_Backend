@@ -5,11 +5,17 @@ import intelink.dto.auth.LoginRequest;
 import intelink.dto.auth.RegisterRequest;
 import intelink.dto.auth.ResetPasswordRequest;
 import intelink.dto.auth.UserProfileResponse;
+import intelink.models.Subscription;
+import intelink.models.SubscriptionPlan;
 import intelink.models.User;
 import intelink.models.VerificationToken;
+import intelink.models.enums.SubscriptionPlanType;
+import intelink.models.enums.SubscriptionStatus;
 import intelink.models.enums.UserRole;
 import intelink.models.enums.VerificationTokenType;
 import intelink.modules.auth.repositories.UserRepository;
+import intelink.modules.subscription.repositories.SubscriptionPlanRepository;
+import intelink.modules.subscription.repositories.SubscriptionRepository;
 import intelink.modules.utils.services.EmailService;
 import intelink.utils.helper.AuthToken;
 import jakarta.mail.MessagingException;
@@ -42,6 +48,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final VerificationTokenService verificationTokenService;
+    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -109,6 +117,28 @@ public class AuthService {
         log.info("[UserService] User created with ID: {}", savedUser.getId());
 
         // 3. Create FREE subscription for new user
+        try {
+            Optional<SubscriptionPlan> freePlanOpt = subscriptionPlanRepository.findByType(SubscriptionPlanType.FREE);
+            if (freePlanOpt.isPresent()) {
+                SubscriptionPlan freePlan = freePlanOpt.get();
+                Subscription freeSubscription = Subscription.builder()
+                        .user(savedUser)
+                        .subscriptionPlan(freePlan)
+                        .status(SubscriptionStatus.ACTIVE)
+                        .active(true)
+                        .activatedAt(Instant.now())
+                        .expiresAt(null) // Lifetime for FREE plan
+                        .creditUsed(0.0)
+                        .build();
+                subscriptionRepository.save(freeSubscription);
+                log.info("[UserService] FREE subscription created for user ID: {}", savedUser.getId());
+            } else {
+                log.warn("[UserService] FREE plan not found. Skipping subscription creation for user ID: {}", savedUser.getId());
+            }
+        } catch (Exception e) {
+            log.error("[UserService] Failed to create FREE subscription for user ID: {}. Error: {}", savedUser.getId(), e.getMessage());
+            // Don't fail registration if subscription creation fails
+        }
 
         // 4. Generate email verification token and send email
         sendVerificationEmail(user);
@@ -242,7 +272,8 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(User user) {
-        return UserProfileResponse.fromEntity(user);
+        Optional<Subscription> activeSubscription = subscriptionRepository.findActiveSubscriptionByUser(user);
+        return UserProfileResponse.fromEntity(user, activeSubscription.orElse(null));
     }
 
     @Transactional(readOnly = true)

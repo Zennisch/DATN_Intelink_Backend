@@ -1,5 +1,6 @@
 package intelink.dto.auth;
 
+import intelink.models.Subscription;
 import intelink.models.User;
 
 public record UserProfileResponse(
@@ -17,9 +18,36 @@ public record UserProfileResponse(
         Double balance,
         String currency,
         String createdAt,
-        String updatedAt
+        String updatedAt,
+        CurrentSubscription currentSubscription
 ) {
-    public static UserProfileResponse fromEntity(User user) {
+    public record CurrentSubscription(
+            String id,
+            String planType,
+            String status,
+            Boolean active,
+            String activatedAt,
+            String expiresAt,
+            Double creditUsed,
+            Double proratedValue
+    ) {}
+
+    public static UserProfileResponse fromEntity(User user, Subscription subscription) {
+        CurrentSubscription currentSub = null;
+        
+        if (subscription != null) {
+            currentSub = new CurrentSubscription(
+                    subscription.getId().toString(),
+                    subscription.getSubscriptionPlan().getType().name(),
+                    subscription.getStatus().name(),
+                    subscription.getActive(),
+                    subscription.getActivatedAt() != null ? subscription.getActivatedAt().toString() : null,
+                    subscription.getExpiresAt() != null ? subscription.getExpiresAt().toString() : null,
+                    subscription.getCreditUsed(),
+                    subscription.getProratedValue()
+            );
+        }
+        
         return new UserProfileResponse(
                 user.getId(),
                 user.getUsername(),
@@ -35,7 +63,8 @@ public record UserProfileResponse(
                 user.getBalance(),
                 user.getCurrency(),
                 user.getCreatedAt().toString(),
-                user.getUpdatedAt().toString()
+                user.getUpdatedAt().toString(),
+                currentSub
         );
     }
 }

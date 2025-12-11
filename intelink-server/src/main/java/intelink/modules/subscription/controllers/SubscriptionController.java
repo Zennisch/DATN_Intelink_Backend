@@ -1,10 +1,14 @@
 package intelink.modules.subscription.controllers;
 
+import intelink.dto.subscription.CalculateCostRequest;
+import intelink.dto.subscription.CalculateCostResponse;
 import intelink.dto.subscription.CreateSubscriptionRequest;
 import intelink.dto.subscription.SubscriptionResponse;
 import intelink.models.Subscription;
+import intelink.models.SubscriptionPlan;
 import intelink.models.User;
 import intelink.modules.auth.services.AuthService;
+import intelink.modules.subscription.services.SubscriptionPlanService;
 import intelink.modules.subscription.services.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,6 +33,7 @@ import java.util.stream.Collectors;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
+    private final SubscriptionPlanService subscriptionPlanService;
     private final AuthService authService;
 
     @GetMapping("/active")
@@ -119,6 +124,56 @@ public class SubscriptionController {
         } catch (IllegalStateException e) {
             log.error("[SubscriptionController.cancelSubscription] State error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
+
+    @PostMapping("/calculate-cost")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Calculate subscription cost", description = "Calculate final cost with pro-rated credit before purchasing")
+    public ResponseEntity<CalculateCostResponse> calculateCost(
+            @Valid @RequestBody CalculateCostRequest request) {
+        
+        User currentUser = authService.getCurrentUser();
+        
+        try {
+            // Get new plan
+            SubscriptionPlan newPlan = subscriptionPlanService.getPlanById(request.planId());
+            
+            // Get current active subscription
+            Optional<Subscription> currentSubscriptionOpt = subscriptionService.getActiveSubscriptionByUser(currentUser);
+            
+            // Calculate pro-rated credit
+            double proratedCredit = subscriptionService.calculateProratedCreditForUser(currentUser);
+            
+            // Calculate final cost
+            double finalCost = Math.max(0, newPlan.getPrice() - proratedCredit);
+            double savings = proratedCredit;
+            
+            CalculateCostResponse.CalculateCostResponseBuilder responseBuilder = CalculateCostResponse.builder()
+                    .planId(newPlan.getId())
+                    .planType(newPlan.getType().name())
+                    .planPrice(newPlan.getPrice())
+                    .durationDays(newPlan.getDuration())
+                    .proratedCredit(proratedCredit)
+                    .finalCost(finalCost)
+                    .savings(savings);
+            
+            if (currentSubscriptionOpt.isPresent()) {
+                Subscription currentSub = currentSubscriptionOpt.get();
+                responseBuilder
+                        .currentPlanType(currentSub.getSubscriptionPlan().getType().name())
+                        .currentExpiresAt(currentSub.getExpiresAt())
+                        .message("You have an active " + currentSub.getSubscriptionPlan().getType().name() + 
+                                " subscription. Pro-rated credit will be applied.");
+            } else {
+                responseBuilder.message("No active subscription. Full price will be charged.");
+            }
+            
+            return ResponseEntity.ok(responseBuilder.build());
+            
+        } catch (IllegalArgumentException e) {
+            log.error("[SubscriptionController.calculateCost] Error: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 }

@@ -171,6 +171,20 @@ public class SubscriptionService {
     }
 
     /**
+     * Calculate cost for upgrading/downgrading to a new plan (public method for preview)
+     */
+    @Transactional(readOnly = true)
+    public double calculateProratedCreditForUser(User user) {
+        Optional<Subscription> currentActiveOpt = subscriptionRepository.findActiveSubscriptionByUser(user);
+        
+        if (currentActiveOpt.isEmpty()) {
+            return 0.0;
+        }
+        
+        return calculateProrateCredit(currentActiveOpt.get(), Instant.now());
+    }
+
+    /**
      * Calculate expiration date based on duration in days
      */
     private Instant calculateExpirationDate(Instant startDate, Integer durationDays) {
