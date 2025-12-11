@@ -28,6 +28,11 @@ public class SubscriptionPlanService {
                 .orElseThrow(() -> new IllegalArgumentException("Subscription plan not found with id: " + id));
     }
 
+    @Transactional(readOnly = true)
+    public java.util.Optional<SubscriptionPlan> findById(Long id) {
+        return subscriptionPlanRepository.findById(id);
+    }
+
     @Transactional
     public SubscriptionPlan createPlan(SubscriptionPlanRequest request) {
         // Check if plan type already exists

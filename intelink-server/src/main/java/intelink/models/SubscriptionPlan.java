@@ -58,6 +58,9 @@ public class SubscriptionPlan {
     @Column(name = "api_access_enabled", nullable = false)
     private Boolean apiAccessEnabled;
 
+    @Column(name = "duration")
+    private Integer duration;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
