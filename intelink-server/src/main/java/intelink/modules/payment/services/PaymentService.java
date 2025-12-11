@@ -211,23 +211,34 @@ public class PaymentService {
         Collections.sort(fieldNames);
         
         StringBuilder hashData = new StringBuilder();
-        for (int i = 0; i < fieldNames.size(); i++) {
-            String key = fieldNames.get(i);
-            String value = filteredParams.get(key);
-            
-            if (value != null && !value.isEmpty()) {
-                if (hashData.length() > 0) {
-                    hashData.append("&");
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
+            String fieldValue = filteredParams.get(fieldName);
+            if (fieldValue != null && !fieldValue.isEmpty()) {
+                // Build in URL format WITH URL encoding
+                try {
+                    hashData.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
+                    hashData.append('=');
+                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+                } catch (Exception e) {
+                    log.error("[PaymentService.verifyVNPayCallback] Error encoding: {}", e.getMessage());
+                    hashData.append(fieldName);
+                    hashData.append('=');
+                    hashData.append(fieldValue);
                 }
-                hashData.append(key).append("=").append(value);
+                if (itr.hasNext()) {
+                    hashData.append('&');
+                }
             }
         }
 
         // Calculate hash
         String calculatedHash = vnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
 
-        log.info("[PaymentService.verifyVNPayCallback] Expected hash: {}, Calculated hash: {}", 
-                vnpSecureHash, calculatedHash);
+        log.info("[PaymentService.verifyVNPayCallback] Hash data: {}", hashData.toString());
+        log.info("[PaymentService.verifyVNPayCallback] Expected hash: {}", vnpSecureHash);
+        log.info("[PaymentService.verifyVNPayCallback] Calculated hash: {}", calculatedHash);
 
         return calculatedHash.equalsIgnoreCase(vnpSecureHash);
     }

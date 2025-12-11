@@ -18,11 +18,11 @@ import java.util.UUID;
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
 
-    @Query("SELECT s FROM Subscription s WHERE s.user = :user AND s.active = true AND s.status = 'ACTIVE'")
+    @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.subscriptionPlan WHERE s.user = :user AND s.active = true AND s.status = 'ACTIVE'")
     Optional<Subscription> findActiveSubscriptionByUser(@Param("user") User user);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT s FROM Subscription s WHERE s.user = :user AND s.active = true AND s.status = 'ACTIVE'")
+    @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.subscriptionPlan WHERE s.user = :user AND s.active = true AND s.status = 'ACTIVE'")
     Optional<Subscription> findActiveSubscriptionByUserWithLock(@Param("user") User user);
 
     @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.subscriptionPlan WHERE s.id = :id")
@@ -32,7 +32,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.subscriptionPlan WHERE s.id = :id")
     Optional<Subscription> findByIdWithPlanAndLock(@Param("id") UUID id);
 
-    List<Subscription> findByUserOrderByCreatedAtDesc(User user);
+    @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.subscriptionPlan WHERE s.user = :user ORDER BY s.createdAt DESC")
+    List<Subscription> findByUserOrderByCreatedAtDesc(@Param("user") User user);
 
     @Query("SELECT s FROM Subscription s WHERE s.status = :status AND s.expiresAt < :expiryThreshold")
     List<Subscription> findExpiredSubscriptions(@Param("status") SubscriptionStatus status, @Param("expiryThreshold") Instant expiryThreshold);
