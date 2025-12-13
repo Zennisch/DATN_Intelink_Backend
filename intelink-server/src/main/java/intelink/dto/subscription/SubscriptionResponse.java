@@ -23,6 +23,7 @@ public class SubscriptionResponse {
     private Instant expiresAt;
     private Instant createdAt;
     private Instant updatedAt;
+    private SubscriptionPlanResponse planDetails;
 
     public static SubscriptionResponse fromEntity(Subscription subscription) {
         return SubscriptionResponse.builder()
@@ -30,6 +31,7 @@ public class SubscriptionResponse {
                 .userId(subscription.getUser() != null ? subscription.getUser().getId() : null)
                 .planId(subscription.getSubscriptionPlan() != null ? subscription.getSubscriptionPlan().getId() : null)
                 .planType(subscription.getSubscriptionPlan() != null ? subscription.getSubscriptionPlan().getType().name() : null)
+                .planDetails(subscription.getSubscriptionPlan() != null ? SubscriptionPlanResponse.fromEntity(subscription.getSubscriptionPlan()) : null)
                 .status(subscription.getStatus())
                 .active(subscription.getActive())
                 .creditUsed(subscription.getCreditUsed())
