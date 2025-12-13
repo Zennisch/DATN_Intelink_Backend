@@ -30,7 +30,7 @@ public class UserSeeder {
 
             for (int i = 1; i <= 5; i++) {
                 User.UserBuilder userBuilder = User.builder()
-                        .username("user" + i)
+                        .username("username" + i)
                         .email("user" + i + "@example.com")
                         .password(commonPassword)
                         .profileName("User " + i)

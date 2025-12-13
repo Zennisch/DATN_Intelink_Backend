@@ -30,6 +30,9 @@ public class SubscriptionPlanSeeder {
                     .maxUsagePerUrl(100)
                     .description("Free plan with basic features")
                     .active(true)
+                    .shortCodeCustomizationEnabled(false)
+                    .statisticsEnabled(false)
+                    .apiAccessEnabled(false)
                     .build(),
 
                 // Monthly Plans
@@ -41,6 +44,9 @@ public class SubscriptionPlanSeeder {
                     .maxUsagePerUrl(1000)
                     .description("Pro plan for power users")
                     .active(true)
+                    .shortCodeCustomizationEnabled(true)
+                    .statisticsEnabled(true)
+                    .apiAccessEnabled(false)
                     .build(),
                 SubscriptionPlan.builder()
                     .type(SubscriptionPlanType.ENTERPRISE)
@@ -50,6 +56,9 @@ public class SubscriptionPlanSeeder {
                     .maxUsagePerUrl(10000)
                     .description("Enterprise plan for businesses")
                     .active(true)
+                    .shortCodeCustomizationEnabled(true)
+                    .statisticsEnabled(true)
+                    .apiAccessEnabled(true)
                     .build(),
 
                 // Yearly Plans
@@ -61,6 +70,9 @@ public class SubscriptionPlanSeeder {
                     .maxUsagePerUrl(1000)
                     .description("Pro plan for power users (Yearly)")
                     .active(true)
+                    .shortCodeCustomizationEnabled(true)
+                    .statisticsEnabled(true)
+                    .apiAccessEnabled(false)
                     .build(),
                 SubscriptionPlan.builder()
                     .type(SubscriptionPlanType.ENTERPRISE)
@@ -70,6 +82,9 @@ public class SubscriptionPlanSeeder {
                     .maxUsagePerUrl(10000)
                     .description("Enterprise plan for businesses (Yearly)")
                     .active(true)
+                    .shortCodeCustomizationEnabled(true)
+                    .statisticsEnabled(true)
+                    .apiAccessEnabled(true)
                     .build()
             );
 
