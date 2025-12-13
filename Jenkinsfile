@@ -51,7 +51,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the project with Maven...'
-                sh 'cd $WORKSPACE/intelink-project && mvn clean package -DskipTests -B -q'
+                sh 'cd $WORKSPACE/intelink-server && mvn clean package -DskipTests -B -q'
                 echo 'Build completed successfully.'
             }
         }
