@@ -2,11 +2,18 @@ package intelink.modules.auth.services;
 
 import intelink.configs.securities.JwtTokenProvider;
 import intelink.models.OAuthAccount;
+import intelink.models.Subscription;
+import intelink.models.SubscriptionPlan;
 import intelink.models.User;
+import intelink.models.enums.SubscriptionPlanBillingInterval;
+import intelink.models.enums.SubscriptionPlanType;
+import intelink.models.enums.SubscriptionStatus;
 import intelink.models.enums.UserProvider;
 import intelink.models.enums.UserRole;
 import intelink.modules.auth.repositories.OAuthAccountRepository;
 import intelink.modules.auth.repositories.UserRepository;
+import intelink.modules.subscription.repositories.SubscriptionPlanRepository;
+import intelink.modules.subscription.repositories.SubscriptionRepository;
 import intelink.utils.EnumUtil;
 import intelink.utils.helper.AuthToken;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +34,8 @@ public class OAuthAccountService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final OAuthAccountRepository oAuthAccountRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -107,6 +116,32 @@ public class OAuthAccountService extends DefaultOAuth2UserService {
                     .lastLoginAt(Instant.now())
                     .build()
             );
+
+            // Create FREE subscription for new user
+            try {
+                Optional<SubscriptionPlan> freePlanOpt = subscriptionPlanRepository.findByTypeAndBillingInterval(
+                        SubscriptionPlanType.FREE,
+                        SubscriptionPlanBillingInterval.NONE
+                );
+                if (freePlanOpt.isPresent()) {
+                    SubscriptionPlan freePlan = freePlanOpt.get();
+                    Subscription freeSubscription = Subscription.builder()
+                            .user(user)
+                            .subscriptionPlan(freePlan)
+                            .status(SubscriptionStatus.ACTIVE)
+                            .active(true)
+                            .activatedAt(Instant.now())
+                            .expiresAt(null) // Lifetime for FREE plan
+                            .creditUsed(0.0)
+                            .build();
+                    subscriptionRepository.save(freeSubscription);
+                    log.info("[OAuthAccountService] FREE subscription created for user ID: {}", user.getId());
+                } else {
+                    log.warn("[OAuthAccountService] FREE plan not found. Skipping subscription creation for user ID: {}", user.getId());
+                }
+            } catch (Exception e) {
+                log.error("[OAuthAccountService] Failed to create FREE subscription for user ID: {}. Error: {}", user.getId(), e.getMessage());
+            }
         }
 
         // 6. Create and save new OAuthAccount
