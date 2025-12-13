@@ -93,8 +93,7 @@ public class AuthService {
         Optional<User> existingUserByUsername = userRepository.findByUsernameAndVerifiedFalse(username);
 
         // Scenario: Both email AND username match same unverified user -> Resend verification
-        if (existingUserByEmail.isPresent() && existingUserByUsername.isPresent()
-                && existingUserByEmail.get().getId().equals(existingUserByUsername.get().getId())) {
+        if (existingUserByEmail.isPresent() && existingUserByUsername.isPresent() && existingUserByEmail.get().getId().equals(existingUserByUsername.get().getId())) {
             User user = existingUserByEmail.get();
             user.setPassword(passwordEncoder.encode(password));
             userRepository.save(user);
@@ -121,15 +120,8 @@ public class AuthService {
             Optional<SubscriptionPlan> freePlanOpt = subscriptionPlanRepository.findByType(SubscriptionPlanType.FREE);
             if (freePlanOpt.isPresent()) {
                 SubscriptionPlan freePlan = freePlanOpt.get();
-                Subscription freeSubscription = Subscription.builder()
-                        .user(savedUser)
-                        .subscriptionPlan(freePlan)
-                        .status(SubscriptionStatus.ACTIVE)
-                        .active(true)
-                        .activatedAt(Instant.now())
-                        .expiresAt(null) // Lifetime for FREE plan
-                        .creditUsed(0.0)
-                        .build();
+                Subscription freeSubscription = Subscription.builder().user(savedUser).subscriptionPlan(freePlan).status(SubscriptionStatus.ACTIVE).active(true).activatedAt(Instant.now()).expiresAt(null) // Lifetime for FREE plan
+                        .creditUsed(0.0).build();
                 subscriptionRepository.save(freeSubscription);
                 log.info("[UserService] FREE subscription created for user ID: {}", savedUser.getId());
             } else {
@@ -308,5 +300,15 @@ public class AuthService {
     @Transactional
     public void increaseTotalShortUrls(Long userId) {
         userRepository.incrementTotalShortUrls(userId);
+    }
+
+    @Transactional
+    public void decreaseTotalShortUrls(Long userId) {
+        userRepository.decrementTotalShortUrls(userId);
+    }
+
+    @Transactional
+    public void increaseTotalClicks(Long userId) {
+        userRepository.incrementTotalClicks(userId);
     }
 }

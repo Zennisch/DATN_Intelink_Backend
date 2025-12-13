@@ -35,4 +35,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls + 1 WHERE u.id = :userId")
     void incrementTotalShortUrls(Long userId);
+
+    @Modifying
+    @Query("UPDATE User u SET u.totalShortUrls = u.totalShortUrls - 1 WHERE u.id = :userId AND u.totalShortUrls > 0")
+    void decrementTotalShortUrls(Long userId);
+
+    @Modifying
+    @Query("UPDATE User u SET u.totalClicks = u.totalClicks + 1 WHERE u.id = :userId")
+    void incrementTotalClicks(Long userId);
 }

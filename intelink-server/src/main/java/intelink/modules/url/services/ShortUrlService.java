@@ -399,6 +399,7 @@ public class ShortUrlService {
         ShortUrl shortUrl = shortUrlRepository.findByShortCodeAndUser(shortCode, user)
                 .orElseThrow(() -> new IllegalArgumentException("Short URL not found"));
         shortUrl.setDeletedAt(Instant.now());
+        authService.decreaseTotalShortUrls(user.getId());
         shortUrlRepository.save(shortUrl);
     }
 
