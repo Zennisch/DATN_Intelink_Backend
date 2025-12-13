@@ -12,6 +12,7 @@ public class DataSeeder implements CommandLineRunner {
     private final UserSeeder userSeeder;
     private final SubscriptionSeeder subscriptionSeeder;
     private final ShortUrlSeeder shortUrlSeeder;
+    private final ClickDataSeeder clickDataSeeder;
 
     @Override
     public void run(String... args) throws Exception {
@@ -19,6 +20,7 @@ public class DataSeeder implements CommandLineRunner {
         userSeeder.seed();
         subscriptionSeeder.seed();
         shortUrlSeeder.seed();
+        clickDataSeeder.seed();
     }
 }
 
