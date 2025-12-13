@@ -53,4 +53,13 @@ public class ClickStat {
     @Column(name = "blocked_clicks", nullable = false)
     @Builder.Default
     private Long blockedClicks = 0L;
+
+    public ClickStat(Granularity granularity, Instant bucketStart, Instant bucketEnd, Long totalClicks, Long allowedClicks, Long blockedClicks) {
+        this.granularity = granularity;
+        this.bucketStart = bucketStart;
+        this.bucketEnd = bucketEnd;
+        this.totalClicks = totalClicks;
+        this.allowedClicks = allowedClicks;
+        this.blockedClicks = blockedClicks;
+    }
 }

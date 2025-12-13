@@ -175,39 +175,6 @@ public class SubscriptionService implements ISubscriptionService {
         return subscriptionRepository.save(subscription);
     }
 
-    @Transactional
-    public BigDecimal calculateAmountToPay(User user, Subscription subscription, RegisterSubscriptionRequest request) {
-        // Tính toán pro-rate nếu có subscription hiện tại và applyImmediately
-        Subscription currentSubscription = findCurrentActiveSubscription(user);
-        BigDecimal proRateValue = BigDecimal.ZERO;
-        BigDecimal planPrice = subscription.getSubscriptionPlan().getPrice();
-        BigDecimal amountToPay = planPrice;
-
-        if (currentSubscription != null && Boolean.TRUE.equals(request.getApplyImmediately())) {
-            SubscriptionPlan currentPlan = currentSubscription.getSubscriptionPlan();
-            if (!currentPlan.getType().name().equals("FREE")) {
-                Instant now = Instant.now();
-                Instant expiresAt = currentSubscription.getExpiresAt();
-                long totalDays = ChronoUnit.DAYS.between(currentSubscription.getStartsAt(), expiresAt);
-                long daysLeft = ChronoUnit.DAYS.between(now, expiresAt);
-
-                if (daysLeft > 0 && totalDays > 0) {
-                    BigDecimal dailyPrice = currentPlan.getPrice().divide(BigDecimal.valueOf(totalDays), 2,
-                            BigDecimal.ROUND_HALF_UP);
-                    proRateValue = dailyPrice.multiply(BigDecimal.valueOf(daysLeft));
-                }
-
-                amountToPay = planPrice.subtract(proRateValue);
-                if (amountToPay.compareTo(BigDecimal.ZERO) < 0) {
-                    user.setCreditBalance(user.getCreditBalance() + amountToPay.abs().doubleValue());
-                    userRepository.save(user);
-                    amountToPay = BigDecimal.ZERO;
-                }
-            }
-        }
-        return amountToPay;
-    }
-
     @Override
     @Transactional
     public void cancelSubscription(User user, UUID subscriptionId) {
@@ -333,32 +300,5 @@ public class SubscriptionService implements ISubscriptionService {
                 .message(message)
                 .startDate(startDate)
                 .build();
-    }
-
-    @Transactional
-    public Subscription createFreeSubscription(User user) {
-        // Tìm FREE subscription plan
-        SubscriptionPlan freePlan = subscriptionPlanRepository.findByType(SubscriptionPlanType.FREE)
-                .orElseThrow(() -> new RuntimeException("FREE subscription plan not found. Please ensure FREE plan exists in database."));
-
-        // Kiểm tra xem user đã có active subscription chưa
-        Subscription existingSubscription = findCurrentActiveSubscription(user);
-        if (existingSubscription != null) {
-            log.warn("User {} already has an active subscription: {}", user.getUsername(), existingSubscription.getId());
-            return existingSubscription;
-        }
-
-        // Tạo FREE subscription
-        Subscription freeSubscription = Subscription.builder()
-                .user(user)
-                .subscriptionPlan(freePlan)
-                .status(SubscriptionStatus.ACTIVE)
-                .active(true)
-                .startsAt(Instant.now())
-                .expiresAt(null) // FREE plan không có ngày hết hạn
-                .build();
-
-        log.info("Creating FREE subscription for user: {}", user.getUsername());
-        return subscriptionRepository.save(freeSubscription);
     }
 }

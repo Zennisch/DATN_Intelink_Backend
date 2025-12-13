@@ -1,0 +1,34 @@
+package intelink.modules.redirect.controllers;
+
+import intelink.modules.redirect.services.RedirectService;
+import intelink.utils.helper.RedirectResult;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+
+@RestController
+@RequiredArgsConstructor
+@Slf4j
+public class RedirectController {
+
+    private final RedirectService redirectService;
+
+    @GetMapping("/{shortCode}")
+    public ResponseEntity<?> redirect(
+            @PathVariable String shortCode,
+            @RequestParam(required = false) String password,
+            HttpServletRequest request
+    ) throws IllegalBlockSizeException, BadPaddingException {
+        RedirectResult result = redirectService.handleRedirect(shortCode, password, request);
+        return ResponseEntity.ok(result);
+    }
+
+}

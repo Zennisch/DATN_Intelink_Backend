@@ -23,6 +23,8 @@ public class ClickLog {
 
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,6 +49,9 @@ public class ClickLog {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ClickStatus status;
+
+    @Column(name = "reason", length = 1024)
+    private String reason;
 
     @Column(name = "timestamp", nullable = false)
     private Instant timestamp;

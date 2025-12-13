@@ -158,11 +158,11 @@
             <artifactId>geoip2</artifactId>
             <version>4.3.1</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.idealista/format-preserving-encryption -->
+        <!-- https://mvnrepository.com/artifact/io.github.mysto/ff3 -->
         <dependency>
-            <groupId>com.idealista</groupId>
-            <artifactId>format-preserving-encryption</artifactId>
-            <version>1.0.0</version>
+            <groupId>io.github.mysto</groupId>
+            <artifactId>ff3</artifactId>
+            <version>1.2.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui -->
         <dependency>
@@ -175,6 +175,18 @@
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>postgres-socket-factory</artifactId>
             <version>1.27.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.28.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.20.1</version>
         </dependency>
     </dependencies>
     <dependencyManagement>

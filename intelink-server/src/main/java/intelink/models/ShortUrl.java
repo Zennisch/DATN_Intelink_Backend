@@ -1,6 +1,7 @@
 package intelink.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import intelink.models.enums.AccessControlMode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,7 +27,7 @@ public class ShortUrl {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     @ToString.Exclude
     @JsonIgnore
     private User user;
@@ -60,8 +61,12 @@ public class ShortUrl {
     @Column(name = "original_url", nullable = false, length = 2048)
     private String originalUrl;
 
-    @Column(name = "short_code", nullable = false, unique = true, length = 16)
+    @Column(name = "short_code", length = 16)
     private String shortCode;
+
+    @Lob
+    @Column(name = "short_code_tweak")
+    private byte[] shortCodeTweak;
 
     @Column(name = "enabled", nullable = false)
     @Builder.Default
@@ -75,6 +80,11 @@ public class ShortUrl {
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "access_control_mode", nullable = false)
+    @Builder.Default
+    private AccessControlMode accessControlMode = AccessControlMode.NONE;
 
     @Column(name = "total_clicks", nullable = false)
     @Builder.Default

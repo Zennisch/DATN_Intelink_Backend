@@ -49,4 +49,12 @@ public class DimensionStat {
     @Column(name = "blocked_clicks", nullable = false)
     @Builder.Default
     private Long blockedClicks = 0L;
+
+    public DimensionStat(DimensionType type, String value, Long totalClicks, Long allowedClicks, Long blockedClicks) {
+        this.type = type;
+        this.value = value;
+        this.totalClicks = totalClicks;
+        this.allowedClicks = allowedClicks;
+        this.blockedClicks = blockedClicks;
+    }
 }

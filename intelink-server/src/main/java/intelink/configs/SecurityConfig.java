@@ -4,7 +4,7 @@ import intelink.configs.securities.JwtAuthenticationEntryPoint;
 import intelink.configs.securities.JwtAuthenticationFilter;
 import intelink.configs.securities.OAuth2AuthenticationSuccessHandler;
 import intelink.models.enums.UserRole;
-import intelink.modules.oauth.OAuthAccountService;
+import intelink.modules.auth.services.OAuthAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -105,8 +105,9 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/{shortCode}").permitAll()
                         .requestMatchers(HttpMethod.POST, "/{shortCode}/unlock").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/url").permitAll()
 
-                        .requestMatchers("/api/v1/urls/**").hasAnyRole(ADMIN, USER)
+                        .requestMatchers("/api/v1/url/**").hasAnyRole(ADMIN, USER)
                         .requestMatchers("/api/v1/statistics/**").hasAnyRole(ADMIN, USER)
 
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
