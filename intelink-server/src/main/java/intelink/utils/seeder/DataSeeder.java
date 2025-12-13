@@ -11,12 +11,14 @@ public class DataSeeder implements CommandLineRunner {
     private final SubscriptionPlanSeeder subscriptionPlanSeeder;
     private final UserSeeder userSeeder;
     private final SubscriptionSeeder subscriptionSeeder;
+    private final ShortUrlSeeder shortUrlSeeder;
 
     @Override
     public void run(String... args) throws Exception {
         subscriptionPlanSeeder.seed();
         userSeeder.seed();
         subscriptionSeeder.seed();
+        shortUrlSeeder.seed();
     }
 }
 
