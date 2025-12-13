@@ -1,29 +1,40 @@
 package intelink.modules.redirect.services;
 
-import intelink.dto.statistics.*;
-import intelink.models.ClickStat;
-import intelink.models.DimensionStat;
-import intelink.models.ShortUrl;
-import intelink.models.User;
-import intelink.models.enums.DimensionType;
-import intelink.models.enums.Granularity;
-import intelink.modules.redirect.repositories.ClickLogRepository;
-import intelink.modules.redirect.repositories.ClickStatRepository;
-import intelink.modules.redirect.repositories.DimensionStatRepository;
-import intelink.modules.url.services.ShortUrlService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import intelink.dto.statistics.DimensionStatItemResponse;
+import intelink.dto.statistics.DimensionStatResponse;
+import intelink.dto.statistics.GeographyStatItemResponse;
+import intelink.dto.statistics.GeographyStatResponse;
+import intelink.dto.statistics.PeakTimeStatResponse;
+import intelink.dto.statistics.TimeSeriesStatItemResponse;
+import intelink.dto.statistics.TimeSeriesStatResponse;
+import intelink.models.ClickStat;
+import intelink.models.DimensionStat;
+import intelink.models.ShortUrl;
+import intelink.models.User;
+import intelink.models.enums.DimensionType;
+import intelink.models.enums.Granularity;
+import intelink.modules.redirect.repositories.ClickStatRepository;
+import intelink.modules.redirect.repositories.DimensionStatRepository;
+import intelink.modules.url.services.ShortUrlService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +43,6 @@ public class StatisticsService {
 
     private final DimensionStatRepository dimensionStatRepository;
     private final ClickStatRepository clickStatRepository;
-    private final ClickLogRepository clickLogRepository;
     private final ShortUrlService shortUrlService;
     
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
