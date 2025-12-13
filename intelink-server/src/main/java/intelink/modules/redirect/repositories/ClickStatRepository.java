@@ -2,7 +2,9 @@ package intelink.modules.redirect.repositories;
 
 import intelink.models.ClickStat;
 import intelink.models.ShortUrl;
+import intelink.models.User;
 import intelink.models.enums.Granularity;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -66,4 +68,27 @@ public interface ClickStatRepository extends JpaRepository<ClickStat, UUID> {
             @Param("from") Instant from,
             @Param("to") Instant to,
             org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT new intelink.models.ClickStat(c.granularity, c.bucketStart, c.bucketEnd, SUM(c.totalClicks), SUM(c.allowedClicks), SUM(c.blockedClicks)) " +
+            "FROM ClickStat c JOIN c.shortUrl s " +
+            "WHERE s.user = :user AND c.granularity = :granularity AND c.bucketStart BETWEEN :bucketStart AND :bucketEnd " +
+            "GROUP BY c.granularity, c.bucketStart, c.bucketEnd " +
+            "ORDER BY c.bucketStart")
+    java.util.List<ClickStat> findByUserAndGranularityAndBucketStartBetween(
+            @Param("user") User user,
+            @Param("granularity") Granularity granularity,
+            @Param("bucketStart") Instant bucketStart,
+            @Param("bucketEnd") Instant bucketEnd);
+
+    @Query("SELECT new intelink.models.ClickStat(c.granularity, c.bucketStart, c.bucketEnd, SUM(c.totalClicks), SUM(c.allowedClicks), SUM(c.blockedClicks)) " +
+            "FROM ClickStat c JOIN c.shortUrl s " +
+            "WHERE s.user = :user AND c.granularity = :granularity AND c.bucketStart BETWEEN :bucketStart AND :bucketEnd " +
+            "GROUP BY c.granularity, c.bucketStart, c.bucketEnd " +
+            "ORDER BY SUM(c.totalClicks) DESC")
+    java.util.List<ClickStat> findTopByUserAndGranularityAndBucketStartBetween(
+            @Param("user") User user,
+            @Param("granularity") Granularity granularity,
+            @Param("bucketStart") Instant bucketStart,
+            @Param("bucketEnd") Instant bucketEnd,
+            Pageable pageable);
 }

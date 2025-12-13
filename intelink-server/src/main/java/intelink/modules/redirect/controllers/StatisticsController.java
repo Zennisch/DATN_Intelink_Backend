@@ -25,6 +25,80 @@ public class StatisticsController {
     private final StatisticsService statisticsService;
     private final AuthService authService;
 
+    @GetMapping("/browser")
+    public ResponseEntity<?> getBrowserStats(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.BROWSER);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/os")
+    public ResponseEntity<?> getOsStats(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.OS);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/device")
+    public ResponseEntity<?> getDeviceStats(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.DEVICE_TYPE);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/country")
+    public ResponseEntity<?> getCountryStats(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        GeographyStatResponse response = statisticsService.getGeographyStats(user, DimensionType.COUNTRY);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/city")
+    public ResponseEntity<?> getCityStats(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        GeographyStatResponse response = statisticsService.getGeographyStats(user, DimensionType.CITY);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/timeseries")
+    public ResponseEntity<?> getTimeSeriesStats(
+            @RequestParam(required = false) Granularity granularity,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String timezone,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        TimeSeriesStatResponse response = statisticsService.getTimeSeriesStats(
+                user, granularity, from, to, timezone);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/peak-times")
+    public ResponseEntity<?> getPeakTimeStats(
+            @RequestParam(required = false) Granularity granularity,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String timezone,
+            @RequestParam(required = false, defaultValue = "10") Integer limit,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        PeakTimeStatResponse response = statisticsService.getPeakTimeStats(
+                user, granularity, from, to, timezone, limit);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{shortCode}/browser")
     public ResponseEntity<?> getBrowserStats(
             @PathVariable String shortCode,

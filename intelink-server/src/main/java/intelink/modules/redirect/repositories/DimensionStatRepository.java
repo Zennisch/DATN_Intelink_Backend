@@ -2,6 +2,7 @@ package intelink.modules.redirect.repositories;
 
 import intelink.models.DimensionStat;
 import intelink.models.ShortUrl;
+import intelink.models.User;
 import intelink.models.enums.DimensionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -47,4 +48,11 @@ public interface DimensionStatRepository extends JpaRepository<DimensionStat, UU
 
     @Query("SELECT d FROM DimensionStat d WHERE d.shortUrl = :shortUrl AND d.type = :type ORDER BY d.allowedClicks DESC")
     java.util.List<DimensionStat> findByShortUrlAndTypeOrderByAllowedClicksDesc(@Param("shortUrl") ShortUrl shortUrl, @Param("type") DimensionType type);
+
+    @Query("SELECT new intelink.models.DimensionStat(d.type, d.value, SUM(d.totalClicks), SUM(d.allowedClicks), SUM(d.blockedClicks)) " +
+            "FROM DimensionStat d JOIN d.shortUrl s " +
+            "WHERE s.user = :user AND d.type = :type " +
+            "GROUP BY d.type, d.value " +
+            "ORDER BY SUM(d.allowedClicks) DESC")
+    java.util.List<DimensionStat> findByUserAndTypeOrderByAllowedClicksDesc(@Param("user") User user, @Param("type") DimensionType type);
 }

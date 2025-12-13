@@ -38,9 +38,17 @@ public class StatisticsService {
     @Transactional(readOnly = true)
     public DimensionStatResponse getDimensionStats(User user, String shortCode, DimensionType dimensionType) {
         ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
-        
         List<DimensionStat> stats = dimensionStatRepository.findByShortUrlAndTypeOrderByAllowedClicksDesc(shortUrl, dimensionType);
-        
+        return buildDimensionStatResponse(stats, dimensionType);
+    }
+
+    @Transactional(readOnly = true)
+    public DimensionStatResponse getDimensionStats(User user, DimensionType dimensionType) {
+        List<DimensionStat> stats = dimensionStatRepository.findByUserAndTypeOrderByAllowedClicksDesc(user, dimensionType);
+        return buildDimensionStatResponse(stats, dimensionType);
+    }
+
+    private DimensionStatResponse buildDimensionStatResponse(List<DimensionStat> stats, DimensionType dimensionType) {
         long totalClicks = stats.stream()
                 .mapToLong(DimensionStat::getAllowedClicks)
                 .sum();
@@ -68,9 +76,17 @@ public class StatisticsService {
     @Transactional(readOnly = true)
     public GeographyStatResponse getGeographyStats(User user, String shortCode, DimensionType dimensionType) {
         ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
-        
         List<DimensionStat> stats = dimensionStatRepository.findByShortUrlAndTypeOrderByAllowedClicksDesc(shortUrl, dimensionType);
-        
+        return buildGeographyStatResponse(stats, dimensionType);
+    }
+
+    @Transactional(readOnly = true)
+    public GeographyStatResponse getGeographyStats(User user, DimensionType dimensionType) {
+        List<DimensionStat> stats = dimensionStatRepository.findByUserAndTypeOrderByAllowedClicksDesc(user, dimensionType);
+        return buildGeographyStatResponse(stats, dimensionType);
+    }
+
+    private GeographyStatResponse buildGeographyStatResponse(List<DimensionStat> stats, DimensionType dimensionType) {
         long totalAllowedClicks = stats.stream()
                 .mapToLong(DimensionStat::getAllowedClicks)
                 .sum();
@@ -112,52 +128,45 @@ public class StatisticsService {
             String toStr,
             String timezoneStr
     ) {
-        // Parse timezone, default to UTC
-        ZoneId timezone = timezoneStr != null ? ZoneId.of(timezoneStr) : ZoneOffset.UTC;
+        TimeRange tr = parseTimeRange(granularity, fromStr, toStr, timezoneStr);
         
-        // Parse granularity, default to HOURLY
-        Granularity effectiveGranularity = granularity != null ? granularity : Granularity.HOURLY;
-        
-        // Parse from/to or use defaults
-        ZonedDateTime toZoned;
-        ZonedDateTime fromZoned;
-        
-        if (toStr != null) {
-            toZoned = parseDateTime(toStr, timezone);
-        } else {
-            toZoned = ZonedDateTime.now(timezone);
-        }
-        
-        if (fromStr != null) {
-            fromZoned = parseDateTime(fromStr, timezone);
-        } else {
-            // Calculate default from based on granularity
-            int defaultBuckets = getDefaultBuckets(effectiveGranularity);
-            fromZoned = subtractBuckets(toZoned, effectiveGranularity, defaultBuckets);
-        }
-        
-        // Convert to UTC for database query
-        Instant fromUtc = fromZoned.withZoneSameInstant(ZoneOffset.UTC).toInstant();
-        Instant toUtc = toZoned.withZoneSameInstant(ZoneOffset.UTC).toInstant();
-        
-        // Query database
         ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
         List<ClickStat> stats = clickStatRepository.findByShortUrlAndGranularityAndBucketStartBetween(
-                shortUrl, effectiveGranularity, fromUtc, toUtc);
+                shortUrl, tr.granularity, tr.fromUtc, tr.toUtc);
         
+        return buildTimeSeriesStatResponse(stats, tr);
+    }
+
+    @Transactional(readOnly = true)
+    public TimeSeriesStatResponse getTimeSeriesStats(
+            User user,
+            Granularity granularity,
+            String fromStr,
+            String toStr,
+            String timezoneStr
+    ) {
+        TimeRange tr = parseTimeRange(granularity, fromStr, toStr, timezoneStr);
+        
+        List<ClickStat> stats = clickStatRepository.findByUserAndGranularityAndBucketStartBetween(
+                user, tr.granularity, tr.fromUtc, tr.toUtc);
+        
+        return buildTimeSeriesStatResponse(stats, tr);
+    }
+
+    private TimeSeriesStatResponse buildTimeSeriesStatResponse(List<ClickStat> stats, TimeRange tr) {
         // Create map for quick lookup
         Map<Instant, ClickStat> statsMap = stats.stream()
                 .collect(Collectors.toMap(ClickStat::getBucketStart, stat -> stat));
         
         // Generate all buckets and fill with data
         List<TimeSeriesStatItemResponse> data = new ArrayList<>();
-        ZonedDateTime current = alignToBucketStart(fromZoned, effectiveGranularity);
+        ZonedDateTime current = alignToBucketStart(tr.fromZoned, tr.granularity);
         long totalClicks = 0;
         long totalAllowedClicks = 0;
         long totalBlockedClicks = 0;
         
-        while (current.isBefore(toZoned) || current.equals(toZoned)) {
-            ZonedDateTime bucketEnd = addOneBucket(current, effectiveGranularity);
+        while (current.isBefore(tr.toZoned) || current.equals(tr.toZoned)) {
+            ZonedDateTime bucketEnd = addOneBucket(current, tr.granularity);
             
             // Convert to UTC to lookup in map
             Instant bucketStartUtc = current.withZoneSameInstant(ZoneOffset.UTC).toInstant();
@@ -183,10 +192,10 @@ public class StatisticsService {
         }
         
         return TimeSeriesStatResponse.builder()
-                .granularity(effectiveGranularity.name())
-                .timezone(timezone.getId())
-                .from(fromZoned.format(ISO_FORMATTER))
-                .to(toZoned.format(ISO_FORMATTER))
+                .granularity(tr.granularity.name())
+                .timezone(tr.timezone.getId())
+                .from(tr.fromZoned.format(ISO_FORMATTER))
+                .to(tr.toZoned.format(ISO_FORMATTER))
                 .totalClicks(totalClicks)
                 .totalAllowedClicks(totalAllowedClicks)
                 .totalBlockedClicks(totalBlockedClicks)
@@ -204,16 +213,74 @@ public class StatisticsService {
             String timezoneStr,
             Integer limit
     ) {
-        // Parse timezone, default to UTC
-        ZoneId timezone = timezoneStr != null ? ZoneId.of(timezoneStr) : ZoneOffset.UTC;
-        
-        // Parse granularity, default to HOURLY
-        Granularity effectiveGranularity = granularity != null ? granularity : Granularity.HOURLY;
-        
-        // Parse limit, default to 10
+        TimeRange tr = parseTimeRange(granularity, fromStr, toStr, timezoneStr);
         int effectiveLimit = limit != null && limit > 0 ? limit : 10;
         
-        // Parse from/to or use defaults
+        ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
+        List<ClickStat> stats = clickStatRepository.findTopByShortUrlAndGranularityAndBucketStartBetween(
+                shortUrl, tr.granularity, tr.fromUtc, tr.toUtc, PageRequest.of(0, effectiveLimit));
+        
+        List<ClickStat> allStats = clickStatRepository.findByShortUrlAndGranularityAndBucketStartBetween(
+                shortUrl, tr.granularity, tr.fromUtc, tr.toUtc);
+        
+        return buildPeakTimeStatResponse(stats, allStats, tr);
+    }
+
+    @Transactional(readOnly = true)
+    public PeakTimeStatResponse getPeakTimeStats(
+            User user,
+            Granularity granularity,
+            String fromStr,
+            String toStr,
+            String timezoneStr,
+            Integer limit
+    ) {
+        TimeRange tr = parseTimeRange(granularity, fromStr, toStr, timezoneStr);
+        int effectiveLimit = limit != null && limit > 0 ? limit : 10;
+        
+        List<ClickStat> stats = clickStatRepository.findTopByUserAndGranularityAndBucketStartBetween(
+                user, tr.granularity, tr.fromUtc, tr.toUtc, PageRequest.of(0, effectiveLimit));
+        
+        List<ClickStat> allStats = clickStatRepository.findByUserAndGranularityAndBucketStartBetween(
+                user, tr.granularity, tr.fromUtc, tr.toUtc);
+        
+        return buildPeakTimeStatResponse(stats, allStats, tr);
+    }
+
+    private PeakTimeStatResponse buildPeakTimeStatResponse(List<ClickStat> stats, List<ClickStat> allStats, TimeRange tr) {
+        // Convert to response with timezone conversion
+        List<TimeSeriesStatItemResponse> data = stats.stream()
+                .map(stat -> {
+                    ZonedDateTime bucketStart = stat.getBucketStart().atZone(ZoneOffset.UTC).withZoneSameInstant(tr.timezone);
+                    ZonedDateTime bucketEnd = stat.getBucketEnd().atZone(ZoneOffset.UTC).withZoneSameInstant(tr.timezone);
+                    
+                    return TimeSeriesStatItemResponse.builder()
+                            .bucketStart(bucketStart.format(ISO_FORMATTER))
+                            .bucketEnd(bucketEnd.format(ISO_FORMATTER))
+                            .clicks(stat.getTotalClicks())
+                            .allowedClicks(stat.getAllowedClicks())
+                            .blockedClicks(stat.getBlockedClicks())
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        return PeakTimeStatResponse.builder()
+                .granularity(tr.granularity.name())
+                .timezone(tr.timezone.getId())
+                .from(tr.fromZoned.format(ISO_FORMATTER))
+                .to(tr.toZoned.format(ISO_FORMATTER))
+                .totalBuckets(allStats.size())
+                .returnedBuckets(data.size())
+                .data(data)
+                .build();
+    }
+
+    private record TimeRange(Granularity granularity, ZoneId timezone, ZonedDateTime fromZoned, ZonedDateTime toZoned, Instant fromUtc, Instant toUtc) {}
+
+    private TimeRange parseTimeRange(Granularity granularity, String fromStr, String toStr, String timezoneStr) {
+        ZoneId timezone = timezoneStr != null ? ZoneId.of(timezoneStr) : ZoneOffset.UTC;
+        Granularity effectiveGranularity = granularity != null ? granularity : Granularity.HOURLY;
+        
         ZonedDateTime toZoned;
         ZonedDateTime fromZoned;
         
@@ -226,49 +293,14 @@ public class StatisticsService {
         if (fromStr != null) {
             fromZoned = parseDateTime(fromStr, timezone);
         } else {
-            // Calculate default from based on granularity
             int defaultBuckets = getDefaultBuckets(effectiveGranularity);
             fromZoned = subtractBuckets(toZoned, effectiveGranularity, defaultBuckets);
         }
         
-        // Convert to UTC for database query
         Instant fromUtc = fromZoned.withZoneSameInstant(ZoneOffset.UTC).toInstant();
         Instant toUtc = toZoned.withZoneSameInstant(ZoneOffset.UTC).toInstant();
         
-        // Query database with limit
-        ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
-        List<ClickStat> stats = clickStatRepository.findTopByShortUrlAndGranularityAndBucketStartBetween(
-                shortUrl, effectiveGranularity, fromUtc, toUtc, PageRequest.of(0, effectiveLimit));
-        
-        // Convert to response with timezone conversion
-        List<TimeSeriesStatItemResponse> data = stats.stream()
-                .map(stat -> {
-                    ZonedDateTime bucketStart = stat.getBucketStart().atZone(ZoneOffset.UTC).withZoneSameInstant(timezone);
-                    ZonedDateTime bucketEnd = stat.getBucketEnd().atZone(ZoneOffset.UTC).withZoneSameInstant(timezone);
-                    
-                    return TimeSeriesStatItemResponse.builder()
-                            .bucketStart(bucketStart.format(ISO_FORMATTER))
-                            .bucketEnd(bucketEnd.format(ISO_FORMATTER))
-                            .clicks(stat.getTotalClicks())
-                            .allowedClicks(stat.getAllowedClicks())
-                            .blockedClicks(stat.getBlockedClicks())
-                            .build();
-                })
-                .collect(Collectors.toList());
-        
-        // Count total buckets in the range
-        List<ClickStat> allStats = clickStatRepository.findByShortUrlAndGranularityAndBucketStartBetween(
-                shortUrl, effectiveGranularity, fromUtc, toUtc);
-        
-        return PeakTimeStatResponse.builder()
-                .granularity(effectiveGranularity.name())
-                .timezone(timezone.getId())
-                .from(fromZoned.format(ISO_FORMATTER))
-                .to(toZoned.format(ISO_FORMATTER))
-                .totalBuckets(allStats.size())
-                .returnedBuckets(data.size())
-                .data(data)
-                .build();
+        return new TimeRange(effectiveGranularity, timezone, fromZoned, toZoned, fromUtc, toUtc);
     }
     
     private int getDefaultBuckets(Granularity granularity) {
