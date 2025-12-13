@@ -87,7 +87,7 @@ public class ShortUrlController {
         Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
         
-        Page<ShortUrl> shortUrlPage = shortUrlService.searchShortUrls(user, query, pageable);
+        Page<ShortUrl> shortUrlPage = shortUrlService.searchShortUrls(user, query, status, pageable);
         
         Page<ShortUrlResponse> responsePage = shortUrlPage.map(shortUrl -> {
             List<ShortUrlAccessControl> accessControls = shortUrlAccessControlService.getShortUrlAccessControls(shortUrl);

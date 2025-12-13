@@ -330,11 +330,18 @@ public class ShortUrlService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ShortUrl> searchShortUrls(User user, String query, Pageable pageable) {
-        if (query == null || query.trim().isEmpty()) {
-            return shortUrlRepository.findByUserAndDeletedAtIsNull(user, pageable);
+    public Page<ShortUrl> searchShortUrls(User user, String query, String status, Pageable pageable) {
+        Boolean enabled = null;
+        if (status != null && !status.isEmpty()) {
+            if ("active".equalsIgnoreCase(status) || "true".equalsIgnoreCase(status) || "enabled".equalsIgnoreCase(status)) {
+                enabled = true;
+            } else if ("inactive".equalsIgnoreCase(status) || "false".equalsIgnoreCase(status) || "disabled".equalsIgnoreCase(status)) {
+                enabled = false;
+            }
         }
-        return shortUrlRepository.searchByUserAndQuery(user, query.trim(), pageable);
+
+        String searchQuery = (query != null && !query.trim().isEmpty()) ? query.trim() : null;
+        return shortUrlRepository.searchWithFilters(user, searchQuery, enabled, pageable);
     }
 
     @Transactional(readOnly = true)
