@@ -9,6 +9,7 @@ import intelink.models.Subscription;
 import intelink.models.SubscriptionPlan;
 import intelink.models.User;
 import intelink.models.VerificationToken;
+import intelink.models.enums.SubscriptionPlanBillingInterval;
 import intelink.models.enums.SubscriptionPlanType;
 import intelink.models.enums.SubscriptionStatus;
 import intelink.models.enums.UserRole;
@@ -117,7 +118,10 @@ public class AuthService {
 
         // 3. Create FREE subscription for new user
         try {
-            Optional<SubscriptionPlan> freePlanOpt = subscriptionPlanRepository.findByType(SubscriptionPlanType.FREE);
+            Optional<SubscriptionPlan> freePlanOpt = subscriptionPlanRepository.findByTypeAndBillingInterval(
+                SubscriptionPlanType.FREE, 
+                SubscriptionPlanBillingInterval.NONE
+            );
             if (freePlanOpt.isPresent()) {
                 SubscriptionPlan freePlan = freePlanOpt.get();
                 Subscription freeSubscription = Subscription.builder().user(savedUser).subscriptionPlan(freePlan).status(SubscriptionStatus.ACTIVE).active(true).activatedAt(Instant.now()).expiresAt(null) // Lifetime for FREE plan

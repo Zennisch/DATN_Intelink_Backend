@@ -16,7 +16,9 @@ import java.time.Instant;
 @Builder
 
 @Entity
-@Table(name = "subscription_plans")
+@Table(name = "subscription_plans", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"type", "billing_interval"})
+})
 public class SubscriptionPlan {
 
     @Id
@@ -26,7 +28,7 @@ public class SubscriptionPlan {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, unique = true, length = 32)
+    @Column(name = "type", nullable = false, length = 32)
     private SubscriptionPlanType type;
 
     @Enumerated(EnumType.STRING)
