@@ -7,6 +7,7 @@ import intelink.models.ShortUrl;
 import intelink.models.User;
 import intelink.models.enums.DimensionType;
 import intelink.models.enums.Granularity;
+import intelink.modules.redirect.repositories.ClickLogRepository;
 import intelink.modules.redirect.repositories.ClickStatRepository;
 import intelink.modules.redirect.repositories.DimensionStatRepository;
 import intelink.modules.url.services.ShortUrlService;
@@ -31,6 +32,7 @@ public class StatisticsService {
 
     private final DimensionStatRepository dimensionStatRepository;
     private final ClickStatRepository clickStatRepository;
+    private final ClickLogRepository clickLogRepository;
     private final ShortUrlService shortUrlService;
     
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
@@ -40,6 +42,47 @@ public class StatisticsService {
         ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
         List<DimensionStat> stats = dimensionStatRepository.findByShortUrlAndTypeOrderByAllowedClicksDesc(shortUrl, dimensionType);
         return buildDimensionStatResponse(stats, dimensionType);
+    }
+
+    @Transactional(readOnly = true)
+    public DimensionStatResponse getDimensionStats(User user, DimensionType dimensionType, String fromStr, String toStr, String timezoneStr) {
+        if (fromStr == null && toStr == null) {
+            return getDimensionStats(user, dimensionType);
+        }
+
+        TimeRange tr = parseTimeRange(Granularity.DAILY, fromStr, toStr, timezoneStr);
+        
+        // 1. Get total clicks in range from ClickStat
+        List<ClickStat> clickStats = clickStatRepository.findByUserAndGranularityAndBucketStartBetween(
+                user, tr.granularity, tr.fromUtc, tr.toUtc);
+        long rangeTotalClicks = clickStats.stream().mapToLong(ClickStat::getAllowedClicks).sum();
+
+        // 2. Get lifetime distribution from DimensionStat
+        List<DimensionStat> lifetimeStats = dimensionStatRepository.findByUserAndTypeOrderByAllowedClicksDesc(user, dimensionType);
+        long lifetimeTotalClicks = lifetimeStats.stream().mapToLong(DimensionStat::getAllowedClicks).sum();
+
+        // 3. Estimate range stats based on lifetime distribution
+        List<DimensionStatItemResponse> data = lifetimeStats.stream()
+                .map(stat -> {
+                    double percentage = lifetimeTotalClicks > 0 
+                            ? (double) stat.getAllowedClicks() / lifetimeTotalClicks 
+                            : 0.0;
+                    long estimatedClicks = (long) (rangeTotalClicks * percentage);
+                    
+                    return DimensionStatItemResponse.builder()
+                            .name(stat.getValue())
+                            .clicks(estimatedClicks)
+                            .percentage(Math.round(percentage * 100.0 * 100.0) / 100.0)
+                            .build();
+                })
+                .filter(item -> item.getClicks() > 0)
+                .collect(Collectors.toList());
+
+        return DimensionStatResponse.builder()
+                .category(dimensionType.name())
+                .totalClicks(rangeTotalClicks)
+                .data(data)
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -78,6 +121,63 @@ public class StatisticsService {
         ShortUrl shortUrl = shortUrlService.getShortUrlByShortCode(user, shortCode);
         List<DimensionStat> stats = dimensionStatRepository.findByShortUrlAndTypeOrderByAllowedClicksDesc(shortUrl, dimensionType);
         return buildGeographyStatResponse(stats, dimensionType);
+    }
+
+    @Transactional(readOnly = true)
+    public GeographyStatResponse getGeographyStats(User user, DimensionType dimensionType, String fromStr, String toStr, String timezoneStr) {
+        if (fromStr == null && toStr == null) {
+            return getGeographyStats(user, dimensionType);
+        }
+
+        TimeRange tr = parseTimeRange(Granularity.DAILY, fromStr, toStr, timezoneStr);
+        
+        // 1. Get total clicks in range from ClickStat
+        List<ClickStat> clickStats = clickStatRepository.findByUserAndGranularityAndBucketStartBetween(
+                user, tr.granularity, tr.fromUtc, tr.toUtc);
+        long rangeTotalAllowedClicks = clickStats.stream().mapToLong(ClickStat::getAllowedClicks).sum();
+        long rangeTotalBlockedClicks = clickStats.stream().mapToLong(ClickStat::getBlockedClicks).sum();
+
+        // 2. Get lifetime distribution from DimensionStat
+        List<DimensionStat> lifetimeStats = dimensionStatRepository.findByUserAndTypeOrderByAllowedClicksDesc(user, dimensionType);
+        long lifetimeTotalAllowedClicks = lifetimeStats.stream().mapToLong(DimensionStat::getAllowedClicks).sum();
+        long lifetimeTotalBlockedClicks = lifetimeStats.stream().mapToLong(DimensionStat::getBlockedClicks).sum();
+
+        // 3. Estimate range stats based on lifetime distribution
+        List<GeographyStatItemResponse> data = lifetimeStats.stream()
+                .map(stat -> {
+                    double allowedPercentage = lifetimeTotalAllowedClicks > 0 
+                            ? (double) stat.getAllowedClicks() / lifetimeTotalAllowedClicks 
+                            : 0.0;
+                    double blockedPercentage = lifetimeTotalBlockedClicks > 0 
+                            ? (double) stat.getBlockedClicks() / lifetimeTotalBlockedClicks 
+                            : 0.0;
+                            
+                    long estimatedAllowedClicks = (long) (rangeTotalAllowedClicks * allowedPercentage);
+                    long estimatedBlockedClicks = (long) (rangeTotalBlockedClicks * blockedPercentage);
+                    long totalEstimatedClicks = estimatedAllowedClicks + estimatedBlockedClicks;
+                    
+                    double totalPercentage = (rangeTotalAllowedClicks + rangeTotalBlockedClicks) > 0
+                            ? (double) totalEstimatedClicks / (rangeTotalAllowedClicks + rangeTotalBlockedClicks) * 100
+                            : 0.0;
+
+                    return GeographyStatItemResponse.builder()
+                            .name(stat.getValue())
+                            .clicks(estimatedAllowedClicks) // Using allowed clicks as main metric
+                            .percentage(Math.round(totalPercentage * 100.0) / 100.0)
+                            .allowedClicks(estimatedAllowedClicks)
+                            .blockedClicks(estimatedBlockedClicks)
+                            .build();
+                })
+                .filter(item -> (item.getAllowedClicks() + item.getBlockedClicks()) > 0)
+                .collect(Collectors.toList());
+
+        return GeographyStatResponse.builder()
+                .category(dimensionType.name())
+                .totalClicks(rangeTotalAllowedClicks + rangeTotalBlockedClicks)
+                .totalAllowedClicks(rangeTotalAllowedClicks)
+                .totalBlockedClicks(rangeTotalBlockedClicks)
+                .data(data)
+                .build();
     }
 
     @Transactional(readOnly = true)

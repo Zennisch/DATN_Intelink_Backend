@@ -27,46 +27,61 @@ public class StatisticsController {
 
     @GetMapping("/browser")
     public ResponseEntity<?> getBrowserStats(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String timezone,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = authService.getCurrentUser(userDetails);
-        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.BROWSER);
+        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.BROWSER, from, to, timezone);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/os")
     public ResponseEntity<?> getOsStats(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String timezone,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = authService.getCurrentUser(userDetails);
-        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.OS);
+        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.OS, from, to, timezone);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/device")
     public ResponseEntity<?> getDeviceStats(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String timezone,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = authService.getCurrentUser(userDetails);
-        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.DEVICE_TYPE);
+        DimensionStatResponse response = statisticsService.getDimensionStats(user, DimensionType.DEVICE_TYPE, from, to, timezone);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/country")
     public ResponseEntity<?> getCountryStats(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String timezone,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = authService.getCurrentUser(userDetails);
-        GeographyStatResponse response = statisticsService.getGeographyStats(user, DimensionType.COUNTRY);
+        GeographyStatResponse response = statisticsService.getGeographyStats(user, DimensionType.COUNTRY, from, to, timezone);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/city")
     public ResponseEntity<?> getCityStats(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String timezone,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         User user = authService.getCurrentUser(userDetails);
-        GeographyStatResponse response = statisticsService.getGeographyStats(user, DimensionType.CITY);
+        GeographyStatResponse response = statisticsService.getGeographyStats(user, DimensionType.CITY, from, to, timezone);
         return ResponseEntity.ok(response);
     }
 
