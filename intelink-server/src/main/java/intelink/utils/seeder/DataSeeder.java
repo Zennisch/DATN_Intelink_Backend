@@ -9,10 +9,12 @@ import org.springframework.stereotype.Component;
 public class DataSeeder implements CommandLineRunner {
 
     private final SubscriptionPlanSeeder subscriptionPlanSeeder;
+    private final UserSeeder userSeeder;
 
     @Override
     public void run(String... args) throws Exception {
         subscriptionPlanSeeder.seed();
+        userSeeder.seed();
     }
 }
 
