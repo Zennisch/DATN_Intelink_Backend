@@ -47,6 +47,7 @@ public class SubscriptionPlanSeeder {
                     .shortCodeCustomizationEnabled(true)
                     .statisticsEnabled(true)
                     .apiAccessEnabled(false)
+                    .duration(30)
                     .build(),
                 SubscriptionPlan.builder()
                     .type(SubscriptionPlanType.ENTERPRISE)
@@ -59,6 +60,7 @@ public class SubscriptionPlanSeeder {
                     .shortCodeCustomizationEnabled(true)
                     .statisticsEnabled(true)
                     .apiAccessEnabled(true)
+                    .duration(30)
                     .build(),
 
                 // Yearly Plans
@@ -73,6 +75,7 @@ public class SubscriptionPlanSeeder {
                     .shortCodeCustomizationEnabled(true)
                     .statisticsEnabled(true)
                     .apiAccessEnabled(false)
+                    .duration(365)
                     .build(),
                 SubscriptionPlan.builder()
                     .type(SubscriptionPlanType.ENTERPRISE)
@@ -85,6 +88,7 @@ public class SubscriptionPlanSeeder {
                     .shortCodeCustomizationEnabled(true)
                     .statisticsEnabled(true)
                     .apiAccessEnabled(true)
+                    .duration(365)
                     .build()
             );
 

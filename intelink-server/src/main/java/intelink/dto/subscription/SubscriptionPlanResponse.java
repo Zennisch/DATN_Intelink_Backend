@@ -22,6 +22,7 @@ public class SubscriptionPlanResponse {
     private Boolean shortCodeCustomizationEnabled;
     private Boolean statisticsEnabled;
     private Boolean apiAccessEnabled;
+    private Integer duration;
     private Instant createdAt;
 
     public static SubscriptionPlanResponse fromEntity(SubscriptionPlan plan) {
@@ -37,6 +38,7 @@ public class SubscriptionPlanResponse {
                 .shortCodeCustomizationEnabled(plan.getShortCodeCustomizationEnabled())
                 .statisticsEnabled(plan.getStatisticsEnabled())
                 .apiAccessEnabled(plan.getApiAccessEnabled())
+                .duration(plan.getDuration())
                 .createdAt(plan.getCreatedAt())
                 .build();
     }
