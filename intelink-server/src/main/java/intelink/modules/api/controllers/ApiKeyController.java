@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/keys")
+@RequestMapping("/api/v1/api-keys")
 @RequiredArgsConstructor
 public class ApiKeyController {
 
