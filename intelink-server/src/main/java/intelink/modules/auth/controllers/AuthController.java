@@ -101,6 +101,30 @@ public class AuthController {
         return ResponseEntity.ok(resp);
     }
 
+    // ========== Update Profile
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        UserProfileResponse resp = authService.updateProfile(user, request);
+        return ResponseEntity.ok(resp);
+    }
+
+    // ========== Update Password
+    @PutMapping("/password")
+    public ResponseEntity<?> updatePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdatePasswordRequest request
+    ) {
+        User user = authService.getCurrentUser(userDetails);
+        authService.updatePassword(user, request);
+        String msg = "Password updated successfully";
+        AuthInfoResponse resp = new AuthInfoResponse(true, msg);
+        return ResponseEntity.ok(resp);
+    }
+
     // ========== OAuth Login
     @GetMapping("/oauth/callback")
     public ResponseEntity<?> oAuthCallback(@RequestParam String token) {

@@ -4,6 +4,8 @@ import intelink.configs.securities.JwtTokenProvider;
 import intelink.dto.auth.LoginRequest;
 import intelink.dto.auth.RegisterRequest;
 import intelink.dto.auth.ResetPasswordRequest;
+import intelink.dto.auth.UpdatePasswordRequest;
+import intelink.dto.auth.UpdateProfileRequest;
 import intelink.dto.auth.UserProfileResponse;
 import intelink.models.Subscription;
 import intelink.models.SubscriptionPlan;
@@ -270,6 +272,37 @@ public class AuthService {
     public UserProfileResponse getProfile(User user) {
         Optional<Subscription> activeSubscription = subscriptionRepository.findActiveSubscriptionByUser(user);
         return UserProfileResponse.fromEntity(user, activeSubscription.orElse(null));
+    }
+
+    @Transactional
+    public UserProfileResponse updateProfile(User user, UpdateProfileRequest request) {
+        if (request.username() != null && !request.username().equals(user.getUsername())) {
+            if (userRepository.existsByUsernameAndVerifiedTrue(request.username())) {
+                throw new IllegalArgumentException("Username already exists");
+            }
+            user.setUsername(request.username());
+        }
+
+        if (request.profileName() != null) {
+            user.setProfileName(request.profileName());
+        }
+
+        if (request.profilePictureUrl() != null) {
+            user.setProfilePictureUrl(request.profilePictureUrl());
+        }
+
+        User updatedUser = userRepository.save(user);
+        return getProfile(updatedUser);
+    }
+
+    @Transactional
+    public void updatePassword(User user, UpdatePasswordRequest request) {
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Old password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
