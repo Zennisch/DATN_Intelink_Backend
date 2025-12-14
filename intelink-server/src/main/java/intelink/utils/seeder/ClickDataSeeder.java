@@ -41,7 +41,7 @@ public class ClickDataSeeder {
                 log.warn("No short URLs found. Skipping click data seeding.");
                 return;
             }
-            createClickLogsAndStats(shortUrls, 50000);
+            createClickLogsAndStats(shortUrls, 10000);
             log.info("Click Data Seeder completed.");
         }
     }
@@ -56,7 +56,7 @@ public class ClickDataSeeder {
         int batchSize = 1000;
         for (int i = 0; i < clickLogCount; i++) {
             ShortUrl randomShortUrl = utils.getRandomElement(shortUrls);
-            Instant timestamp = utils.getRandomInstantBetween(2024, 2025);
+            Instant timestamp = utils.getRandomInstantBetween(2025, 2025);
             String country = utils.getRandomElement(utils.countries);
             String city = utils.getRandomElement(utils.cities);
             String browser = utils.getRandomElement(utils.browsers);
