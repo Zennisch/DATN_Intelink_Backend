@@ -61,7 +61,7 @@ pipeline {
                 echo 'Building Docker image...'
                 sh '''
                     . $WORKSPACE/.env
-                    docker build -t $GCP_IMAGE_URL $WORKSPACE/intelink-server --quiet
+                    docker build -f $WORKSPACE/intelink-server/Dockerfile.prod -t $GCP_IMAGE_URL $WORKSPACE/intelink-server --quiet
                 '''
                 echo 'Docker image built successfully.'
             }
