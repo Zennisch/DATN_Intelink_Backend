@@ -188,6 +188,12 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.20.1</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.cloud.sql/cloud-sql-connector-jdbc-sqlserver -->
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>cloud-sql-connector-jdbc-sqlserver</artifactId>
+            <version>1.27.1</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
