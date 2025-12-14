@@ -15,7 +15,6 @@ import intelink.modules.url.repositories.ShortUrlRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -34,14 +33,16 @@ public class ClickDataSeeder {
     private final ShortUrlRepository shortUrlRepository;
     private final DataSeedingUtils utils;
 
-    @Transactional
     public void seed() {
         if (clickLogRepository.count() == 0) {
+            log.info("Starting Click Data Seeder...");
             List<ShortUrl> shortUrls = shortUrlRepository.findAll();
             if (shortUrls.isEmpty()) {
+                log.warn("No short URLs found. Skipping click data seeding.");
                 return;
             }
             createClickLogsAndStats(shortUrls, 50000);
+            log.info("Click Data Seeder completed.");
         }
     }
 
@@ -75,12 +76,6 @@ public class ClickDataSeeder {
 
             clickLogs.add(clickLog);
 
-            // Update ShortUrl counters (in memory for now, but ideally should update DB)
-            // Since we are seeding, we can update ShortUrl at the end or just let it be inconsistent if not critical
-            // But let's try to be consistent if possible. However, updating ShortUrl 50k times is slow.
-            // We will skip updating ShortUrl counters for performance in this batch seeder, 
-            // or we could aggregate and update at the end. For now, let's focus on logs and stats.
-
             for (Granularity granularity : Granularity.values()) {
                 Instant bucketStart = utils.getBucketStart(timestamp, granularity);
                 Instant bucketEnd = utils.getBucketEnd(bucketStart, granularity);
@@ -113,27 +108,37 @@ public class ClickDataSeeder {
 
             if ((i + 1) % batchSize == 0 || i == clickLogCount - 1) {
                 clickLogRepository.saveAll(clickLogs);
-
-                if (i == clickLogCount - 1) {
-                    clickStatRepository.saveAll(clickStatsMap.values());
-                    dimensionStatRepository.saveAll(dimensionStatsMap.values());
-                    clickStatsMap.clear();
-                    dimensionStatsMap.clear();
-                }
-
+                log.info("Saved click logs batch {} of {}", (i / batchSize) + 1, (clickLogCount + batchSize - 1) / batchSize);
                 clickLogs.clear();
-
-                log.info("Saved batch {} of {}", (i / batchSize) + 1, (clickLogCount + batchSize - 1) / batchSize);
             }
         }
+
+        // Save Stats in batches
+        saveStatsInBatches(new ArrayList<>(clickStatsMap.values()), batchSize);
+        saveDimensionStatsInBatches(new ArrayList<>(dimensionStatsMap.values()), batchSize);
         
-        // Update ShortUrl total clicks
-        // This is a simplified update, assuming all clicks are allowed and unique logic is ignored for seeding speed
-        // for (ShortUrl url : shortUrls) {
-             // We could count from logs but that's expensive. 
-             // For seeding, we might just leave ShortUrl counters as is or update them if needed.
-             // Given the requirement is about logs and stats, I'll leave ShortUrl counters alone to avoid complexity/performance issues.
-        // }
+        clickStatsMap.clear();
+        dimensionStatsMap.clear();
+    }
+
+    private void saveStatsInBatches(List<ClickStat> stats, int batchSize) {
+        int total = stats.size();
+        log.info("Saving {} click stats...", total);
+        for (int i = 0; i < total; i += batchSize) {
+            int end = Math.min(i + batchSize, total);
+            clickStatRepository.saveAll(stats.subList(i, end));
+            log.info("Saved click stats batch {}/{}", (i / batchSize) + 1, (total + batchSize - 1) / batchSize);
+        }
+    }
+
+    private void saveDimensionStatsInBatches(List<DimensionStat> stats, int batchSize) {
+        int total = stats.size();
+        log.info("Saving {} dimension stats...", total);
+        for (int i = 0; i < total; i += batchSize) {
+            int end = Math.min(i + batchSize, total);
+            dimensionStatRepository.saveAll(stats.subList(i, end));
+            log.info("Saved dimension stats batch {}/{}", (i / batchSize) + 1, (total + batchSize - 1) / batchSize);
+        }
     }
 
     private void createDimensionStat(Map<String, DimensionStat> dimensionStatsMap, ShortUrl shortUrl, DimensionType type, String value, ClickStatus status) {
