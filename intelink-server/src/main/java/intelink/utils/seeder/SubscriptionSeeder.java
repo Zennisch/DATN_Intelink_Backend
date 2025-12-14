@@ -32,18 +32,32 @@ public class SubscriptionSeeder {
                     SubscriptionPlanType.FREE, SubscriptionPlanBillingInterval.NONE)
                     .orElseThrow(() -> new RuntimeException("Free plan not found"));
 
+            SubscriptionPlan enterpriseMonthlyPlan = subscriptionPlanRepository.findByTypeAndBillingInterval(
+                    SubscriptionPlanType.ENTERPRISE, SubscriptionPlanBillingInterval.MONTHLY)
+                    .orElseThrow(() -> new RuntimeException("Enterprise Monthly plan not found"));
+
             List<User> users = userRepository.findAll();
             List<Subscription> subscriptions = new ArrayList<>();
 
             for (User user : users) {
+                SubscriptionPlan planToAssign = freePlan;
+                Instant expiresAt = null;
+
+                if ("username3".equals(user.getUsername())) {
+                    planToAssign = enterpriseMonthlyPlan;
+                    if (planToAssign.getDuration() != null) {
+                        expiresAt = Instant.now().plus(planToAssign.getDuration(), java.time.temporal.ChronoUnit.DAYS);
+                    }
+                }
+
                 Subscription subscription = Subscription.builder()
                         .user(user)
-                        .subscriptionPlan(freePlan)
+                        .subscriptionPlan(planToAssign)
                         .status(SubscriptionStatus.ACTIVE)
                         .active(true)
                         .creditUsed(0.0)
                         .activatedAt(Instant.now())
-                        .expiresAt(null) // Lifetime
+                        .expiresAt(expiresAt)
                         .build();
                 subscriptions.add(subscription);
             }
