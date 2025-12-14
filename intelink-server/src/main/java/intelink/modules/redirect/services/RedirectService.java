@@ -94,14 +94,27 @@ public class RedirectService {
             return RedirectResult.unavailable(shortCode);
         }
 
-        // 3. Process IP information
+        // 3. Check if URL has password and password is correct
+        Optional<ShortUrlAccessControl> passwordAccessControl = shortUrlAccessControlService.findByShortUrlAndType(shortUrl, AccessControlType.PASSWORD_PROTECTED);
+        if (passwordAccessControl.isPresent()) {
+            if (password == null || password.isEmpty()) {
+                log.info("[RedirectService.handleRedirect] Password required for Short URL: {}", shortCode);
+                return RedirectResult.passwordRequired(passwordUnlockUrlTemplate.replace("{shortCode}", shortCode), shortCode);
+            }
+            if (!passwordEncoder.matches(password, passwordAccessControl.get().getValue())) {
+                log.warn("[RedirectService.handleRedirect] Incorrect password for Short URL: {}", shortCode);
+                return RedirectResult.incorrectPassword(shortCode);
+            }
+        }
+
+        // 4. Process IP information
         AccessControlMode accessControlMode = shortUrl.getAccessControlMode();
         IpInfo ipInfo = IpUtil.process(request);
         String ipAddress = ipInfo.ipAddress();
         String countryCode = GeoLiteUtil.getCountryIsoFromIp(ipAddress);
         List<AccessBlockedEntry> accessBlockedEntries = new ArrayList<>();
 
-        // 3.1 CIDR access control check
+        // 4.1 CIDR access control check
         List<ShortUrlAccessControl> cidrAccessControls = shortUrlAccessControlService.findAllByShortUrlAndType(shortUrl, AccessControlType.CIDR);
         if (!cidrAccessControls.isEmpty()) {
             boolean ipMatchedInList = cidrAccessControls.stream().anyMatch(ac -> AccessControlValidationUtil.isIpInCidrRange(ipAddress, ac.getValue()));
@@ -117,7 +130,7 @@ public class RedirectService {
             }
         }
 
-        // 3.2 Geography access control check
+        // 4.2 Geography access control check
         List<ShortUrlAccessControl> geographyAccessControls = shortUrlAccessControlService.findAllByShortUrlAndType(shortUrl, AccessControlType.GEOGRAPHY);
         if (!geographyAccessControls.isEmpty()) {
             boolean countryMatchedInList = geographyAccessControls.stream().anyMatch(ac -> ac.getValue().equalsIgnoreCase(countryCode));
@@ -133,7 +146,7 @@ public class RedirectService {
             }
         }
 
-        // 3.3. Final access decision
+        // 4.3. Final access decision
         if (!accessBlockedEntries.isEmpty()) {
             StringBuilder reasonBuilder = new StringBuilder();
             reasonBuilder.append(accessControlMode.name()).append("|");
@@ -143,19 +156,6 @@ public class RedirectService {
             log.warn("[RedirectService.handleRedirect] Access denied for Short URL: {}. Reasons: {}", shortCode, reason);
             clickLogService.recordClick(shortUrl, ClickStatus.BLOCKED, reason, request);
             return RedirectResult.accessDenied(shortCode);
-        }
-
-        // 4. Check if URL has password and password is correct
-        Optional<ShortUrlAccessControl> passwordAccessControl = shortUrlAccessControlService.findByShortUrlAndType(shortUrl, AccessControlType.PASSWORD_PROTECTED);
-        if (passwordAccessControl.isPresent()) {
-            if (password == null || password.isEmpty()) {
-                log.info("[RedirectService.handleRedirect] Password required for Short URL: {}", shortCode);
-                return RedirectResult.passwordRequired(passwordUnlockUrlTemplate.replace("{shortCode}", shortCode), shortCode);
-            }
-            if (!passwordEncoder.matches(password, passwordAccessControl.get().getValue())) {
-                log.warn("[RedirectService.handleRedirect] Incorrect password for Short URL: {}", shortCode);
-                return RedirectResult.incorrectPassword(shortCode);
-            }
         }
 
         // 5. Record click log and redirect to original URL
