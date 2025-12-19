@@ -17,10 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -56,20 +53,14 @@ public class ClickDataSeeder {
         log.info("Will seed {} clicks in {} batches of {} clicks with {} second delay", 
                 clickLogCount, totalBatches, clicksPerBatch, delaySeconds);
 
-        Map<String, ClickStat> clickStatsMap = new HashMap<>();
-        Map<String, DimensionStat> dimensionStatsMap = new HashMap<>();
-
-        int saveBatchSize = 1000;
         int processedClicks = 0;
         
         for (int batchNum = 0; batchNum < totalBatches; batchNum++) {
             int clicksInThisBatch = Math.min(clicksPerBatch, clickLogCount - processedClicks);
-            List<ClickLog> clickLogs = new ArrayList<>();
             
             log.info("Processing batch {}/{} ({} clicks)...", batchNum + 1, totalBatches, clicksInThisBatch);
             
             for (int i = 0; i < clicksInThisBatch; i++) {
-                int totalIndex = processedClicks + i;
                 ShortUrl randomShortUrl = utils.getRandomElement(shortUrls);
                 Instant timestamp = utils.getRandomInstantBetween(2025, 2025);
                 String country = utils.getRandomElement(utils.countries);
@@ -89,46 +80,31 @@ public class ClickDataSeeder {
                         .status(status)
                         .build();
 
-                clickLogs.add(clickLog);
+                clickLogRepository.save(clickLog);
 
                 for (Granularity granularity : Granularity.values()) {
                     Instant bucketStart = utils.getBucketStart(timestamp, granularity);
                     Instant bucketEnd = utils.getBucketEnd(bucketStart, granularity);
-                    String statsKey = randomShortUrl.getId() + "_" + granularity + "_" + bucketStart.toString();
-
-                    clickStatsMap.computeIfAbsent(statsKey, k -> ClickStat.builder()
-                                    .granularity(granularity)
-                                    .bucketStart(bucketStart)
-                                    .bucketEnd(bucketEnd)
-                                    .totalClicks(0L)
-                                    .allowedClicks(0L)
-                                    .blockedClicks(0L)
-                                    .shortUrl(randomShortUrl)
-                                    .build());
                     
-                    ClickStat stat = clickStatsMap.get(statsKey);
-                    stat.setTotalClicks(stat.getTotalClicks() + 1);
-                    if (status == ClickStatus.ALLOWED) {
-                        stat.setAllowedClicks(stat.getAllowedClicks() + 1);
-                    } else {
-                        stat.setBlockedClicks(stat.getBlockedClicks() + 1);
-                    }
+                    clickStatRepository.upsertAndIncrement(
+                        randomShortUrl.getId(),
+                        granularity.name(),
+                        bucketStart,
+                        bucketEnd,
+                        status == ClickStatus.ALLOWED ? 1 : 0
+                    );
                 }
 
-                createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.COUNTRY, country, status);
-                createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.CITY, city, status);
-                createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.BROWSER, browser, status);
-                createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.OS, os, status);
-                createDimensionStat(dimensionStatsMap, randomShortUrl, DimensionType.DEVICE_TYPE, deviceType, status);
+                updateDimensionStat(randomShortUrl, DimensionType.COUNTRY, country, status);
+                updateDimensionStat(randomShortUrl, DimensionType.CITY, city, status);
+                updateDimensionStat(randomShortUrl, DimensionType.BROWSER, browser, status);
+                updateDimensionStat(randomShortUrl, DimensionType.OS, os, status);
+                updateDimensionStat(randomShortUrl, DimensionType.DEVICE_TYPE, deviceType, status);
             }
             
-            // Save click logs for this batch
-            clickLogRepository.saveAll(clickLogs);
             processedClicks += clicksInThisBatch;
-            log.info("Saved {} click logs (Total: {}/{})", clicksInThisBatch, processedClicks, clickLogCount);
-            clickLogs.clear();
+            log.info("Processed {} clicks (Total: {}/{})", clicksInThisBatch, processedClicks, clickLogCount);
             
-            // Wait before processing next batch (except for the last batch)
             if (batchNum < totalBatches - 1) {
                 try {
                     log.info("Waiting {} seconds before next batch...", delaySeconds);
@@ -140,54 +116,16 @@ public class ClickDataSeeder {
                 }
             }
         }
-
-        // Save Stats in batches
-        saveStatsInBatches(new ArrayList<>(clickStatsMap.values()), saveBatchSize);
-        saveDimensionStatsInBatches(new ArrayList<>(dimensionStatsMap.values()), saveBatchSize);
-        
-        clickStatsMap.clear();
-        dimensionStatsMap.clear();
         
         log.info("Completed seeding {} click logs with statistics", processedClicks);
     }
 
-    private void saveStatsInBatches(List<ClickStat> stats, int batchSize) {
-        int total = stats.size();
-        log.info("Saving {} click stats...", total);
-        for (int i = 0; i < total; i += batchSize) {
-            int end = Math.min(i + batchSize, total);
-            clickStatRepository.saveAll(stats.subList(i, end));
-            log.info("Saved click stats batch {}/{}", (i / batchSize) + 1, (total + batchSize - 1) / batchSize);
-        }
-    }
-
-    private void saveDimensionStatsInBatches(List<DimensionStat> stats, int batchSize) {
-        int total = stats.size();
-        log.info("Saving {} dimension stats...", total);
-        for (int i = 0; i < total; i += batchSize) {
-            int end = Math.min(i + batchSize, total);
-            dimensionStatRepository.saveAll(stats.subList(i, end));
-            log.info("Saved dimension stats batch {}/{}", (i / batchSize) + 1, (total + batchSize - 1) / batchSize);
-        }
-    }
-
-    private void createDimensionStat(Map<String, DimensionStat> dimensionStatsMap, ShortUrl shortUrl, DimensionType type, String value, ClickStatus status) {
-        String key = shortUrl.getId() + "_" + type + "_" + value;
-        dimensionStatsMap.computeIfAbsent(key, k -> DimensionStat.builder()
-                        .type(type)
-                        .value(value)
-                        .totalClicks(0L)
-                        .allowedClicks(0L)
-                        .blockedClicks(0L)
-                        .shortUrl(shortUrl)
-                        .build());
-        
-        DimensionStat stat = dimensionStatsMap.get(key);
-        stat.setTotalClicks(stat.getTotalClicks() + 1);
-        if (status == ClickStatus.ALLOWED) {
-            stat.setAllowedClicks(stat.getAllowedClicks() + 1);
-        } else {
-            stat.setBlockedClicks(stat.getBlockedClicks() + 1);
-        }
+    private void updateDimensionStat(ShortUrl shortUrl, DimensionType type, String value, ClickStatus status) {
+        dimensionStatRepository.upsertAndIncrement(
+            shortUrl.getId(),
+            type.name(),
+            value,
+            status == ClickStatus.ALLOWED ? 1 : 0
+        );
     }
 }

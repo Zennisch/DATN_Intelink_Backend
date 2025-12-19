@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -28,6 +29,7 @@ public interface ClickStatRepository extends JpaRepository<ClickStat, UUID> {
     void increaseBlockedCounters(@Param("id") UUID id);
 
     @Modifying
+    @Transactional
     @Query(value = """
         MERGE click_stats WITH (HOLDLOCK) AS target
         USING (SELECT :shortUrlId AS short_url_id, :granularity AS granularity, 

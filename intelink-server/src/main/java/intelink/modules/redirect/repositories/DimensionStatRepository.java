@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public interface DimensionStatRepository extends JpaRepository<DimensionStat, UU
     void increaseBlockedCounters(@Param("id") UUID id);
 
     @Modifying
+    @Transactional
     @Query(value = """
         MERGE dimension_stats WITH (HOLDLOCK) AS target
         USING (SELECT :shortUrlId AS short_url_id, :type AS type, :value AS value) AS source
